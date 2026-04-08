@@ -50,9 +50,6 @@ export function Navbar() {
           </Link>
         </nav>
         <div className="flex items-center gap-2">
-          <Link href="/admin">
-            <Button variant="ghost" className="hidden sm:inline-flex">Admin</Button>
-          </Link>
           <Button className="bg-primary hover:bg-primary/90">Gas Daftar</Button>
         </div>
       </div>
