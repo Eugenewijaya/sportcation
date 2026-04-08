@@ -1,56 +1,65 @@
 {
   "hero": {
     "badge": "Lagi Viral & Beta",
-    "title": "Gas Booking Lapangan, Anti Wacana Kawan!",
-    "description": "Sportcation bikin gampang nyari dan booking venue olahraga instan. Mager atau ada dadakan? Santai, fitur resell unik kita bikin lu bisa lelang bookingan lu ke player lain. Ga ada ceritanya rugi bandar!",
-    "buttonPrimary": "Download App Kuy",
-    "buttonSecondary": "Liat Demo Dulu",
+    "title": "Booking Lapangan Olahraga dengan Mudah",
+    "description": "Sportcation memudahkan pencarian dan pemesanan venue olahraga secara instan. Jika Anda memiliki jadwal mendadak, cukup lakukan pemesanan dalam hitungan detik.",
+    "buttonPrimary": "Unduh Aplikasi",
+    "buttonSecondary": "Lihat Demo",
     "stats": [
-      { "value": "10K+", "label": "Anak Skema" },
-      { "value": "500+", "label": "Venue Hits" },
-      { "value": "4.8", "label": "Rating Netizen" }
+      { "value": "10K+", "label": "Pengguna" },
+      { "value": "500+", "label": "Venue Terdaftar" },
+      { "value": "4.8", "label": "Rating Pengguna" }
+    ]
+  },
+  "promoSection": {
+    "title": "Mager Mendadak?",
+    "description": "Temukan solusi cepat saat Anda tidak dapat bermain. Kami menyediakan layanan lelang slot sehingga Anda tidak kehilangan uang.",
+    "bullets": [
+      "Temukan venue terdekat",
+      "Booking cepat dalam hitungan detik",
+      "Resell slot tanpa kerugian"
     ]
   },
   "features": [
     {
       "icon": "Calendar",
-      "title": "Booking Gak Pake Ribet",
-      "description": "Reserve lapangan hitungan detik, cek avail gampang banget.",
+      "title": "Booking Tanpa Ribet",
+      "description": "Reservasi lapangan dalam hitungan detik, cek ketersediaan dengan mudah.",
       "color": "bg-blue-50",
       "iconColor": "text-blue-600"
     },
     {
       "icon": "TrendingUp",
       "title": "Jual Kilat / Lelang",
-      "description": "Batal main? Tenang, lempar slot lu ke player lain. No rugi club!",
+      "description": "Jika batal, lelang slot Anda ke pemain lain tanpa kerugian.",
       "color": "bg-green-50",
       "iconColor": "text-green-600"
     },
     {
       "icon": "MapPin",
       "title": "Cari Venue Terdekat",
-      "description": "Lebih tau banyak tempat olahraga asik, dekat tempat healing lu.",
+      "description": "Temukan venue olahraga terdekat dengan mudah.",
       "color": "bg-purple-50",
       "iconColor": "text-purple-600"
     },
     {
       "icon": "Shield",
-      "title": "Bayar Super Aman",
-      "description": "Transaksi satset, aman, dan langsung confirm masuk.",
+      "title": "Pembayaran Aman",
+      "description": "Transaksi cepat, aman, dan konfirmasi otomatis.",
       "color": "bg-orange-50",
       "iconColor": "text-orange-600"
     },
     {
       "icon": "Users",
-      "title": "Circle Baru",
-      "description": "Gabung komunitas, cari barengan main, tambah mutualan asik.",
+      "title": "Komunitas Baru",
+      "description": "Bergabung dengan komunitas, temukan partner bermain, dan dapatkan pengalaman seru.",
       "color": "bg-pink-50",
       "iconColor": "text-pink-600"
     },
     {
       "icon": "Flame",
-      "title": "Promo Meresahkan",
-      "description": "Banyak notif diskon dadakan & flash sale, lumayan cuy!",
+      "title": "Promo Menarik",
+      "description": "Dapatkan notifikasi diskon dan flash sale secara real time.",
       "color": "bg-red-50",
       "iconColor": "text-red-600"
     }
@@ -66,45 +75,23 @@
     { "name": "Squash", "image": "/squash-court.jpg", "color": "from-green-500", "emoji": "🎾" }
   ],
   "howItWorks": [
-    {
-      "step": 1,
-      "title": "Temuin Venue Lu",
-      "description": "Cari lapangan yang asik. Bisa di-filter sesuai cabor, jam main, atau duit yang ada di dompet."
-    },
-    {
-      "step": 2,
-      "title": "Booking Satset",
-      "description": "Order slot dalam hitungan detik. Bayar gampang, langsung dapet confirm ijo."
-    },
-    {
-      "step": 3,
-      "title": "Gass Main (Atau Resell)",
-      "description": "Dateng dan keluarkan skill tier atas lu. Kalau mager badai, tinggal resell ke player lain."
-    }
+    { "step": 1, "title": "Temukan Venue", "description": "Cari venue yang sesuai dengan kebutuhan Anda." },
+    { "step": 2, "title": "Booking Cepat", "description": "Lakukan pemesanan dalam hitungan detik dan bayar dengan mudah." },
+    { "step": 3, "title": "Main atau Resell", "description": "Jika tidak jadi, lelang slot Anda ke pemain lain." }
   ],
   "testimonials": [
-    {
-      "name": "Alex Johnson",
-      "role": "Anak Padel Akut",
-      "text": "Akhirnya nemu app yang the best. Fitur lelangnya nylametin nyawa & dompet sering banget cuy!",
-      "avatar": "AJ"
-    },
-    {
-      "name": "Maria Garcia",
-      "role": "Petarung Tennis",
-      "text": "Jadwal main bareng jadi no ribet karena Sportcation. Ini app fix masuk top tier gw.",
-      "avatar": "MG"
-    },
-    {
-      "name": "James Chen",
-      "role": "Suhu Gym",
-      "text": "Gampang parah buat mantau tempat gym. Komunitas di dalemnya juga toxic-free & super chill.",
-      "avatar": "JC"
-    }
+    { "name": "Alex Johnson", "role": "Pengguna Padel", "text": "Aplikasi ini sangat membantu, fitur lelangnya menyelamatkan budget saya.", "avatar": "AJ" },
+    { "name": "Maria Garcia", "role": "Pemain Tennis", "text": "Jadwal bermain menjadi lebih teratur berkat Sportcation.", "avatar": "MG" },
+    { "name": "James Chen", "role": "Pengguna Gym", "text": "Mudah memantau venue gym, komunitasnya juga sangat bersahabat.", "avatar": "JC" }
   ],
   "about": {
-    "story": "Sportcation dibikin pas taun 2022 sama sekumpulan orang sumpek yang capek kena PHP jadwal main dan duit angus garagara batal sewa. Kita ngerasa 'Ini gabisa dibiarin', jadi yaudah kita bikin solusinya.",
-    "mission": "Sekarang, kita ganti cara orang nyari keringet. Bikin olahraga kerasa reachable, affordable, & full ngebahagiain lu pada di manapun kalian berada."
+    "story": "Sportcation didirikan pada tahun 2022 oleh tim yang ingin mempermudah proses pencarian dan pemesanan venue olahraga.",
+    "mission": "Menyediakan platform yang mudah diakses, terjangkau, dan menyenangkan bagi semua kalangan.",
+    "stats": [
+      { "label": "Tahun Berdiri", "value": "2022" },
+      { "label": "Jumlah Crew", "value": "50+" },
+      { "label": "Kota Operasi", "value": "15" }
+    ]
   },
   "contact": {
     "email": "hello@sportcation.com",
