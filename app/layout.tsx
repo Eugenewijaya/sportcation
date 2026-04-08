@@ -2,15 +2,17 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
+import { Navbar } from "@/components/Navbar"
+import { Footer } from "@/components/Footer"
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Sportcation - Book Sports Venues Instantly",
+  title: "Sportcation - Booking Lapangan Santai Asik",
   description:
-    "Book padel, tennis, golf, futsal, badminton, and gym facilities instantly. Resell or auction your bookings if plans change.",
+    "Booking padel, tennis, golf, futsal instan anti ribet. Batal main? Santai, lelang aja bookingan lu cuy.",
   generator: "v0.app",
   icons: {
     icon: [
@@ -37,9 +39,13 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={`font-sans antialiased`}>
-        {children}
+    <html lang="id">
+      <body className={`font-sans antialiased min-h-screen flex flex-col`}>
+        <Navbar />
+        <main className="flex-1">
+          {children}
+        </main>
+        <Footer />
         <Analytics />
       </body>
     </html>

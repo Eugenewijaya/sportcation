@@ -1,0 +1,114 @@
+{
+  "hero": {
+    "badge": "Lagi Viral & Beta",
+    "title": "Gas Booking Lapangan, Anti Wacana Kawan!",
+    "description": "Sportcation bikin gampang nyari dan booking venue olahraga instan. Mager atau ada dadakan? Santai, fitur resell unik kita bikin lu bisa lelang bookingan lu ke player lain. Ga ada ceritanya rugi bandar!",
+    "buttonPrimary": "Download App Kuy",
+    "buttonSecondary": "Liat Demo Dulu",
+    "stats": [
+      { "value": "10K+", "label": "Anak Skema" },
+      { "value": "500+", "label": "Venue Hits" },
+      { "value": "4.8", "label": "Rating Netizen" }
+    ]
+  },
+  "features": [
+    {
+      "icon": "Calendar",
+      "title": "Booking Gak Pake Ribet",
+      "description": "Reserve lapangan hitungan detik, cek avail gampang banget.",
+      "color": "bg-blue-50",
+      "iconColor": "text-blue-600"
+    },
+    {
+      "icon": "TrendingUp",
+      "title": "Jual Kilat / Lelang",
+      "description": "Batal main? Tenang, lempar slot lu ke player lain. No rugi club!",
+      "color": "bg-green-50",
+      "iconColor": "text-green-600"
+    },
+    {
+      "icon": "MapPin",
+      "title": "Cari Venue Terdekat",
+      "description": "Lebih tau banyak tempat olahraga asik, dekat tempat healing lu.",
+      "color": "bg-purple-50",
+      "iconColor": "text-purple-600"
+    },
+    {
+      "icon": "Shield",
+      "title": "Bayar Super Aman",
+      "description": "Transaksi satset, aman, dan langsung confirm masuk.",
+      "color": "bg-orange-50",
+      "iconColor": "text-orange-600"
+    },
+    {
+      "icon": "Users",
+      "title": "Circle Baru",
+      "description": "Gabung komunitas, cari barengan main, tambah mutualan asik.",
+      "color": "bg-pink-50",
+      "iconColor": "text-pink-600"
+    },
+    {
+      "icon": "Flame",
+      "title": "Promo Meresahkan",
+      "description": "Banyak notif diskon dadakan & flash sale, lumayan cuy!",
+      "color": "bg-red-50",
+      "iconColor": "text-red-600"
+    }
+  ],
+  "sports": [
+    { "name": "Padel", "image": "/padel-court-modern.jpg", "color": "from-blue-400", "emoji": "🎾" },
+    { "name": "Golf", "image": "/golf-course-green.png", "color": "from-green-400", "emoji": "⛳" },
+    { "name": "Tennis", "image": "/tennis-court-blue.jpg", "color": "from-yellow-400", "emoji": "🎾" },
+    { "name": "Futsal", "image": "/futsal-indoor-court.jpg", "color": "from-orange-400", "emoji": "⚽" },
+    { "name": "Badminton", "image": "/badminton-court.png", "color": "from-red-400", "emoji": "🏸" },
+    { "name": "Gym", "image": "/modern-gym-equipment.png", "color": "from-purple-400", "emoji": "💪" },
+    { "name": "Basketball", "image": "/basketball-court.jpg", "color": "from-orange-500", "emoji": "🏀" },
+    { "name": "Squash", "image": "/squash-court.jpg", "color": "from-green-500", "emoji": "🎾" }
+  ],
+  "howItWorks": [
+    {
+      "step": 1,
+      "title": "Temuin Venue Lu",
+      "description": "Cari lapangan yang asik. Bisa di-filter sesuai cabor, jam main, atau duit yang ada di dompet."
+    },
+    {
+      "step": 2,
+      "title": "Booking Satset",
+      "description": "Order slot dalam hitungan detik. Bayar gampang, langsung dapet confirm ijo."
+    },
+    {
+      "step": 3,
+      "title": "Gass Main (Atau Resell)",
+      "description": "Dateng dan keluarkan skill tier atas lu. Kalau mager badai, tinggal resell ke player lain."
+    }
+  ],
+  "testimonials": [
+    {
+      "name": "Alex Johnson",
+      "role": "Anak Padel Akut",
+      "text": "Akhirnya nemu app yang the best. Fitur lelangnya nylametin nyawa & dompet sering banget cuy!",
+      "avatar": "AJ"
+    },
+    {
+      "name": "Maria Garcia",
+      "role": "Petarung Tennis",
+      "text": "Jadwal main bareng jadi no ribet karena Sportcation. Ini app fix masuk top tier gw.",
+      "avatar": "MG"
+    },
+    {
+      "name": "James Chen",
+      "role": "Suhu Gym",
+      "text": "Gampang parah buat mantau tempat gym. Komunitas di dalemnya juga toxic-free & super chill.",
+      "avatar": "JC"
+    }
+  ],
+  "about": {
+    "story": "Sportcation dibikin pas taun 2022 sama sekumpulan orang sumpek yang capek kena PHP jadwal main dan duit angus garagara batal sewa. Kita ngerasa 'Ini gabisa dibiarin', jadi yaudah kita bikin solusinya.",
+    "mission": "Sekarang, kita ganti cara orang nyari keringet. Bikin olahraga kerasa reachable, affordable, & full ngebahagiain lu pada di manapun kalian berada."
+  },
+  "contact": {
+    "email": "hello@sportcation.com",
+    "phone": "+62 811 1234 5678",
+    "address": "SCBD Sudirman, Jakarta Selatan"
+  }
+}
