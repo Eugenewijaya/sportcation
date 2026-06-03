@@ -14,9 +14,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.sportcation.app.data.mock.MockSlot
-import com.sportcation.app.data.mock.MockSlotAvailability
 import com.sportcation.app.data.mock.MockSlotRepository
 import com.sportcation.app.data.mock.MockVenueRepository
+import com.sportcation.app.data.mock.SlotAvailability
 import com.sportcation.app.ui.components.AppTopBar
 import com.sportcation.app.ui.components.CategoryChip
 import com.sportcation.app.ui.components.EmptyState
@@ -32,16 +32,21 @@ import com.sportcation.app.ui.theme.AppSpacing
 fun SlotSelectionScreen(
     venueId: String,
     onBack: () -> Unit,
-    onCheckout: () -> Unit
+    onCheckout: (String) -> Unit
 ) {
     val venue = MockVenueRepository.findById(venueId)
+    val courts = MockSlotRepository.courtsForVenue(venue.id)
+    val initialCourtId = courts.firstOrNull()?.id.orEmpty()
     var selectedDateLabel by remember { mutableStateOf(MockSlotRepository.dateLabels.first()) }
+    var selectedCourtId by remember { mutableStateOf(initialCourtId) }
     var selectedSlotId by remember { mutableStateOf<String?>(null) }
-    var selectionError by remember { mutableStateOf<String?>(null) }
+    var slotMessage by remember { mutableStateOf<String?>(null) }
     val slots = MockSlotRepository.slotsForVenue(
         venueId = venue.id,
+        courtId = selectedCourtId,
         dateLabel = selectedDateLabel
     )
+    val selectedCourt = courts.firstOrNull { it.id == selectedCourtId }
     val selectedSlot = slots.firstOrNull { it.id == selectedSlotId }
 
     SportcationPlaceholderScreen(
@@ -49,12 +54,9 @@ fun SlotSelectionScreen(
         description = "Choose a mock date and available time for ${venue.name}. No booking is created in this sprint.",
         primaryActionLabel = "Continue to Checkout",
         onPrimaryAction = {
-            if (selectedSlot != null) {
-                onCheckout()
-            } else {
-                selectionError = "Select an available slot before continuing."
-            }
+            selectedSlot?.let { onCheckout(it.id) }
         },
+        primaryActionEnabled = selectedSlot != null,
         secondaryActionLabel = "Back",
         onSecondaryAction = onBack,
         extraContent = {
@@ -89,7 +91,27 @@ fun SlotSelectionScreen(
                         onClick = {
                             selectedDateLabel = dateLabel
                             selectedSlotId = null
-                            selectionError = null
+                            slotMessage = null
+                        }
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(AppSpacing.md))
+            SectionHeader(title = "Choose court")
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(AppSpacing.xs)
+            ) {
+                courts.forEach { court ->
+                    CategoryChip(
+                        label = "${court.name} - ${court.surfaceLabel}",
+                        selected = selectedCourtId == court.id,
+                        onClick = {
+                            selectedCourtId = court.id
+                            selectedSlotId = null
+                            slotMessage = null
                         }
                     )
                 }
@@ -108,10 +130,11 @@ fun SlotSelectionScreen(
                             status = slot.toSlotStatus(selectedSlotId),
                             modifier = Modifier.weight(1f),
                             onClick = {
-                                if (slot.availability == MockSlotAvailability.Available) {
-                                    selectedSlotId = slot.id
-                                    selectionError = null
-                                }
+                                selectedSlotId = slot.id
+                                slotMessage = null
+                            },
+                            onUnavailableClick = {
+                                slotMessage = "This slot is unavailable. Choose another available time."
                             }
                         )
                     }
@@ -125,19 +148,19 @@ fun SlotSelectionScreen(
             if (selectedSlot == null) {
                 EmptyState(
                     title = "No slot selected",
-                    message = "Tap an available time to preview your checkout summary."
+                    message = "Tap an available time to preview your booking summary."
                 )
             } else {
                 EmptyState(
-                    title = selectedSlot.timeRange,
-                    message = "$selectedDateLabel at ${venue.name}. Estimated court fee ${selectedSlot.priceLabel}."
+                    title = "${selectedCourt?.name ?: "Court"} - ${selectedSlot.timeRange}",
+                    message = "${selectedSlot.dateLabel} (${selectedSlot.date}) at ${venue.name}. Estimated court fee ${selectedSlot.priceLabel}."
                 )
             }
-            if (selectionError != null) {
+            if (slotMessage != null) {
                 Spacer(modifier = Modifier.height(AppSpacing.sm))
                 ErrorState(
-                    title = "Slot required",
-                    message = selectionError ?: ""
+                    title = "Slot unavailable",
+                    message = slotMessage ?: ""
                 )
             }
             Spacer(modifier = Modifier.height(AppSpacing.lg))
@@ -150,8 +173,8 @@ private fun MockSlot.toSlotStatus(selectedSlotId: String?): SlotStatus {
         return SlotStatus.Selected
     }
 
-    return when (availability) {
-        MockSlotAvailability.Available -> SlotStatus.Available
-        MockSlotAvailability.Unavailable -> SlotStatus.Unavailable
+    return when (status) {
+        SlotAvailability.Available -> SlotStatus.Available
+        SlotAvailability.Unavailable -> SlotStatus.Unavailable
     }
 }

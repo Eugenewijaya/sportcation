@@ -1,6 +1,10 @@
 package com.sportcation.app.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -11,20 +15,25 @@ import com.sportcation.app.feature.auth.OnboardingScreen
 import com.sportcation.app.feature.auth.OtpVerificationScreen
 import com.sportcation.app.feature.auth.RegisterScreen
 import com.sportcation.app.feature.auth.SplashScreen
+import com.sportcation.app.feature.booking.BookingDetailScreen
 import com.sportcation.app.feature.booking.BookingSuccessScreen
 import com.sportcation.app.feature.booking.CheckoutScreen
 import com.sportcation.app.feature.booking.MyBookingsScreen
+import com.sportcation.app.feature.booking.PaymentSimulationScreen
+import com.sportcation.app.feature.booking.QrTicketScreen
 import com.sportcation.app.feature.explore.ExploreScreen
 import com.sportcation.app.feature.explore.SlotSelectionScreen
 import com.sportcation.app.feature.explore.VenueDetailScreen
 import com.sportcation.app.feature.home.HomeScreen
 import com.sportcation.app.feature.notification.NotificationScreen
+import com.sportcation.app.feature.profile.EditProfileScreen
 import com.sportcation.app.feature.profile.ProfileScreen
 import com.sportcation.app.feature.settings.SettingsScreen
 
 @Composable
 fun SportcationNavGraph() {
     val navController = rememberNavController()
+    var recentBookingId by rememberSaveable { mutableStateOf<String?>(null) }
 
     NavHost(
         navController = navController,
@@ -110,24 +119,97 @@ fun SportcationNavGraph() {
             SlotSelectionScreen(
                 venueId = venueId,
                 onBack = { navController.popBackStack() },
-                onCheckout = { navController.navigate(AppRoute.Checkout.route) }
+                onCheckout = { slotId ->
+                    navController.navigate(AppRoute.Checkout.createRoute(slotId))
+                }
             )
         }
-        composable(AppRoute.Checkout.route) {
+        composable(
+            route = AppRoute.Checkout.route,
+            arguments = listOf(navArgument("slotId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val slotId = backStackEntry.arguments?.getString("slotId").orEmpty()
+
             CheckoutScreen(
+                slotId = slotId,
                 onBack = { navController.popBackStack() },
-                onConfirm = { navController.navigate(AppRoute.BookingSuccess.route) }
+                onContinuePayment = { selectedSlotId, paymentMethodId ->
+                    navController.navigate(
+                        AppRoute.PaymentSimulation.createRoute(
+                            slotId = selectedSlotId,
+                            paymentMethodId = paymentMethodId
+                        )
+                    )
+                }
             )
         }
-        composable(AppRoute.BookingSuccess.route) {
+        composable(
+            route = AppRoute.PaymentSimulation.route,
+            arguments = listOf(
+                navArgument("slotId") { type = NavType.StringType },
+                navArgument("paymentMethodId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val slotId = backStackEntry.arguments?.getString("slotId").orEmpty()
+            val paymentMethodId = backStackEntry.arguments?.getString("paymentMethodId").orEmpty()
+
+            PaymentSimulationScreen(
+                slotId = slotId,
+                paymentMethodId = paymentMethodId,
+                onBack = { navController.popBackStack() },
+                onPaymentSuccess = { bookingId ->
+                    recentBookingId = bookingId
+                    navController.navigate(AppRoute.BookingSuccess.createRoute(bookingId))
+                }
+            )
+        }
+        composable(
+            route = AppRoute.BookingSuccess.route,
+            arguments = listOf(navArgument("bookingId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val bookingId = backStackEntry.arguments?.getString("bookingId").orEmpty()
+
             BookingSuccessScreen(
-                onViewBookings = { navController.navigate(AppRoute.MyBookings.route) },
-                onBackHome = { navController.navigate(AppRoute.Home.route) }
+                bookingId = bookingId,
+                onViewTicket = { bookingId ->
+                    navController.navigate(AppRoute.QrTicket.createRoute(bookingId))
+                },
+                onViewBookings = { navController.navigate(AppRoute.MyBookings.route) }
+            )
+        }
+        composable(
+            route = AppRoute.QrTicket.route,
+            arguments = listOf(navArgument("bookingId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val bookingId = backStackEntry.arguments?.getString("bookingId").orEmpty()
+
+            QrTicketScreen(
+                bookingId = bookingId,
+                onBack = { navController.popBackStack() },
+                onMyBookings = { navController.navigate(AppRoute.MyBookings.route) }
             )
         }
         composable(AppRoute.MyBookings.route) {
             MyBookingsScreen(
-                onHome = { navController.navigate(AppRoute.Home.route) }
+                recentBookingId = recentBookingId,
+                onHome = { navController.navigate(AppRoute.Home.route) },
+                onBookingDetail = { bookingId ->
+                    navController.navigate(AppRoute.BookingDetail.createRoute(bookingId))
+                }
+            )
+        }
+        composable(
+            route = AppRoute.BookingDetail.route,
+            arguments = listOf(navArgument("bookingId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val bookingId = backStackEntry.arguments?.getString("bookingId").orEmpty()
+
+            BookingDetailScreen(
+                bookingId = bookingId,
+                onBack = { navController.popBackStack() },
+                onViewTicket = { selectedBookingId ->
+                    navController.navigate(AppRoute.QrTicket.createRoute(selectedBookingId))
+                }
             )
         }
         composable(AppRoute.Notification.route) {
@@ -138,7 +220,15 @@ fun SportcationNavGraph() {
         composable(AppRoute.Profile.route) {
             ProfileScreen(
                 onHome = { navController.navigate(AppRoute.Home.route) },
-                onSettings = { navController.navigate(AppRoute.Settings.route) }
+                onEditProfile = { navController.navigate(AppRoute.EditProfile.route) },
+                onBookings = { navController.navigate(AppRoute.MyBookings.route) },
+                onSettings = { navController.navigate(AppRoute.Settings.route) },
+                onLogout = { navController.navigate(AppRoute.Login.route) }
+            )
+        }
+        composable(AppRoute.EditProfile.route) {
+            EditProfileScreen(
+                onBack = { navController.popBackStack() }
             )
         }
         composable(AppRoute.Settings.route) {

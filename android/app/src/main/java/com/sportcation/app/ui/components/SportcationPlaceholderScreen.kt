@@ -27,6 +27,7 @@ fun SportcationPlaceholderScreen(
     modifier: Modifier = Modifier,
     primaryActionLabel: String? = null,
     onPrimaryAction: (() -> Unit)? = null,
+    primaryActionEnabled: Boolean = true,
     secondaryActionLabel: String? = null,
     onSecondaryAction: (() -> Unit)? = null,
     extraContent: @Composable ColumnScope.() -> Unit = {}
@@ -65,7 +66,8 @@ fun SportcationPlaceholderScreen(
             SportcationPrimaryButton(
                 label = primaryActionLabel,
                 onClick = onPrimaryAction,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                enabled = primaryActionEnabled
             )
             Spacer(modifier = Modifier.height(AppSpacing.sm))
         }

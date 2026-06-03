@@ -37,9 +37,9 @@ fun SlotCard(
     priceLabel: String,
     status: SlotStatus,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    onUnavailableClick: () -> Unit = {}
 ) {
-    val enabled = status != SlotStatus.Unavailable
     val containerColor = when (status) {
         SlotStatus.Available -> AppColorSurface
         SlotStatus.Selected -> AppColorPrimary
@@ -59,7 +59,15 @@ fun SlotCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(enabled = enabled, onClick = onClick),
+            .clickable(
+                onClick = {
+                    if (status == SlotStatus.Unavailable) {
+                        onUnavailableClick()
+                    } else {
+                        onClick()
+                    }
+                }
+            ),
         shape = RoundedCornerShape(AppRadius.md),
         colors = CardDefaults.cardColors(containerColor = containerColor),
         border = BorderStroke(width = 1.dp, color = if (status == SlotStatus.Selected) AppColorPrimary else AppColorBorder)

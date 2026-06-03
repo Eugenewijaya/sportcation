@@ -18,6 +18,14 @@ yarn-error.log*
 
 # env files
 .env*
+!.env.example
+!**/.env.example
+
+# backend
+/backend/node_modules/
+/backend/dist/
+/backend/coverage/
+/backend/*.tsbuildinfo
 
 # vercel
 .vercel

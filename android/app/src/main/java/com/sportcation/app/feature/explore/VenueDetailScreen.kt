@@ -9,9 +9,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.sportcation.app.data.mock.MockSlotAvailability
 import com.sportcation.app.data.mock.MockSlotRepository
 import com.sportcation.app.data.mock.MockVenueRepository
+import com.sportcation.app.data.mock.SlotAvailability
 import com.sportcation.app.ui.components.AppTopBar
 import com.sportcation.app.ui.components.CategoryChip
 import com.sportcation.app.ui.components.EmptyState
@@ -29,6 +29,7 @@ fun VenueDetailScreen(
     onSelectSlot: () -> Unit
 ) {
     val venue = MockVenueRepository.findById(venueId)
+    val courts = MockSlotRepository.courtsForVenue(venue.id)
     val previewSlots = MockSlotRepository.previewSlotsForVenue(venue.id)
 
     SportcationPlaceholderScreen(
@@ -62,7 +63,7 @@ fun VenueDetailScreen(
             SectionHeader(title = "About")
             EmptyState(
                 title = "Venue overview",
-                message = "${venue.name} offers ${venue.sportCategory.lowercase()} sessions with ${venue.availableStatus.lowercase()} and ${venue.priceRange}."
+                message = venue.description
             )
             Spacer(modifier = Modifier.height(AppSpacing.md))
             SectionHeader(title = "Facilities")
@@ -74,6 +75,22 @@ fun VenueDetailScreen(
             ) {
                 venue.facilities.forEachIndexed { index, facility ->
                     CategoryChip(label = facility, selected = index == 0, onClick = {})
+                }
+            }
+            Spacer(modifier = Modifier.height(AppSpacing.md))
+            SectionHeader(title = "Available courts")
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(AppSpacing.xs)
+            ) {
+                courts.forEachIndexed { index, court ->
+                    CategoryChip(
+                        label = "${court.name} - ${court.surfaceLabel}",
+                        selected = index == 0,
+                        onClick = {}
+                    )
                 }
             }
             Spacer(modifier = Modifier.height(AppSpacing.md))
@@ -92,7 +109,7 @@ fun VenueDetailScreen(
                     SlotCard(
                         timeRange = slot.timeRange,
                         priceLabel = slot.priceLabel,
-                        status = slot.availability.toSlotStatus(),
+                        status = slot.status.toSlotStatus(),
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -102,9 +119,9 @@ fun VenueDetailScreen(
     )
 }
 
-private fun MockSlotAvailability.toSlotStatus(): SlotStatus {
+private fun SlotAvailability.toSlotStatus(): SlotStatus {
     return when (this) {
-        MockSlotAvailability.Available -> SlotStatus.Available
-        MockSlotAvailability.Unavailable -> SlotStatus.Unavailable
+        SlotAvailability.Available -> SlotStatus.Available
+        SlotAvailability.Unavailable -> SlotStatus.Unavailable
     }
 }

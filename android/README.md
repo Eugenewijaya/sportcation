@@ -23,11 +23,30 @@ It does not include real authentication, booking, payment, auction, resell, wall
 
 ## Build
 
-When JDK, Gradle, and Android SDK are installed, run:
+Open the `android` directory in Android Studio.
+
+Prerequisites:
+
+- Android Studio with JDK 17.
+- Android SDK Platform 35.
+- Android SDK Build Tools 35.x or newer.
+
+From a terminal, run:
 
 ```powershell
 cd android
-gradle :app:assembleDebug
+.\gradlew.bat :app:assembleDebug
 ```
 
-If using Android Studio, open the `android` directory as the Android project.
+On macOS or Linux:
+
+```bash
+cd android
+./gradlew :app:assembleDebug
+```
+
+The debug APK is generated at:
+
+```text
+android/app/build/outputs/apk/debug/app-debug.apk
+```
