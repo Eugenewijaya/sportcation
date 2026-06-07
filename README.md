@@ -1,30 +1,54 @@
-# Landing page Sportcation (2)
+# Sportcation
 
-*Automatically synced with your [v0.app](https://v0.app) deployments*
+Sportcation is a responsive Next.js web app prototype for sports venue discovery and booking.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/euegene-sagaras-projects/v0-landing-page-sportcation)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/R67jQokgzQd)
+The current implementation follows the exported design layers in:
 
-## Overview
+```text
+D:\sportcation\figma sportcation
+```
 
-This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
+## Current Scope
 
-## Deployment
+- Onboarding and login entry.
+- Home dashboard.
+- Explore venues with search and category filters.
+- Venue detail with schedule and slot selection.
+- Checkout.
+- QRIS payment simulation.
+- Booking success and ticket/QR placeholder.
+- Flash sale deals.
+- Auction and resell flow.
+- My bookings.
+- Notifications.
+- Profile.
+- Settings.
+- Help and privacy screens.
 
-Your project is live at:
+This is a web app prototype with local mock state. It is not an Android app and does not include production backend integration.
 
-**[https://vercel.com/euegene-sagaras-projects/v0-landing-page-sportcation](https://vercel.com/euegene-sagaras-projects/v0-landing-page-sportcation)**
+## Run Locally
 
-## Build your app
+```bash
+npm install
+npm run dev
+```
 
-Continue building your app on:
+Open:
 
-**[https://v0.app/chat/R67jQokgzQd](https://v0.app/chat/R67jQokgzQd)**
+```text
+http://localhost:3000
+```
 
-## How It Works
+## Build
 
-1. Create and modify your project using [v0.app](https://v0.app)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+```bash
+npm run build
+```
+
+## Notes For The Team
+
+- Mobile viewport follows the Figma app screens with bottom navigation.
+- Desktop viewport adapts into a web shell with sidebar navigation and wider dashboard panels.
+- Venue, booking, payment, auction, and profile data are mock/local only.
+- Do not reintroduce the old JSON admin CMS or Android project unless explicitly requested.

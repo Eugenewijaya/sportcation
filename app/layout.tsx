@@ -1,19 +1,20 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { Inter } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
-import { Navbar } from "@/components/Navbar"
-import { Footer } from "@/components/Footer"
 import "./globals.css"
 
-const _geist = Geist({ subsets: ["latin"] })
-const _geistMono = Geist_Mono({ subsets: ["latin"] })
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-sportcation",
+})
 
 export const metadata: Metadata = {
-  title: "Sportcation - Booking Lapangan Santai Asik",
+  title: "Sportcation - Sport Venue Booking Web App",
   description:
-    "Booking padel, tennis, golf, futsal instan anti ribet. Batal main? Santai, lelang aja bookingan lu cuy.",
-  generator: "v0.app",
+    "Responsive Sportcation web app for venue discovery, flash sale booking, checkout, auction, resell, and profile flows.",
+  generator: "Codex",
   icons: {
     icon: [
       {
@@ -40,12 +41,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id">
-      <body className={`font-sans antialiased min-h-screen flex flex-col`}>
-        <Navbar />
-        <main className="flex-1">
-          {children}
-        </main>
-        <Footer />
+      <body className={`${inter.variable} font-sans antialiased`}>
+        {children}
         <Analytics />
       </body>
     </html>
