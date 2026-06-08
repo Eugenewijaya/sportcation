@@ -66,6 +66,19 @@ Useful routes:
 npm run build
 ```
 
+## Database Foundation
+
+The repository includes Drizzle ORM schema and migration setup for Neon PostgreSQL.
+
+```bash
+cp .env.example .env.local
+npm run db:generate
+npm run db:migrate
+npm run db:seed
+```
+
+Use `DATABASE_URL` for runtime access. Use `DIRECT_DATABASE_URL` for migrations if the Neon project provides a separate direct connection string.
+
 ## Notes For The Team
 
 - Mobile viewport follows the Figma app screens with bottom navigation.
@@ -73,4 +86,5 @@ npm run build
 - Venue, booking, payment, auction, and profile data are mock/local only.
 - Merchant and admin screens use CRUD-ready mock resources, forms, filters, and row actions so they can later be wired to backend mutations.
 - Planned backend stack: Drizzle ORM with Neon PostgreSQL.
+- Drizzle schema lives in `lib/db/schema.ts`; generated SQL migrations live in `drizzle/`.
 - Do not reintroduce the old JSON admin CMS or Android project unless explicitly requested.

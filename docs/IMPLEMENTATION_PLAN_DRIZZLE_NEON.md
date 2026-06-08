@@ -15,6 +15,9 @@ The app builds as a frontend-only prototype with local mock data. It has no prod
 - Framework: Next.js App Router.
 - Styling: Tailwind CSS v4 with global Sportcation tokens.
 - UI state: local React state and static mock arrays.
+- ORM foundation: Drizzle ORM.
+- Database target: Neon PostgreSQL.
+- Schema/migration status: initial schema and generated migration are present.
 - Routing:
   - `/`
   - `/merchant`
@@ -31,8 +34,8 @@ The app builds as a frontend-only prototype with local mock data. It has no prod
   - `/admin/reports`
   - `/admin/content`
   - `/admin/settings`
-- Backend: not implemented.
-- Database: not implemented.
+- Backend API routes: not implemented.
+- Database runtime integration: not connected yet because a Neon `DATABASE_URL` is required.
 
 ## CRUD Readiness
 
@@ -83,15 +86,16 @@ Primary recommendation:
 ## Implementation Stages
 
 1. Environment and database foundation
-   - Add `.env.example`.
-   - Add `drizzle.config.ts`.
-   - Add `src/db` or `lib/db` connection module.
-   - Configure Neon pooled connection for runtime and direct connection for migrations.
+   - Done: added `.env.example`.
+   - Done: added `drizzle.config.ts`.
+   - Done: added `lib/db` connection module.
+   - Done: configured Neon pooled runtime URL and optional direct migration URL.
 
 2. Schema and migrations
-   - Create Drizzle schema files by domain.
-   - Add primary keys, foreign keys, indexes, timestamps, and status enums.
-   - Add seed script for sport categories, demo venues, courts, slots, users, bookings, and admin account.
+   - Done: created initial Drizzle schema.
+   - Done: added primary keys, foreign keys, indexes, timestamps, status enums, and review rating check constraint.
+   - Done: added generated SQL migration.
+   - Done: added seed script for sport categories, demo venues, courts, slots, users, bookings, payments, wallet, auction, notifications, voucher, and CMS entry.
 
 3. Authentication and authorization
    - Implement login/register/session.
@@ -130,10 +134,10 @@ Primary recommendation:
 
 ## Immediate Next Task
 
-Implement backend foundation only:
+Apply and verify database foundation against the real Neon project:
 
-- Install Drizzle ORM and Neon dependencies.
-- Create database connection module.
-- Create schema folder and initial tables.
-- Add migration and seed scripts.
-- Do not wire UI yet until schema validation passes.
+- Add real `DATABASE_URL` and optional `DIRECT_DATABASE_URL`.
+- Run `npm run db:migrate`.
+- Run `npm run db:seed`.
+- Inspect tables in Neon or `npm run db:studio`.
+- Then implement read-only venue/category/slot API routes before wiring UI mutations.
