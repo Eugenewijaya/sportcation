@@ -4,7 +4,7 @@
 
 Project name: Sportcation.
 
-Sportcation is now a responsive web app for sports venue discovery, booking, checkout, payment simulation, auction, resell, bookings, notification, profile, and settings flows.
+Sportcation is now a responsive web app for sports venue discovery, booking, checkout, payment simulation, auction, resell, bookings, notification, profile, settings, merchant operations, and admin operations.
 
 ## Source Of Truth
 
@@ -19,7 +19,9 @@ Sportcation is now a responsive web app for sports venue discovery, booking, che
 - Keep the product implemented in Next.js.
 - The app should prioritize a usable responsive prototype with local UI state.
 - Do not reintroduce the old JSON admin CMS, hardcoded admin credentials, Android project, or backend scaffolding unless the user explicitly asks.
-- Product flows can use mock/local data until real backend requirements are requested.
+- Product flows can use mock/local data until real backend integration starts.
+- Backend direction requested by the user: Drizzle ORM with Neon PostgreSQL.
+- Do not use local JSON file storage for production data.
 
 ## Core Web App Flows
 
@@ -39,6 +41,8 @@ Build and maintain these flows progressively:
 12. Profile.
 13. Settings.
 14. Help and privacy screens.
+15. Merchant venue, slot, booking, finance, and settings management.
+16. Admin user, venue, booking, payment, report, content, and settings management.
 
 ## Development Rules
 
@@ -48,8 +52,9 @@ Build and maintain these flows progressively:
 - Explain files created, modified, or deleted.
 - Run available build, lint, or visual verification commands when possible.
 - Keep local mock data centralized or clearly grouped.
+- For CRUD-ready UI, keep resource rows, form fields, status, filters, and row actions shaped like future API contracts.
 - Avoid hardcoded credentials and production-like secrets.
-- Do not add a backend or database unless requested in a separate task.
+- Do not add production backend/database code until explicitly requested, but prepare UI contracts for Drizzle ORM and Neon PostgreSQL integration.
 - Do not preserve insecure or irrelevant architecture from the old landing/admin app.
 - Use responsive layouts intentionally:
   - Mobile: app-like shell with bottom navigation.

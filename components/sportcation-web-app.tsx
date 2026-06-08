@@ -34,6 +34,7 @@ import {
   ShieldCheck,
   ShowerHead,
   Star,
+  Store,
   Ticket,
   Timer,
   User,
@@ -548,6 +549,14 @@ function DesktopSidebar({ active, onNavigate }: { active: View; onNavigate: (vie
         <AppButton onClick={() => onNavigate("auction")} className="mt-5 h-11 w-full text-xs">
           Open Auction
         </AppButton>
+      </div>
+      <div className="mt-4 grid gap-3">
+        <a href="/merchant" className="rounded-2xl bg-[#eafff8] px-4 py-3 text-sm font-black text-[#007c61]">
+          Merchant Studio
+        </a>
+        <a href="/admin" className="rounded-2xl bg-[#edf1f1] px-4 py-3 text-sm font-black text-[#5f666a]">
+          Admin Command
+        </a>
       </div>
     </aside>
   )
@@ -1542,6 +1551,16 @@ function ProfileScreen({ onNavigate }: { onNavigate: (view: View) => void }) {
                 </button>
               )
             })}
+            <a href="/merchant" className="flex items-center gap-4 rounded-[22px] bg-white p-5 text-left shadow-sm">
+              <span className="grid h-12 w-12 place-items-center rounded-xl bg-[#dcfff6] text-[#007c61]"><Store className="h-6 w-6" /></span>
+              <span className="min-w-0 flex-1 text-base font-black">Merchant Studio</span>
+              <ChevronRight className="h-5 w-5 text-[#a1a7aa]" />
+            </a>
+            <a href="/admin" className="flex items-center gap-4 rounded-[22px] bg-white p-5 text-left shadow-sm">
+              <span className="grid h-12 w-12 place-items-center rounded-xl bg-[#071413] text-[#49e7ba]"><ShieldCheck className="h-6 w-6" /></span>
+              <span className="min-w-0 flex-1 text-base font-black">Admin Command</span>
+              <ChevronRight className="h-5 w-5 text-[#a1a7aa]" />
+            </a>
             <button type="button" onClick={() => onNavigate("onboarding")} className="flex items-center gap-4 rounded-[22px] bg-white p-5 text-left shadow-sm">
               <span className="grid h-12 w-12 place-items-center rounded-xl bg-[#f8e3e6] text-[#c41226]"><LogOut className="h-6 w-6" /></span>
               <span className="min-w-0 flex-1 text-base font-black text-[#c41226]">Logout</span>
