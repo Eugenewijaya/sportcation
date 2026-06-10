@@ -115,6 +115,10 @@ async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
       ...init?.headers,
     },
   })
+  if (response.status === 401 && typeof window !== "undefined") {
+    window.location.assign(`/login?next=${encodeURIComponent(window.location.pathname)}`)
+    throw new Error("Session berakhir. Silakan login kembali.")
+  }
   const payload = await response.json()
   if (!response.ok) {
     const details = payload.error?.details as Array<{ message?: string }> | undefined

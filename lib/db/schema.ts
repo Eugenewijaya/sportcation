@@ -1,5 +1,5 @@
 import { relations, sql } from "drizzle-orm"
-import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core"
+import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core"
 
 const timestamps = {
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
@@ -10,7 +10,10 @@ export const users = sqliteTable(
   "users",
   {
     id: text("id").primaryKey(),
+    name: text("name").notNull().default("Sportcation User"),
     email: text("email"),
+    emailVerified: integer("email_verified", { mode: "boolean" }).notNull().default(false),
+    image: text("image"),
     phone: text("phone"),
     role: text("role", { enum: ["customer", "merchant_owner", "merchant_staff", "admin"] })
       .notNull()
@@ -18,6 +21,14 @@ export const users = sqliteTable(
     status: text("status", { enum: ["active", "pending", "restricted", "disabled"] })
       .notNull()
       .default("active"),
+    authCreatedAt: integer("auth_created_at", { mode: "timestamp" })
+      .$defaultFn(() => new Date())
+      .default(sql`0`)
+      .notNull(),
+    authUpdatedAt: integer("auth_updated_at", { mode: "timestamp" })
+      .$defaultFn(() => new Date())
+      .default(sql`0`)
+      .notNull(),
     ...timestamps,
   },
   (table) => [
@@ -25,6 +36,79 @@ export const users = sqliteTable(
     uniqueIndex("users_phone_unique").on(table.phone),
     index("users_role_status_idx").on(table.role, table.status),
   ],
+)
+
+export const authSessions = sqliteTable(
+  "auth_sessions",
+  {
+    id: text("id").primaryKey(),
+    expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+    token: text("token").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    uniqueIndex("auth_sessions_token_unique").on(table.token),
+    index("auth_sessions_user_idx").on(table.userId),
+    index("auth_sessions_expiry_idx").on(table.expiresAt),
+  ],
+)
+
+export const authAccounts = sqliteTable(
+  "auth_accounts",
+  {
+    id: text("id").primaryKey(),
+    accountId: text("account_id").notNull(),
+    providerId: text("provider_id").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    accessToken: text("access_token"),
+    refreshToken: text("refresh_token"),
+    idToken: text("id_token"),
+    accessTokenExpiresAt: integer("access_token_expires_at", { mode: "timestamp" }),
+    refreshTokenExpiresAt: integer("refresh_token_expires_at", { mode: "timestamp" }),
+    scope: text("scope"),
+    password: text("password"),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+  },
+  (table) => [
+    uniqueIndex("auth_accounts_provider_account_unique").on(table.providerId, table.accountId),
+    index("auth_accounts_user_idx").on(table.userId),
+  ],
+)
+
+export const authVerifications = sqliteTable(
+  "auth_verifications",
+  {
+    id: text("id").primaryKey(),
+    identifier: text("identifier").notNull(),
+    value: text("value").notNull(),
+    expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+  },
+  (table) => [
+    index("auth_verifications_identifier_idx").on(table.identifier),
+    index("auth_verifications_expiry_idx").on(table.expiresAt),
+  ],
+)
+
+export const authRateLimits = sqliteTable(
+  "auth_rate_limits",
+  {
+    id: text("id").primaryKey(),
+    key: text("key").notNull(),
+    count: integer("count").notNull(),
+    lastRequest: integer("last_request", { mode: "number" }).notNull(),
+  },
+  (table) => [uniqueIndex("auth_rate_limits_key_unique").on(table.key)],
 )
 
 export const userProfiles = sqliteTable("user_profiles", {
@@ -54,6 +138,24 @@ export const merchantProfiles = sqliteTable(
   (table) => [
     index("merchant_profiles_owner_idx").on(table.ownerUserId),
     index("merchant_profiles_status_idx").on(table.status),
+  ],
+)
+
+export const merchantMembers = sqliteTable(
+  "merchant_members",
+  {
+    merchantId: text("merchant_id")
+      .notNull()
+      .references(() => merchantProfiles.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    role: text("role", { enum: ["owner", "manager", "staff", "finance", "viewer"] }).notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    primaryKey({ columns: [table.merchantId, table.userId] }),
+    index("merchant_members_user_idx").on(table.userId),
   ],
 )
 
@@ -267,13 +369,30 @@ export const auditLogs = sqliteTable(
 export const usersRelations = relations(users, ({ one, many }) => ({
   profile: one(userProfiles, { fields: [users.id], references: [userProfiles.userId] }),
   merchant: one(merchantProfiles, { fields: [users.id], references: [merchantProfiles.ownerUserId] }),
+  merchantMemberships: many(merchantMembers),
+  authSessions: many(authSessions),
+  authAccounts: many(authAccounts),
   bookings: many(bookings),
   notifications: many(notifications),
 }))
 
 export const merchantProfilesRelations = relations(merchantProfiles, ({ one, many }) => ({
   owner: one(users, { fields: [merchantProfiles.ownerUserId], references: [users.id] }),
+  members: many(merchantMembers),
   venues: many(venues),
+}))
+
+export const merchantMembersRelations = relations(merchantMembers, ({ one }) => ({
+  merchant: one(merchantProfiles, { fields: [merchantMembers.merchantId], references: [merchantProfiles.id] }),
+  user: one(users, { fields: [merchantMembers.userId], references: [users.id] }),
+}))
+
+export const authSessionsRelations = relations(authSessions, ({ one }) => ({
+  user: one(users, { fields: [authSessions.userId], references: [users.id] }),
+}))
+
+export const authAccountsRelations = relations(authAccounts, ({ one }) => ({
+  user: one(users, { fields: [authAccounts.userId], references: [users.id] }),
 }))
 
 export const sportCategoriesRelations = relations(sportCategories, ({ many }) => ({ venues: many(venues) }))

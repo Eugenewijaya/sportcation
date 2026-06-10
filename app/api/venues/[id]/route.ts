@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm"
 import { apiError, internalError, invalidRequest, ok } from "@/lib/api/http"
+import { MERCHANT_CATALOG_WRITE_ROLES, MERCHANT_READ_ROLES, requireApiActor } from "@/lib/auth-access"
 import { getDb } from "@/lib/db"
-import { DEMO_MERCHANT_ID, DEMO_MERCHANT_USER_ID } from "@/lib/db/constants"
 import { auditLogs, venues } from "@/lib/db/schema"
 import { slugify, venuePatchSchema } from "@/lib/validation/merchant"
 
@@ -9,11 +9,16 @@ export const runtime = "nodejs"
 
 type Context = { params: Promise<{ id: string }> }
 
-export async function GET(_request: Request, context: Context) {
+export async function GET(request: Request, context: Context) {
   try {
+    const access = await requireApiActor(request, ["merchant_owner", "merchant_staff"], {
+      merchantRequired: true,
+      merchantRoles: MERCHANT_READ_ROLES,
+    })
+    if ("response" in access) return access.response
     const { id } = await context.params
     const data = await getDb().select().from(venues).where(eq(venues.id, id)).get()
-    if (!data || data.merchantId !== DEMO_MERCHANT_ID) return apiError("VENUE_NOT_FOUND", "Venue tidak ditemukan.", 404)
+    if (!data || data.merchantId !== access.actor.merchantId) return apiError("VENUE_NOT_FOUND", "Venue tidak ditemukan.", 404)
     return ok(data)
   } catch (error) {
     return internalError(error)
@@ -21,13 +26,18 @@ export async function GET(_request: Request, context: Context) {
 }
 export async function PATCH(request: Request, context: Context) {
   try {
+    const access = await requireApiActor(request, ["merchant_owner", "merchant_staff"], {
+      merchantRequired: true,
+      merchantRoles: MERCHANT_CATALOG_WRITE_ROLES,
+    })
+    if ("response" in access) return access.response
     const { id } = await context.params
     const parsed = venuePatchSchema.safeParse(await request.json())
     if (!parsed.success) return invalidRequest(parsed.error)
 
     const db = getDb()
     const existing = await db.select().from(venues).where(eq(venues.id, id)).get()
-    if (!existing || existing.merchantId !== DEMO_MERCHANT_ID) return apiError("VENUE_NOT_FOUND", "Venue tidak ditemukan.", 404)
+    if (!existing || existing.merchantId !== access.actor.merchantId) return apiError("VENUE_NOT_FOUND", "Venue tidak ditemukan.", 404)
 
     const updatedAt = new Date().toISOString()
     const [updated] = await db
@@ -45,7 +55,7 @@ export async function PATCH(request: Request, context: Context) {
 
     await db.insert(auditLogs).values({
       id: crypto.randomUUID(),
-      actorUserId: DEMO_MERCHANT_USER_ID,
+      actorUserId: access.actor.user.id,
       action: "venue.updated",
       entityType: "venue",
       entityId: id,
@@ -58,17 +68,22 @@ export async function PATCH(request: Request, context: Context) {
   }
 }
 
-export async function DELETE(_request: Request, context: Context) {
+export async function DELETE(request: Request, context: Context) {
   try {
+    const access = await requireApiActor(request, ["merchant_owner", "merchant_staff"], {
+      merchantRequired: true,
+      merchantRoles: MERCHANT_CATALOG_WRITE_ROLES,
+    })
+    if ("response" in access) return access.response
     const { id } = await context.params
     const db = getDb()
     const existing = await db.select().from(venues).where(eq(venues.id, id)).get()
-    if (!existing || existing.merchantId !== DEMO_MERCHANT_ID) return apiError("VENUE_NOT_FOUND", "Venue tidak ditemukan.", 404)
+    if (!existing || existing.merchantId !== access.actor.merchantId) return apiError("VENUE_NOT_FOUND", "Venue tidak ditemukan.", 404)
 
     await db.delete(venues).where(eq(venues.id, id))
     await db.insert(auditLogs).values({
       id: crypto.randomUUID(),
-      actorUserId: DEMO_MERCHANT_USER_ID,
+      actorUserId: access.actor.user.id,
       action: "venue.deleted",
       entityType: "venue",
       entityId: id,

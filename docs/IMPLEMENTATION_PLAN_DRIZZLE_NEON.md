@@ -1,6 +1,6 @@
 # Sportcation Implementation Plan - Drizzle ORM + Neon PostgreSQL
 
-> Historical plan. The active persistence implementation now uses SQLite/libSQL so CRUD can run locally without external infrastructure. See `AUDIT_AND_IMPLEMENTATION_PLAN_SQLITE_LIBSQL.md` for the verified current state. The PostgreSQL schema remains preserved as a future migration reference.
+> Archived planning snapshot. The statements below describe the pre-SQLite/pre-auth state and are retained only as Neon migration context. Do not use this file as current implementation status. See `AUDIT_AND_IMPLEMENTATION_PLAN_SQLITE_LIBSQL.md`.
 
 ## Audit Summary
 
@@ -134,9 +134,9 @@ Primary recommendation:
    - Add Playwright smoke tests for client, merchant, and admin navigation.
    - Add deployment checks and environment validation.
 
-## Immediate Next Task
+## Archived Next Task
 
-Apply and verify database foundation against the real Neon project:
+This task is intentionally deferred. Do not apply the Neon migration until the active SQLite/libSQL implementation has service-layer tests and the team approves a database migration:
 
 - Add real `DATABASE_URL` and optional `DIRECT_DATABASE_URL`.
 - Run `npm run db:migrate`.

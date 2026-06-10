@@ -1,6 +1,6 @@
 import { desc, eq } from "drizzle-orm"
 import { apiError, internalError, invalidRequest, ok } from "@/lib/api/http"
-import { DEMO_MERCHANT_ID, DEMO_MERCHANT_USER_ID } from "@/lib/db/constants"
+import { MERCHANT_CATALOG_WRITE_ROLES, MERCHANT_READ_ROLES, requireApiActor } from "@/lib/auth-access"
 import { getDb } from "@/lib/db"
 import { auditLogs, courts, sportCategories, venues } from "@/lib/db/schema"
 import { slugify, venueInputSchema } from "@/lib/validation/merchant"
@@ -9,6 +9,12 @@ export const runtime = "nodejs"
 
 export async function GET(request: Request) {
   try {
+    const access = await requireApiActor(request, ["merchant_owner", "merchant_staff"], {
+      merchantRequired: true,
+      merchantRoles: MERCHANT_READ_ROLES,
+    })
+    if ("response" in access) return access.response
+    const merchantId = access.actor.merchantId!
     const query = new URL(request.url).searchParams.get("q")?.trim().toLowerCase() ?? ""
     const db = getDb()
     const venueRows = await db
@@ -31,7 +37,7 @@ export async function GET(request: Request) {
       })
       .from(venues)
       .innerJoin(sportCategories, eq(venues.categoryId, sportCategories.id))
-      .where(eq(venues.merchantId, DEMO_MERCHANT_ID))
+      .where(eq(venues.merchantId, merchantId))
       .orderBy(desc(venues.updatedAt))
 
     const courtRows = await db
@@ -60,6 +66,12 @@ export async function GET(request: Request) {
 }
 export async function POST(request: Request) {
   try {
+    const access = await requireApiActor(request, ["merchant_owner", "merchant_staff"], {
+      merchantRequired: true,
+      merchantRoles: MERCHANT_CATALOG_WRITE_ROLES,
+    })
+    if ("response" in access) return access.response
+    const merchantId = access.actor.merchantId!
     const parsed = venueInputSchema.safeParse(await request.json())
     if (!parsed.success) return invalidRequest(parsed.error)
 
@@ -82,7 +94,7 @@ export async function POST(request: Request) {
         .insert(venues)
         .values({
           id: venueId,
-          merchantId: DEMO_MERCHANT_ID,
+          merchantId,
           categoryId: parsed.data.categoryId,
           name: parsed.data.name,
           slug,
@@ -109,7 +121,7 @@ export async function POST(request: Request) {
 
       await tx.insert(auditLogs).values({
         id: crypto.randomUUID(),
-        actorUserId: DEMO_MERCHANT_USER_ID,
+        actorUserId: access.actor.user.id,
         action: "venue.created",
         entityType: "venue",
         entityId: venueId,

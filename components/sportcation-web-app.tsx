@@ -314,7 +314,7 @@ export function SportcationWebApp() {
   const shouldShowBottomNav = ["home", "explore", "auction", "bookings", "notifications", "profile", "settings", "flash", "help"].includes(view)
 
   if (view === "onboarding") {
-    return <OnboardingScreen onLogin={() => go("login")} onDemo={() => go("home")} />
+    return <OnboardingScreen onLogin={() => window.location.assign("/login")} onDemo={() => go("home")} />
   }
 
   if (view === "login") {
@@ -396,9 +396,14 @@ export function SportcationWebApp() {
   )
 }
 
-function Brand({ compact = false }: { compact?: boolean }) {
+function Brand({ compact = false, inverse = false }: { compact?: boolean; inverse?: boolean }) {
   return (
-    <div className="flex items-center gap-2 font-black italic tracking-[-0.04em] text-[#1f2326]">
+    <div
+      className={cx(
+        "flex items-center gap-2 font-black italic tracking-[-0.04em]",
+        inverse ? "text-[#20d9ad]" : "text-[#1f2326]",
+      )}
+    >
       <span className={cx("rounded-xl bg-[#12d5aa]", compact ? "h-7 w-7" : "h-10 w-10")} />
       <span className={cx(compact ? "text-lg" : "text-2xl")}>SPORTCATION</span>
     </div>
@@ -595,7 +600,7 @@ function OnboardingScreen({ onLogin, onDemo }: { onLogin: () => void; onDemo: ()
       >
         <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/35 to-[#071413]/90" />
         <div className="relative flex min-h-screen flex-col px-8 py-10 lg:px-14">
-          <Brand />
+          <Brand inverse />
           <div className="mt-20 max-w-[420px] lg:mt-28">
             <h1 className="text-5xl font-black leading-[0.98] tracking-[-0.07em] lg:text-7xl">
               Sport Venue <span className="text-[#20d9ad]">Booking App</span>

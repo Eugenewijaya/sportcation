@@ -4,6 +4,7 @@ import {
   bookingItems,
   bookings,
   courts,
+  merchantMembers,
   merchantProfiles,
   notifications,
   payments,
@@ -15,6 +16,7 @@ import {
 } from "./schema"
 
 const ids = {
+  adminUser: "user-admin-demo",
   merchantUser: "user-merchant-demo",
   customerUser: "user-customer-demo",
   merchant: "merchant-sportcation-demo",
@@ -40,14 +42,16 @@ async function main() {
   await db
   .insert(users)
   .values([
-    { id: ids.merchantUser, email: "merchant@sportcation.local", role: "merchant_owner" },
-    { id: ids.customerUser, email: "customer@sportcation.local", role: "customer" },
+    { id: ids.adminUser, name: "Sportcation Admin", email: "admin@sportcation.local", role: "admin", emailVerified: true },
+    { id: ids.merchantUser, name: "Nadya Venue Ops", email: "merchant@sportcation.local", role: "merchant_owner", emailVerified: true },
+    { id: ids.customerUser, name: "Alex Rivera", email: "customer@sportcation.local", role: "customer", emailVerified: true },
   ])
   .onConflictDoNothing()
 
   await db
   .insert(userProfiles)
   .values([
+    { userId: ids.adminUser, fullName: "Sportcation Admin", city: "Jakarta" },
     { userId: ids.merchantUser, fullName: "Nadya Venue Ops", city: "Jakarta" },
     { userId: ids.customerUser, fullName: "Alex Rivera", city: "Jakarta" },
   ])
@@ -63,6 +67,11 @@ async function main() {
     status: "verified",
   })
   .onConflictDoNothing()
+
+  await db
+    .insert(merchantMembers)
+    .values({ merchantId: ids.merchant, userId: ids.merchantUser, role: "owner" })
+    .onConflictDoNothing()
 
   await db
   .insert(sportCategories)

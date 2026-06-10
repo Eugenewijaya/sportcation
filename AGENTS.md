@@ -17,10 +17,11 @@ Sportcation is now a responsive web app for sports venue discovery, booking, che
 ## Current Direction
 
 - Keep the product implemented in Next.js.
-- The app should prioritize a usable responsive prototype with local UI state.
-- Do not reintroduce the old JSON admin CMS, hardcoded admin credentials, Android project, or backend scaffolding unless the user explicitly asks.
-- Product flows can use mock/local data until real backend integration starts.
-- Backend direction requested by the user: Drizzle ORM with Neon PostgreSQL.
+- The app currently uses Drizzle ORM with SQLite locally and remote libSQL/Turso for durable production persistence.
+- Better Auth database sessions protect merchant/admin pages and current merchant CRUD APIs.
+- The preserved Neon PostgreSQL schema is a future migration reference, not the active runtime database.
+- Product flows can use mock/local data only where persistence has not been implemented yet.
+- Do not reintroduce the old JSON admin CMS, hardcoded credentials, or Android project.
 - Do not use local JSON file storage for production data.
 
 ## Core Web App Flows
@@ -54,7 +55,9 @@ Build and maintain these flows progressively:
 - Keep local mock data centralized or clearly grouped.
 - For CRUD-ready UI, keep resource rows, form fields, status, filters, and row actions shaped like future API contracts.
 - Avoid hardcoded credentials and production-like secrets.
-- Do not add production backend/database code until explicitly requested, but prepare UI contracts for Drizzle ORM and Neon PostgreSQL integration.
+- Keep authorization at the server mutation/data layer; proxy checks are only an early redirect optimization.
+- Public registration must only create customer accounts. Merchant/admin accounts require controlled provisioning.
+- Local SQLite files are development-only. Stateless production deployment must use remote libSQL/Turso until a planned Neon migration is approved.
 - Do not preserve insecure or irrelevant architecture from the old landing/admin app.
 - Use responsive layouts intentionally:
   - Mobile: app-like shell with bottom navigation.

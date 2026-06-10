@@ -1,168 +1,132 @@
-# Sportcation Audit and Implementation Plan
+# Sportcation Technical Audit and Implementation Plan
 
 Audit date: 10 June 2026
 
-## Executive Status
+## Executive Decision
 
-Sportcation is a responsive Next.js 16 web application with three UI surfaces:
+Sportcation is runnable as a responsive Next.js web application and is ready to continue to the next engineering stage. Authentication, role authorization, merchant ownership checks, persistent SQLite/libSQL CRUD, migration, seed, lint, typecheck, production build, HTTP flow, and browser checks pass.
 
-- Client: discovery, venue detail, slot selection, checkout, payment simulation, success ticket, auction/resell, bookings, notification, profile, settings, help, and privacy.
-- Merchant: dashboard, venues, slots, bookings, finance, and settings.
-- Admin: command dashboard, users, venue moderation, bookings, payments, reports, content, and settings.
-
-The repository builds successfully as a production Next.js application. Merchant venue, court, and slot management now uses a real persistent database and API. The remaining client, merchant, and admin modules still use mock/local UI state.
-
-## Verified Results
-
-- `npm run db:generate`: passed, 12-table SQLite/libSQL migration generated.
-- `npm run db:migrate`: passed.
-- `npm run db:seed`: passed and is idempotent.
-- `npm run lint`: passed.
-- `npx tsc --noEmit`: passed.
-- `npm run build`: passed with TypeScript errors no longer ignored.
-- `npm audit --omit=dev`: 0 production vulnerabilities.
-- CRUD API smoke test: create, read, update, and delete passed for venues and slots.
-- Persistence test: a created venue remained available after restarting the Next.js server.
+The project is not ready for public booking traffic. The next stage should improve service boundaries and automated tests before adding more database-backed product features.
 
 ## Current Architecture
 
 | Layer | Current implementation |
 | --- | --- |
-| Web app | Next.js App Router, React 19, Tailwind CSS 4 |
+| Web | Next.js 16 App Router, React 19, Tailwind CSS 4 |
 | Validation | Zod |
+| Authentication | Better Auth email/password with database sessions |
+| Authorization | App roles plus merchant membership permissions |
 | ORM | Drizzle ORM |
-| Local database | SQLite file through `@libsql/client` |
-| Production database | Remote libSQL/Turso |
-| Future database reference | Neon PostgreSQL schema preserved under `lib/db/postgres` |
-| Authentication | Not implemented |
+| Local database | SQLite through `@libsql/client` |
+| Production persistence | Remote libSQL/Turso |
+| Future database reference | Neon PostgreSQL schema under `lib/db/postgres` |
 | File storage | Not implemented |
 | Payment | UI simulation only |
-| Notifications | Mock UI only |
+| Notification delivery | Mock UI only |
 
-## Database Scope
+The active schema has 17 tables, including users, profiles, auth accounts/sessions/verifications/rate limits, merchant profiles/members, categories, venues, courts, slots, bookings, payments, notifications, and audit logs.
 
-The active SQLite/libSQL schema contains:
+## Verified Results
 
-- users
-- user_profiles
-- merchant_profiles
-- sport_categories
-- venues
-- courts
-- slots
-- bookings
-- booking_items
-- payments
-- notifications
-- audit_logs
+- Database schema generation: passed with no drift.
+- SQLite migrations `0000` through `0002`: passed.
+- Auth timestamp backfill: passed; no user remains with epoch-zero auth timestamps.
+- Seed: passed and remains idempotent.
+- TypeScript: passed.
+- ESLint: passed.
+- Next.js production build: passed.
+- npm dependency audit: 0 known vulnerabilities.
+- Public, merchant, and admin route smoke test: all expected routes returned `200` with the proper session.
+- Unauthenticated merchant route: redirected to login.
+- Merchant to admin route: redirected to unauthorized.
+- Admin to merchant route: redirected to unauthorized.
+- Merchant CRUD: create, update, read, delete, and post-delete `404` passed.
+- Customer/admin calls to merchant API: rejected with `403`.
+- Viewer membership: read allowed, write rejected with `403`.
+- Logout: session invalidated and protected API returned `401`.
+- Auth rate limit: repeated invalid login attempts returned `429`.
+- Browser flow: merchant login, merchant venue data load, logout, and admin login passed.
+- Responsive check: no horizontal overflow at 390 px after the dashboard panel fix; desktop 1440 px also had no overflow.
+- Browser console: no relevant warnings or errors.
 
-Current persistent UI and API coverage:
+## Security And Authorization State
 
-- Sport category reads.
-- Merchant venue create, list, edit, and delete.
-- Automatic initial court creation with a new venue.
-- Court create, list, edit, and delete API.
-- Merchant slot create, list, edit, and delete.
-- Duplicate slot protection.
-- Booked-slot deletion protection.
-- Merchant mutation audit records.
+Implemented:
 
-## Production Persistence Decision
+- Passwords are hashed by Better Auth.
+- Session records are stored in the database.
+- Production requires an explicit auth secret and application URL.
+- Trusted-origin validation is configured.
+- Public signup cannot submit role or account status.
+- Merchant/admin credentials are provisioned through environment-driven bootstrap only.
+- Page layouts perform full server session and role checks.
+- Mutation routes repeat authorization and ownership checks.
+- Merchant membership permissions distinguish catalog write, slot write, and read-only access.
+- Session cookie cache is disabled so role/status revocation is checked against the database.
+- Auth rate limits use database storage.
+- Current mutations create audit log records.
 
-A SQLite file is suitable for local development and a single long-running server with a persistent disk. It is not durable on Vercel or most serverless deployments because their local filesystems are ephemeral.
+Remaining security work:
 
-Sportcation therefore uses the SQLite-compatible libSQL protocol:
+- Email verification, password reset, optional MFA, and account recovery.
+- Granular admin roles such as finance, support, content, and risk.
+- Security headers/CSP review and production penetration testing.
+- Audit log viewer, retention rules, and alerting.
+- Production secrets rotation and incident runbook.
 
-- Local: `file:./data/sportcation.db`.
-- Production: `libsql://...` through Turso.
+## Product And Engineering Gaps
 
-This preserves the current SQLite development workflow while providing durable production storage. Set `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` on the production host. The runtime intentionally rejects the local file fallback when running on Vercel.
+### Blocking Public Booking
 
-## Audit Findings
-
-### Critical Before Public Production
-
-1. No authentication or session management.
-2. Merchant API mutations currently use a demo merchant identity.
-3. No role-based authorization for `/merchant`, `/admin`, or API routes.
-4. Admin resource screens are UI-only and must not receive public mutation endpoints before authorization exists.
-5. Booking and payment state transitions are not server-controlled.
+1. Client catalog still uses mock venue and slot data.
+2. Booking creation and slot hold are not server-controlled or atomic.
+3. Payment simulation is not persisted as a protected state machine.
+4. My Bookings and ticket data are not connected to the authenticated customer.
+5. Admin resource screens are still mock UI.
 
 ### High Priority
 
-1. Client venue lists still read mock data instead of the venue API.
-2. Merchant bookings and finance remain mock data.
-3. Admin users, moderation, booking, payment, report, and content modules remain mock data.
-4. No automated route or browser test suite is committed.
-5. No object storage or upload validation for venue images.
-6. API list endpoints do not yet implement pagination.
+1. Route handlers contain database/business logic directly; a service/repository layer is needed.
+2. No committed unit, integration, or end-to-end test suite exists.
+3. No image object storage or upload validation.
+4. No database pagination; venue search currently filters in application memory.
+5. Merchant UI does not yet hide actions based on membership permission, although the API enforces them.
 
-### Medium Priority
+### Production Operations
 
-1. No rate limiting or abuse protection.
-2. No structured production logging or error monitoring.
-3. No database backup/restore runbook.
-4. No optimistic concurrency or version fields on mutable records.
-5. Audit logs exist for current mutations but have no admin viewer.
-6. Search is in-memory after query and is not suitable for a large venue catalog.
+1. Turso production project and deployment environment are not configured in this repository.
+2. No verified backup/restore runbook.
+3. No structured logging, error monitoring, tracing, or uptime checks.
+4. No CI workflow enforcing migration, lint, typecheck, test, and build.
+5. Local SQLite cannot be used as durable storage on stateless hosting.
 
-## Recommended Development Sequence
+## Recommended Next Stage
 
-### Stage 1: Authentication and Authorization
+Proceed with **Stage 2: service layer and automated test foundation** before client catalog or admin CRUD expansion.
 
-- Add secure customer, merchant, and admin sessions.
-- Replace demo merchant constants with the authenticated merchant membership.
-- Protect page routes through middleware or server-side guards.
-- Add service-level ownership checks for every mutation.
-- Add CSRF-safe mutation strategy and rate limiting.
+Scope:
 
-Exit criteria: an unauthenticated user cannot call any mutation; merchants can only modify their own resources; admin access is role-restricted.
+1. Extract venue, court, slot, membership, and audit logic into server-only services/repositories.
+2. Standardize domain errors and transaction boundaries.
+3. Add Vitest unit tests for validation, permission rules, and state transitions.
+4. Add API integration tests against an isolated temporary SQLite database.
+5. Add Playwright smoke tests for login, role redirects, merchant CRUD, and responsive navigation.
+6. Add a CI workflow for lint, typecheck, tests, migration drift, and build.
 
-### Stage 2: Service and Repository Layer
+Exit criteria:
 
-- Move route database logic into venue, court, and slot services.
-- Add transaction helpers and normalized domain errors.
-- Add Vitest tests for validation and ownership rules.
-- Add route integration tests against a temporary SQLite database.
+- Route handlers are thin request/response adapters.
+- Permission and ownership rules have automated regression coverage.
+- Tests never write to the developer database.
+- CI blocks unsafe changes.
 
-Exit criteria: route handlers are thin adapters and critical CRUD rules are covered by tests.
+After Stage 2 passes, continue to client catalog integration, then atomic booking/payment persistence, and only then real admin CRUD.
 
-### Stage 3: Client Catalog Integration
+## Production Persistence Decision
 
-- Replace client mock categories, venue cards, venue detail, courts, and available slots with API reads.
-- Add pagination, indexed filters, and URL query state.
-- Add image upload through R2, S3, or Vercel Blob.
+The current SQLite-compatible direction remains valid:
 
-Exit criteria: merchant changes appear in the client catalog without code changes or seed edits.
+- Local: `file:./data/sportcation.db`.
+- Production: remote libSQL/Turso.
 
-### Stage 4: Persistent Booking and Payment Simulation
-
-- Implement atomic slot hold and booking creation.
-- Enforce booking state transitions on the server.
-- Persist payment simulation attempts and expiry.
-- Generate signed booking codes or QR payloads.
-- Connect My Bookings and booking detail to authenticated users.
-
-Exit criteria: two users cannot purchase the same slot and payment simulation produces a durable booking history.
-
-### Stage 5: Admin Operations
-
-- Build admin venue approval against real data.
-- Add user/account controls, booking support actions, and payment reconciliation.
-- Add an audit log viewer.
-- Add CMS entities before replacing content mock data.
-
-Exit criteria: every admin action is authorized, audited, validated, and reversible where required.
-
-### Stage 6: Production Readiness
-
-- Configure Turso production database and migration pipeline.
-- Add backup and restore verification.
-- Add Playwright smoke tests for client, merchant, and admin flows.
-- Add Sentry or equivalent error monitoring and structured logs.
-- Add CI checks for lint, typecheck, test, migration generation, and build.
-- Run accessibility, responsive, and performance audits.
-
-## Immediate Next Recommended Task
-
-Implement authentication and role authorization before expanding database-backed admin CRUD. This is the dependency that prevents the current working merchant mutation APIs from being safe for public production.
+This satisfies local CRUD and durable production persistence without requiring the Neon migration now. Neon PostgreSQL remains a future option when scale, reporting, or team requirements justify the migration.

@@ -8,6 +8,20 @@
       "when": 1781073680818,
       "tag": "0000_wooden_legion",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1781102573314,
+      "tag": "0001_supreme_squadron_supreme",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1781103422786,
+      "tag": "0002_backfill_auth_timestamps",
+      "breakpoints": true
     }
   ]
 }

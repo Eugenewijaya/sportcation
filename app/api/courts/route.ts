@@ -1,14 +1,19 @@
 import { eq } from "drizzle-orm"
 import { apiError, internalError, invalidRequest, ok } from "@/lib/api/http"
+import { MERCHANT_CATALOG_WRITE_ROLES, MERCHANT_READ_ROLES, requireApiActor } from "@/lib/auth-access"
 import { getDb } from "@/lib/db"
-import { DEMO_MERCHANT_ID, DEMO_MERCHANT_USER_ID } from "@/lib/db/constants"
 import { auditLogs, courts, venues } from "@/lib/db/schema"
 import { courtInputSchema } from "@/lib/validation/merchant"
 
 export const runtime = "nodejs"
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const access = await requireApiActor(request, ["merchant_owner", "merchant_staff"], {
+      merchantRequired: true,
+      merchantRoles: MERCHANT_READ_ROLES,
+    })
+    if ("response" in access) return access.response
     const data = await getDb()
       .select({
         id: courts.id,
@@ -21,7 +26,7 @@ export async function GET() {
       })
       .from(courts)
       .innerJoin(venues, eq(courts.venueId, venues.id))
-      .where(eq(venues.merchantId, DEMO_MERCHANT_ID))
+      .where(eq(venues.merchantId, access.actor.merchantId!))
 
     return ok(data)
   } catch (error) {
@@ -30,12 +35,17 @@ export async function GET() {
 }
 export async function POST(request: Request) {
   try {
+    const access = await requireApiActor(request, ["merchant_owner", "merchant_staff"], {
+      merchantRequired: true,
+      merchantRoles: MERCHANT_CATALOG_WRITE_ROLES,
+    })
+    if ("response" in access) return access.response
     const parsed = courtInputSchema.safeParse(await request.json())
     if (!parsed.success) return invalidRequest(parsed.error)
 
     const db = getDb()
     const venue = await db.select().from(venues).where(eq(venues.id, parsed.data.venueId)).get()
-    if (!venue || venue.merchantId !== DEMO_MERCHANT_ID) return apiError("VENUE_NOT_FOUND", "Venue tidak ditemukan.", 404)
+    if (!venue || venue.merchantId !== access.actor.merchantId) return apiError("VENUE_NOT_FOUND", "Venue tidak ditemukan.", 404)
 
     const id = crypto.randomUUID()
     const now = new Date().toISOString()
@@ -46,7 +56,7 @@ export async function POST(request: Request) {
 
     await db.insert(auditLogs).values({
       id: crypto.randomUUID(),
-      actorUserId: DEMO_MERCHANT_USER_ID,
+      actorUserId: access.actor.user.id,
       action: "court.created",
       entityType: "court",
       entityId: id,

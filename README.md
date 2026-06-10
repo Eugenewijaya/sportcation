@@ -1,130 +1,100 @@
 # Sportcation
 
-Sportcation is a responsive Next.js web app for sports venue discovery, booking flows, merchant operations, and platform administration.
+Sportcation is a responsive Next.js web app for sports venue discovery, booking flows, merchant operations, and platform administration. The mobile UI follows the exported Figma layers in `D:\sportcation\figma sportcation`, while desktop viewports use dedicated web layouts.
 
-The current implementation follows the exported design layers in:
+## Current State
 
-```text
-D:\sportcation\figma sportcation
-```
+- Next.js 16 App Router, React 19, Tailwind CSS 4.
+- Drizzle ORM with local SQLite and production-compatible remote libSQL/Turso.
+- Better Auth email/password sessions.
+- Role protection for customer, merchant owner/staff, and admin.
+- Merchant membership permissions for owner, manager, staff, finance, and viewer.
+- Persistent merchant venue, court, and slot CRUD.
+- Client booking/payment and most admin modules remain mock UI.
 
-## Current Scope
+## Local Setup
 
-- Onboarding and login entry.
-- Home dashboard.
-- Explore venues with search and category filters.
-- Venue detail with schedule and slot selection.
-- Checkout.
-- QRIS payment simulation.
-- Booking success and ticket/QR placeholder.
-- Flash sale deals.
-- Auction and resell flow.
-- My bookings.
-- Notifications.
-- Profile.
-- Settings.
-- Help and privacy screens.
-- Merchant dashboard for venue, slot, booking, finance, and settings operations.
-- Admin dashboard for user, venue, booking, payment, report, content, and settings operations.
-- Persistent merchant venue, court, and slot CRUD using Drizzle ORM with SQLite/libSQL.
-
-The client booking flow and most admin modules remain prototype/mock flows. This is a web app, not an Android app.
-
-## Run Locally
-
-```bash
+```powershell
 npm install
+Copy-Item .env.example .env.local
 npm run db:migrate
 npm run db:seed
 npm run dev
 ```
 
-Open:
+Set a unique auth secret of at least 32 characters in `.env.local`:
 
 ```text
-http://localhost:3000
+BETTER_AUTH_SECRET=replace-with-a-long-random-secret
+BETTER_AUTH_URL=http://localhost:3000
+AUTH_TRUSTED_ORIGINS=http://localhost:3000
 ```
 
-Useful routes:
+Open `http://localhost:3000`.
 
-```text
-/                  User/client web app
-/merchant          Merchant dashboard
-/merchant/venues   Merchant venue CRUD-ready UI
-/merchant/slots    Merchant slot CRUD-ready UI
-/merchant/bookings Merchant booking operations UI
-/merchant/finance  Merchant settlement UI
-/admin             Admin command dashboard
-/admin/users       Admin user CRUD-ready UI
-/admin/venues      Admin venue moderation UI
-/admin/bookings    Admin booking control UI
-/admin/payments    Admin payment reconciliation UI
-/admin/reports     Admin reports UI
-/admin/content     Admin content control UI
-```
+## Provision Merchant And Admin Accounts
 
-## Build
+Public registration only creates customer accounts. Set temporary bootstrap environment variables, run the command once, then remove the credential variables:
 
 ```bash
-npm run build
+npm run auth:bootstrap
+```
+
+Supported variables are documented in `.env.example`. Passwords must contain at least 12 characters. No operational credentials are committed to the repository.
+
+## Main Routes
+
+```text
+/                       Client web app
+/login                  Shared login
+/register               Customer registration
+/merchant               Protected merchant dashboard
+/merchant/venues        Persistent venue CRUD
+/merchant/slots         Persistent slot CRUD
+/merchant/bookings      Merchant booking UI prototype
+/merchant/finance       Merchant finance UI prototype
+/admin                  Protected admin dashboard
+/admin/users            Admin user UI prototype
+/admin/venues           Admin moderation UI prototype
+/admin/bookings         Admin booking UI prototype
+/admin/payments         Admin payment UI prototype
 ```
 
 ## Database
 
-The active database uses Drizzle ORM with the SQLite dialect:
-
-- Local development: SQLite file at `data/sportcation.db`.
-- Production: remote libSQL/Turso database.
-- Future migration reference: the previous Neon PostgreSQL schema is preserved in `lib/db/postgres` and `drizzle-postgres`.
-
 ```bash
-cp .env.example .env.local
 npm run db:generate
 npm run db:migrate
 npm run db:seed
+npm run db:studio
 ```
 
-For local development, no environment variable is required because the app defaults to:
+- Local development defaults to `file:./data/sportcation.db`.
+- Stateless production environments must use `TURSO_DATABASE_URL=libsql://...` and `TURSO_AUTH_TOKEN`.
+- A local SQLite file is not durable on Vercel because the filesystem is ephemeral.
+- The previous Neon PostgreSQL schema remains under `lib/db/postgres` as a future migration reference.
 
-```text
-file:./data/sportcation.db
+## Validation
+
+```bash
+npm run lint
+npm run typecheck
+npm run build
+npm audit
 ```
 
-For production deployment on Vercel or another stateless platform, configure:
+Production builds require `BETTER_AUTH_SECRET` and either `BETTER_AUTH_URL` or `NEXT_PUBLIC_APP_URL`.
+
+## Current Persistent APIs
 
 ```text
-TURSO_DATABASE_URL=libsql://YOUR_DATABASE.turso.io
-TURSO_AUTH_TOKEN=YOUR_TURSO_TOKEN
-```
-
-Do not use a local SQLite file on Vercel. Its filesystem is ephemeral and changes will not persist reliably.
-
-## Persistent API Routes
-
-```text
-GET, POST       /api/venues
+GET, POST          /api/venues
 GET, PATCH, DELETE /api/venues/:id
-GET, POST       /api/courts
-PATCH, DELETE   /api/courts/:id
-GET, POST       /api/slots
-PATCH, DELETE   /api/slots/:id
-GET             /api/categories
+GET, POST          /api/courts
+PATCH, DELETE      /api/courts/:id
+GET, POST          /api/slots
+PATCH, DELETE      /api/slots/:id
+GET                /api/categories
 ```
 
-The persistent UI is currently available at:
-
-```text
-/merchant/venues
-/merchant/slots
-```
-
-## Notes For The Team
-
-- Mobile viewport follows the Figma app screens with bottom navigation.
-- Desktop viewport adapts into a web shell with sidebar navigation and wider dashboard panels.
-- Venue, court, and slot merchant data is persistent.
-- Client booking/payment, merchant booking/finance, and admin data are still mock/local.
-- APIs are not protected by authentication yet and must not be exposed as production-ready mutation endpoints.
-- Active Drizzle schema lives in `lib/db/schema.ts`; generated SQLite/libSQL migrations live in `drizzle/`.
-- See `docs/AUDIT_AND_IMPLEMENTATION_PLAN_SQLITE_LIBSQL.md` for the verified state and next development stages.
-- Do not reintroduce the old JSON admin CMS or Android project unless explicitly requested.
+Mutation APIs require an active merchant session, verified merchant membership, ownership, and the required membership permission. See `docs/AUDIT_AND_IMPLEMENTATION_PLAN_SQLITE_LIBSQL.md` for verified status and the recommended next stage.

@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useMemo, useState } from "react"
 import { MerchantPersistentWorkspace } from "@/components/merchant-persistent-workspace"
+import { OpsAccountControls } from "@/components/ops-account-controls"
 import {
   Activity,
   Banknote,
@@ -365,7 +366,7 @@ export function SportcationOpsApp({
         <section className="min-h-screen flex-1 lg:pl-[292px]">
           <OpsTopBar role={role} title={roleTitle} subtitle={roleSubtitle} />
           <div className="mx-auto w-full max-w-[430px] px-5 py-6 lg:max-w-none lg:px-8 lg:py-8">
-            <MobileOpsNav role={role} nav={nav} active={normalizedSection} />
+            <MobileOpsNav nav={nav} active={normalizedSection} />
             {actionMessage && (
               <div className="mb-6 flex items-center gap-3 rounded-2xl border border-[#c7f7e7] bg-[#eafff8] px-4 py-3 text-sm font-bold text-[#007c61] lg:hidden">
                 <Database className="h-4 w-4" />
@@ -427,9 +428,7 @@ function OpsSidebar({
         ))}
       </nav>
       <div className="mt-8 grid gap-3">
-        <Link href={role === "merchant" ? "/admin" : "/merchant"} className="rounded-2xl bg-[#eafff8] px-4 py-3 text-sm font-black text-[#007c61]">
-          Switch to {role === "merchant" ? "Admin" : "Merchant"}
-        </Link>
+        <OpsAccountControls />
         <Link href="/" className="rounded-2xl bg-[#edf1f1] px-4 py-3 text-sm font-black text-[#5f666a]">
           Back to User App
         </Link>
@@ -490,11 +489,9 @@ function OpsTopBar({
 }
 
 function MobileOpsNav({
-  role,
   nav,
   active,
 }: {
-  role: SportcationOpsRole
   nav: NavItem[]
   active: SportcationOpsSection
 }) {
@@ -502,9 +499,7 @@ function MobileOpsNav({
     <div className="mb-6 lg:hidden">
       <div className="mb-4 flex items-center justify-between">
         <Link href="/" className="font-black italic tracking-[-0.05em]">SPORTCATION</Link>
-        <Link href={role === "merchant" ? "/admin" : "/merchant"} className="rounded-full bg-[#071413] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white">
-          {role === "merchant" ? "Admin" : "Merchant"}
-        </Link>
+        <OpsAccountControls compact />
       </div>
       <nav className="sportcation-scrollbar -mx-5 flex gap-3 overflow-x-auto px-5 pb-1">
         {nav.map((item) => {
@@ -816,7 +811,7 @@ function OperationsBoard({
   onAction: (message: string) => void
 }) {
   return (
-    <section className="rounded-[30px] bg-white p-6 shadow-sm">
+    <section className="min-w-0 rounded-[30px] bg-white p-6 shadow-sm">
       <div className="mb-5 flex items-center justify-between gap-4">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.22em] text-[#007c61]">Live queue</p>
@@ -846,7 +841,7 @@ function OperationsBoard({
 
 function ReadinessPanel({ title, items }: { title: string; items: string[] }) {
   return (
-    <section className="rounded-[30px] bg-[#071413] p-6 text-white shadow-[0_26px_70px_rgb(0_0_0/0.12)]">
+    <section className="min-w-0 rounded-[30px] bg-[#071413] p-6 text-white shadow-[0_26px_70px_rgb(0_0_0/0.12)]">
       <p className="text-xs font-black uppercase tracking-[0.22em] text-[#49e7ba]">Next backend phase</p>
       <h2 className="mt-3 text-2xl font-black tracking-[-0.05em]">{title}</h2>
       <div className="mt-6 space-y-4">

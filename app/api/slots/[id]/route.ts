@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm"
 import { apiError, internalError, invalidRequest, ok } from "@/lib/api/http"
+import { MERCHANT_SLOT_WRITE_ROLES, requireApiActor } from "@/lib/auth-access"
 import { getDb } from "@/lib/db"
-import { DEMO_MERCHANT_ID, DEMO_MERCHANT_USER_ID } from "@/lib/db/constants"
 import { auditLogs, courts, slots, venues } from "@/lib/db/schema"
 import { slotPatchSchema } from "@/lib/validation/merchant"
 
@@ -19,11 +19,16 @@ async function getOwnedSlot(id: string) {
 
 export async function PATCH(request: Request, context: Context) {
   try {
+    const access = await requireApiActor(request, ["merchant_owner", "merchant_staff"], {
+      merchantRequired: true,
+      merchantRoles: MERCHANT_SLOT_WRITE_ROLES,
+    })
+    if ("response" in access) return access.response
     const { id } = await context.params
     const parsed = slotPatchSchema.safeParse(await request.json())
     if (!parsed.success) return invalidRequest(parsed.error)
     const existing = await getOwnedSlot(id)
-    if (!existing || existing.merchantId !== DEMO_MERCHANT_ID) return apiError("SLOT_NOT_FOUND", "Slot tidak ditemukan.", 404)
+    if (!existing || existing.merchantId !== access.actor.merchantId) return apiError("SLOT_NOT_FOUND", "Slot tidak ditemukan.", 404)
 
     let venueId = existing.slot.venueId
     if (parsed.data.courtId) {
@@ -33,7 +38,7 @@ export async function PATCH(request: Request, context: Context) {
         .innerJoin(venues, eq(courts.venueId, venues.id))
         .where(eq(courts.id, parsed.data.courtId))
         .get()
-      if (!ownedCourt || ownedCourt.merchantId !== DEMO_MERCHANT_ID) return apiError("COURT_NOT_FOUND", "Court tidak ditemukan.", 404)
+      if (!ownedCourt || ownedCourt.merchantId !== access.actor.merchantId) return apiError("COURT_NOT_FOUND", "Court tidak ditemukan.", 404)
       venueId = ownedCourt.court.venueId
     }
 
@@ -49,7 +54,7 @@ export async function PATCH(request: Request, context: Context) {
 
     await getDb().insert(auditLogs).values({
       id: crypto.randomUUID(),
-      actorUserId: DEMO_MERCHANT_USER_ID,
+      actorUserId: access.actor.user.id,
       action: "slot.updated",
       entityType: "slot",
       entityId: id,
@@ -64,17 +69,22 @@ export async function PATCH(request: Request, context: Context) {
   }
 }
 
-export async function DELETE(_request: Request, context: Context) {
+export async function DELETE(request: Request, context: Context) {
   try {
+    const access = await requireApiActor(request, ["merchant_owner", "merchant_staff"], {
+      merchantRequired: true,
+      merchantRoles: MERCHANT_SLOT_WRITE_ROLES,
+    })
+    if ("response" in access) return access.response
     const { id } = await context.params
     const existing = await getOwnedSlot(id)
-    if (!existing || existing.merchantId !== DEMO_MERCHANT_ID) return apiError("SLOT_NOT_FOUND", "Slot tidak ditemukan.", 404)
+    if (!existing || existing.merchantId !== access.actor.merchantId) return apiError("SLOT_NOT_FOUND", "Slot tidak ditemukan.", 404)
     if (existing.slot.status === "booked") return apiError("SLOT_BOOKED", "Slot yang sudah dipesan tidak dapat dihapus.", 409)
 
     await getDb().delete(slots).where(eq(slots.id, id))
     await getDb().insert(auditLogs).values({
       id: crypto.randomUUID(),
-      actorUserId: DEMO_MERCHANT_USER_ID,
+      actorUserId: access.actor.user.id,
       action: "slot.deleted",
       entityType: "slot",
       entityId: id,
