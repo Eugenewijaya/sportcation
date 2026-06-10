@@ -27,6 +27,10 @@ yarn-error.log*
 /backend/coverage/
 /backend/*.tsbuildinfo
 
+# local SQLite/libSQL database
+/data/*.db
+/data/*.db-*
+
 # vercel
 .vercel
 

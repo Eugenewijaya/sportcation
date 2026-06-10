@@ -1,5 +1,7 @@
 # Sportcation Implementation Plan - Drizzle ORM + Neon PostgreSQL
 
+> Historical plan. The active persistence implementation now uses SQLite/libSQL so CRUD can run locally without external infrastructure. See `AUDIT_AND_IMPLEMENTATION_PLAN_SQLITE_LIBSQL.md` for the verified current state. The PostgreSQL schema remains preserved as a future migration reference.
+
 ## Audit Summary
 
 The current repository is a responsive Next.js web app prototype. It now contains three UI surfaces:

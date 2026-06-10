@@ -1,17 +1,13 @@
 import "dotenv/config"
 import { defineConfig } from "drizzle-kit"
 
-const databaseUrl =
-  process.env.DIRECT_DATABASE_URL ??
-  process.env.DATABASE_URL ??
-  "postgresql://sportcation:sportcation@localhost:5432/sportcation"
-
 export default defineConfig({
   schema: "./lib/db/schema.ts",
   out: "./drizzle",
-  dialect: "postgresql",
+  dialect: "turso",
   dbCredentials: {
-    url: databaseUrl,
+    url: process.env.TURSO_DATABASE_URL ?? "file:./data/sportcation.db",
+    authToken: process.env.TURSO_AUTH_TOKEN || undefined,
   },
   strict: true,
   verbose: true,

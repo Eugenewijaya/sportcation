@@ -1,24 +1,33 @@
-import { neon } from "@neondatabase/serverless"
-import { drizzle } from "drizzle-orm/neon-http"
+import { createClient } from "@libsql/client"
+import { drizzle } from "drizzle-orm/libsql"
 import * as schema from "./schema"
 
-function createDbClient(databaseUrl: string) {
-  return drizzle(neon(databaseUrl), { schema })
+function createDbClient() {
+  const url = process.env.TURSO_DATABASE_URL ?? "file:./data/sportcation.db"
+
+  if (process.env.VERCEL && url.startsWith("file:")) {
+    throw new Error(
+      "TURSO_DATABASE_URL is required on Vercel. A local SQLite file is ephemeral and must not be used for production persistence.",
+    )
+  }
+
+  const client = createClient({
+    url,
+    authToken: process.env.TURSO_AUTH_TOKEN || undefined,
+  })
+
+  return drizzle(client, { schema })
 }
 
 export type SportcationDb = ReturnType<typeof createDbClient>
 
-let cachedDb: SportcationDb | undefined
+const globalForDb = globalThis as typeof globalThis & {
+  sportcationDb?: SportcationDb
+}
 
 export function getDb() {
-  const databaseUrl = process.env.DATABASE_URL
-
-  if (!databaseUrl) {
-    throw new Error("DATABASE_URL is required for Sportcation database access.")
-  }
-
-  cachedDb ??= createDbClient(databaseUrl)
-  return cachedDb
+  globalForDb.sportcationDb ??= createDbClient()
+  return globalForDb.sportcationDb
 }
 
 export { schema }

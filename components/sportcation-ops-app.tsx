@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useMemo, useState } from "react"
+import { MerchantPersistentWorkspace } from "@/components/merchant-persistent-workspace"
 import {
   Activity,
   Banknote,
@@ -347,7 +348,9 @@ export function SportcationOpsApp({
 }) {
   const nav = role === "merchant" ? merchantNav : adminNav
   const normalizedSection = nav.some((item) => item.section === section) ? section : "overview"
-  const [actionMessage, setActionMessage] = useState("Ready for CRUD wiring")
+  const [actionMessage, setActionMessage] = useState(
+    role === "merchant" ? "Venue and slot CRUD connected" : "Admin UI ready for backend wiring",
+  )
 
   const roleTitle = role === "merchant" ? "Merchant Studio" : "Admin Command"
   const roleSubtitle =
@@ -385,6 +388,9 @@ function renderOpsSection(
   if (role === "merchant") {
     if (section === "overview") return <MerchantOverview onAction={onAction} />
     if (section === "settings") return <SettingsWorkspace role="merchant" onAction={onAction} />
+    if (section === "venues" || section === "slots") {
+      return <MerchantPersistentWorkspace resource={section} onAction={onAction} />
+    }
     return <CrudWorkspace config={merchantResources[section as Exclude<MerchantSection, "overview" | "settings">]} role="merchant" onAction={onAction} />
   }
 
