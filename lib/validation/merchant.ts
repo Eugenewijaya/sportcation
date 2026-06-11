@@ -3,6 +3,11 @@ import { z } from "zod"
 const venueStatuses = ["draft", "review", "published", "rejected", "archived"] as const
 const courtStatuses = ["active", "maintenance", "hidden"] as const
 const slotStatuses = ["available", "booked", "blocked", "expired"] as const
+const imageUrlSchema = z
+  .string()
+  .trim()
+  .max(500)
+  .refine((value) => value === "" || isSafeImageUrl(value), "Gambar harus menggunakan path lokal atau URL HTTPS.")
 
 export const venueInputSchema = z.object({
   categoryId: z.string().min(1, "Kategori wajib dipilih."),
@@ -12,7 +17,7 @@ export const venueInputSchema = z.object({
   city: z.string().trim().min(2, "Kota wajib diisi.").max(120),
   area: z.string().trim().max(120).optional().default(""),
   priceFrom: z.coerce.number().int().min(0, "Harga tidak boleh negatif."),
-  imageUrl: z.string().trim().max(500).optional().default(""),
+  imageUrl: imageUrlSchema.optional().default(""),
   status: z.enum(venueStatuses).default("draft"),
   defaultCourtName: z.string().trim().min(2).max(120).optional().default("Court 01"),
 })
@@ -26,7 +31,7 @@ export const venuePatchSchema = z
     city: z.string().trim().min(2, "Kota wajib diisi.").max(120),
     area: z.string().trim().max(120),
     priceFrom: z.coerce.number().int().min(0, "Harga tidak boleh negatif."),
-    imageUrl: z.string().trim().max(500),
+    imageUrl: imageUrlSchema,
     status: z.enum(venueStatuses),
   })
   .partial()
@@ -75,6 +80,13 @@ export const slotPatchSchema = z
   })
   .refine((value) => Object.keys(value).length > 0, "Tidak ada perubahan yang dikirim.")
 
+export type VenueInput = z.infer<typeof venueInputSchema>
+export type VenuePatch = z.infer<typeof venuePatchSchema>
+export type CourtInput = z.infer<typeof courtInputSchema>
+export type CourtPatch = z.infer<typeof courtPatchSchema>
+export type SlotInput = z.infer<typeof slotInputSchema>
+export type SlotPatch = z.infer<typeof slotPatchSchema>
+
 export function slugify(value: string) {
   return value
     .toLowerCase()
@@ -82,4 +94,16 @@ export function slugify(value: string) {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "")
+}
+
+function isSafeImageUrl(value: string) {
+  if (value.startsWith("/") && !value.startsWith("//") && !value.includes("\\")) {
+    return true
+  }
+
+  try {
+    return new URL(value).protocol === "https:"
+  } catch {
+    return false
+  }
 }

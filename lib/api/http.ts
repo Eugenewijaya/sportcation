@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import type { ZodError } from "zod"
+import { DomainError } from "@/lib/domain/errors"
 
 export function ok<T>(data: T, init?: ResponseInit) {
   return NextResponse.json({ data }, init)
@@ -30,6 +31,9 @@ export function invalidRequest(error: ZodError) {
 }
 
 export function internalError(error: unknown) {
+  if (error instanceof DomainError) {
+    return apiError(error.code, error.message, error.status, error.details)
+  }
   console.error(error)
   return apiError("INTERNAL_ERROR", "Terjadi kesalahan pada server.", 500)
 }

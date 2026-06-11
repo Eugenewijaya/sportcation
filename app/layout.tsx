@@ -1,14 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
-
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-sportcation",
-})
 
 export const metadata: Metadata = {
   title: "Sportcation - Sport Venue Booking Web App",
@@ -40,8 +33,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="id">
-      <body className={`${inter.variable} font-sans antialiased`}>
+    <html lang="id" data-scroll-behavior="smooth">
+      <body className="font-sans antialiased">
         {children}
         <Analytics />
       </body>

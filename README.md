@@ -10,6 +10,8 @@ Sportcation is a responsive Next.js web app for sports venue discovery, booking 
 - Role protection for customer, merchant owner/staff, and admin.
 - Merchant membership permissions for owner, manager, staff, finance, and viewer.
 - Persistent merchant venue, court, and slot CRUD.
+- Server-only service/repository boundaries with atomic mutation and audit-log transactions.
+- Vitest unit/integration tests, Playwright Chromium E2E, and GitHub Actions CI.
 - Client booking/payment and most admin modules remain mock UI.
 
 ## Local Setup
@@ -79,11 +81,24 @@ npm run db:studio
 ```bash
 npm run lint
 npm run typecheck
+npm run test:coverage
 npm run build
+npm run test:e2e
 npm audit
 ```
 
 Production builds require `BETTER_AUTH_SECRET` and either `BETTER_AUTH_URL` or `NEXT_PUBLIC_APP_URL`.
+The E2E runner creates an isolated SQLite database under `.tmp`, provisions random test credentials, starts a dedicated Next.js server, and removes process state after the suite.
+
+For deployment, use one Vercel project for customer, merchant, and admin routes. See `docs/VERCEL_DEPLOYMENT_RUNBOOK.md`. After pulling production environment variables and applying migrations, run:
+
+```bash
+npm run deploy:check
+```
+
+The check rejects local SQLite, insecure application URLs, placeholder auth secrets, unavailable databases, and missing production tables.
+
+The latest security review is in `docs/SECURITY_AUDIT_2026-06-11.md`. Preview/internal QA is supported after remote database setup; public booking and payment remain out of scope until their server-side state machines are implemented.
 
 ## Current Persistent APIs
 
@@ -98,3 +113,11 @@ GET                /api/categories
 ```
 
 Mutation APIs require an active merchant session, verified merchant membership, ownership, and the required membership permission. See `docs/AUDIT_AND_IMPLEMENTATION_PLAN_SQLITE_LIBSQL.md` for verified status and the recommended next stage.
+
+## Engineering Boundaries
+
+- API route handlers authenticate, validate, call a service, and format the response.
+- Services own business rules, transaction boundaries, and audit events.
+- Repositories own Drizzle queries.
+- Domain errors map expected failures to stable API codes.
+- Tests must use isolated databases and must not write to `data/sportcation.db`.

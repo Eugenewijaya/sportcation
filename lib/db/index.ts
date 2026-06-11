@@ -2,8 +2,13 @@ import { createClient } from "@libsql/client"
 import { drizzle } from "drizzle-orm/libsql"
 import * as schema from "./schema"
 
-function createDbClient() {
-  const url = process.env.TURSO_DATABASE_URL ?? "file:./data/sportcation.db"
+type DatabaseOptions = {
+  url?: string
+  authToken?: string
+}
+
+export function createDatabase(options: DatabaseOptions = {}) {
+  const url = options.url ?? process.env.TURSO_DATABASE_URL ?? "file:./data/sportcation.db"
 
   if (process.env.VERCEL && url.startsWith("file:")) {
     throw new Error(
@@ -13,20 +18,22 @@ function createDbClient() {
 
   const client = createClient({
     url,
-    authToken: process.env.TURSO_AUTH_TOKEN || undefined,
+    authToken: options.authToken ?? process.env.TURSO_AUTH_TOKEN ?? undefined,
   })
 
   return drizzle(client, { schema })
 }
 
-export type SportcationDb = ReturnType<typeof createDbClient>
+export type SportcationDb = ReturnType<typeof createDatabase>
+export type SportcationTransaction = Parameters<Parameters<SportcationDb["transaction"]>[0]>[0]
+export type SportcationDbExecutor = SportcationDb | SportcationTransaction
 
 const globalForDb = globalThis as typeof globalThis & {
   sportcationDb?: SportcationDb
 }
 
 export function getDb() {
-  globalForDb.sportcationDb ??= createDbClient()
+  globalForDb.sportcationDb ??= createDatabase()
   return globalForDb.sportcationDb
 }
 

@@ -1,19 +1,20 @@
 import "server-only"
 
-import { and, eq } from "drizzle-orm"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { apiError } from "@/lib/api/http"
 import { auth, type AuthSession } from "@/lib/auth"
+import { isTrustedMutationRequest } from "@/lib/auth-config"
 import { getDb } from "@/lib/db"
-import { merchantMembers, merchantProfiles } from "@/lib/db/schema"
+import {
+  hasMerchantPermission,
+  type MerchantMembershipRole,
+  type MerchantPermission,
+} from "@/lib/domain/merchant-permissions"
+import { findMerchantContext } from "@/lib/repositories/merchant-repository"
 
 export const APP_ROLES = ["customer", "merchant_owner", "merchant_staff", "admin"] as const
 export type AppRole = (typeof APP_ROLES)[number]
-export const MERCHANT_READ_ROLES = ["owner", "manager", "staff", "finance", "viewer"] as const
-export const MERCHANT_CATALOG_WRITE_ROLES = ["owner", "manager"] as const
-export const MERCHANT_SLOT_WRITE_ROLES = ["owner", "manager", "staff"] as const
-export type MerchantMembershipRole = (typeof MERCHANT_READ_ROLES)[number]
 
 type ApiActor = {
   session: AuthSession
@@ -48,9 +49,15 @@ export async function requireApiActor(
   allowedRoles: readonly AppRole[],
   options: {
     merchantRequired?: boolean
-    merchantRoles?: readonly MerchantMembershipRole[]
+    merchantPermission?: MerchantPermission
   } = {},
 ): Promise<{ actor: ApiActor } | { response: Response }> {
+  if (!isTrustedMutationRequest(request)) {
+    return {
+      response: apiError("UNTRUSTED_ORIGIN", "Origin request tidak diizinkan.", 403),
+    }
+  }
+
   const session = await auth.api.getSession({ headers: request.headers })
   if (!session) {
     return { response: apiError("UNAUTHENTICATED", "Silakan login untuk melanjutkan.", 401) }
@@ -74,11 +81,11 @@ export async function requireApiActor(
   }
 
   if (options.merchantRequired) {
-    const merchantContext = await resolveMerchantContext(session.user.id)
+    const merchantContext = await findMerchantContext(getDb(), session.user.id)
     if (!merchantContext) {
       return { response: apiError("MERCHANT_MEMBERSHIP_REQUIRED", "Akun tidak terhubung ke merchant aktif.", 403) }
     }
-    if (options.merchantRoles && !options.merchantRoles.includes(merchantContext.role)) {
+    if (options.merchantPermission && !hasMerchantPermission(merchantContext.role, options.merchantPermission)) {
       return { response: apiError("MERCHANT_PERMISSION_DENIED", "Role merchant Anda tidak dapat menjalankan aksi ini.", 403) }
     }
     actor.merchantId = merchantContext.merchantId
@@ -86,31 +93,4 @@ export async function requireApiActor(
   }
 
   return { actor }
-}
-
-async function resolveMerchantContext(userId: string) {
-  const ownedMerchant = await getDb()
-    .select({ id: merchantProfiles.id })
-    .from(merchantProfiles)
-    .where(and(eq(merchantProfiles.ownerUserId, userId), eq(merchantProfiles.status, "verified")))
-    .get()
-
-  if (ownedMerchant) {
-    return {
-      merchantId: ownedMerchant.id,
-      role: "owner" as const,
-    }
-  }
-
-  const membership = await getDb()
-    .select({
-      merchantId: merchantMembers.merchantId,
-      role: merchantMembers.role,
-    })
-    .from(merchantMembers)
-    .innerJoin(merchantProfiles, eq(merchantMembers.merchantId, merchantProfiles.id))
-    .where(and(eq(merchantMembers.userId, userId), eq(merchantProfiles.status, "verified")))
-    .get()
-
-  return membership
 }

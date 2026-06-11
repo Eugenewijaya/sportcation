@@ -9,6 +9,10 @@
 
 # production
 /build
+/coverage/
+/playwright-report/
+/test-results/
+/.tmp/
 
 # debug
 npm-debug.log*

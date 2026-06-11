@@ -1,16 +1,20 @@
-import "dotenv/config"
 import { mkdirSync } from "node:fs"
-import { migrate } from "drizzle-orm/libsql/migrator"
-import { getDb } from "./index"
+import { loadCliEnvironment } from "@/lib/env/load-cli-environment"
 
-const databaseUrl = process.env.TURSO_DATABASE_URL ?? "file:./data/sportcation.db"
+loadCliEnvironment()
 
 async function main() {
+  const { getDb } = await import("./index")
+  const { migrateDatabase } = await import("./migration-runner")
+  const databaseUrl = process.env.TURSO_DATABASE_URL ?? "file:./data/sportcation.db"
+
   if (databaseUrl.startsWith("file:")) {
     mkdirSync("./data", { recursive: true })
   }
 
-  await migrate(getDb(), { migrationsFolder: "./drizzle" })
+  const db = getDb()
+  await migrateDatabase(db)
+  await db.$client.close()
   console.log(`Sportcation database migrated: ${databaseUrl.startsWith("file:") ? "local SQLite" : "remote libSQL"}`)
 }
 

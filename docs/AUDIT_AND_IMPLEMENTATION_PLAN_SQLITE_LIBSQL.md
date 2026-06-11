@@ -1,12 +1,12 @@
 # Sportcation Technical Audit and Implementation Plan
 
-Audit date: 10 June 2026
+Audit date: 11 June 2026
 
 ## Executive Decision
 
-Sportcation is runnable as a responsive Next.js web application and is ready to continue to the next engineering stage. Authentication, role authorization, merchant ownership checks, persistent SQLite/libSQL CRUD, migration, seed, lint, typecheck, production build, HTTP flow, and browser checks pass.
+Sportcation is runnable as a responsive Next.js web application. Stage 2 is complete: authentication, role authorization, merchant ownership checks, persistent SQLite/libSQL CRUD, service and repository boundaries, atomic audit transactions, migration, seed, lint, typecheck, coverage, production build, HTTP flow, and Chromium end-to-end checks pass.
 
-The project is not ready for public booking traffic. The next stage should improve service boundaries and automated tests before adding more database-backed product features.
+The project is not ready for public booking traffic. The next product stage is client catalog integration, but it should start only after the requested repository-wide Codex Security audit is completed and any reportable findings are remediated.
 
 ## Current Architecture
 
@@ -23,6 +23,8 @@ The project is not ready for public booking traffic. The next stage should impro
 | File storage | Not implemented |
 | Payment | UI simulation only |
 | Notification delivery | Mock UI only |
+| Automated tests | Vitest unit/integration tests plus Playwright Chromium E2E |
+| CI | GitHub Actions migration, audit, lint, typecheck, test, build, and E2E gates |
 
 The active schema has 17 tables, including users, profiles, auth accounts/sessions/verifications/rate limits, merchant profiles/members, categories, venues, courts, slots, bookings, payments, notifications, and audit logs.
 
@@ -35,7 +37,12 @@ The active schema has 17 tables, including users, profiles, auth accounts/sessio
 - TypeScript: passed.
 - ESLint: passed.
 - Next.js production build: passed.
-- npm dependency audit: 0 known vulnerabilities.
+- npm dependency audit: passed with 0 known vulnerabilities.
+- Vitest: 5 test files and 28 tests passed.
+- Coverage: 90.90% statements, 76.56% branches, 100% functions, and 90.58% lines.
+- Playwright Chromium: 3 E2E tests passed.
+- Migration drift CI check: configured.
+- GitHub Actions CI: configured for migration, dependency audit, lint, typecheck, coverage, build, and E2E.
 - Public, merchant, and admin route smoke test: all expected routes returned `200` with the proper session.
 - Unauthenticated merchant route: redirected to login.
 - Merchant to admin route: redirected to unauthorized.
@@ -65,9 +72,17 @@ Implemented:
 - Session cookie cache is disabled so role/status revocation is checked against the database.
 - Auth rate limits use database storage.
 - Current mutations create audit log records.
+- Venue, court, and slot mutations commit their resource change and audit event atomically.
+- API handlers are thin authentication, validation, service invocation, and response adapters.
+- Unit and integration tests use isolated temporary SQLite databases and do not write to the developer database.
+- Unsafe API methods reject browser requests from untrusted origins.
+- Venue image input accepts only local paths or HTTPS URLs.
+- Global response headers enforce frame denial, MIME sniffing protection, a restricted minimum CSP, referrer policy, permissions policy, and production HSTS.
 
 Remaining security work:
 
+- The current-state security review is documented in `docs/SECURITY_AUDIT_2026-06-11.md`.
+- Complete the formal exhaustive Codex Security scan with threat-model, discovery, validation, and attack-path phases after explicit subagent delegation is authorized.
 - Email verification, password reset, optional MFA, and account recovery.
 - Granular admin roles such as finance, support, content, and risk.
 - Security headers/CSP review and production penetration testing.
@@ -86,41 +101,76 @@ Remaining security work:
 
 ### High Priority
 
-1. Route handlers contain database/business logic directly; a service/repository layer is needed.
-2. No committed unit, integration, or end-to-end test suite exists.
-3. No image object storage or upload validation.
-4. No database pagination; venue search currently filters in application memory.
-5. Merchant UI does not yet hide actions based on membership permission, although the API enforces them.
+1. No image object storage or upload validation.
+2. No database pagination; venue search currently filters in application memory.
+3. Merchant UI does not yet hide actions based on membership permission, although the API enforces them.
+4. Client catalog and booking screens still consume mock/local product data.
+5. Admin operational screens remain UI prototypes without persistent service/API contracts.
 
 ### Production Operations
 
-1. Turso production project and deployment environment are not configured in this repository.
+1. Deployment automation is committed, but the external Vercel project, domain, Turso databases, and secrets still require team provisioning.
 2. No verified backup/restore runbook.
 3. No structured logging, error monitoring, tracing, or uptime checks.
-4. No CI workflow enforcing migration, lint, typecheck, test, and build.
-5. Local SQLite cannot be used as durable storage on stateless hosting.
+4. Local SQLite cannot be used as durable storage on stateless hosting.
 
 ## Recommended Next Stage
 
-Proceed with **Stage 2: service layer and automated test foundation** before client catalog or admin CRUD expansion.
+Stage 2 is complete. After the repository-wide security audit closes, proceed with **Stage 3: persistent client catalog integration**.
 
 Scope:
 
-1. Extract venue, court, slot, membership, and audit logic into server-only services/repositories.
-2. Standardize domain errors and transaction boundaries.
-3. Add Vitest unit tests for validation, permission rules, and state transitions.
-4. Add API integration tests against an isolated temporary SQLite database.
-5. Add Playwright smoke tests for login, role redirects, merchant CRUD, and responsive navigation.
-6. Add a CI workflow for lint, typecheck, tests, migration drift, and build.
+1. Add public read-only venue, category, court, and slot availability service contracts.
+2. Replace client home, explore, venue detail, and slot-selection mock data with API-backed queries.
+3. Add server-side pagination, search, category, location, price, and availability filters.
+4. Preserve the current responsive Figma-aligned UI while adding loading, empty, and recoverable error states.
+5. Add cache/revalidation rules that do not expose unpublished merchant data.
+6. Extend Vitest and Playwright coverage for public catalog search and venue-to-slot navigation.
 
 Exit criteria:
 
-- Route handlers are thin request/response adapters.
-- Permission and ownership rules have automated regression coverage.
-- Tests never write to the developer database.
-- CI blocks unsafe changes.
+- Public APIs return only published venues and eligible slots.
+- Search and filters run in the database with bounded page sizes.
+- Client screens no longer duplicate venue or slot mock records.
+- Merchant draft/review/rejected records cannot leak to public routes.
+- Loading, empty, error, and mobile/desktop navigation states are covered by E2E tests.
+- Existing merchant authorization and CRUD regression tests remain green.
 
-After Stage 2 passes, continue to client catalog integration, then atomic booking/payment persistence, and only then real admin CRUD.
+After Stage 3, continue to atomic booking and payment persistence, then authenticated customer bookings/tickets, and only then expand persistent admin CRUD.
+
+## Stage 2 Implementation Receipt
+
+Implemented:
+
+- `lib/repositories`: merchant, venue, court, and slot database access.
+- `lib/services`: category, venue, court, slot, and audit application logic.
+- `lib/domain`: stable domain errors and explicit merchant permission policy.
+- Reusable migration, seed, and auth bootstrap functions.
+- Thin merchant API route handlers with consistent validation and errors.
+- Atomic resource and audit-log transactions.
+- Vitest unit/integration tests with isolated SQLite files.
+- Playwright E2E login, role-boundary, CRUD persistence, and mobile overflow checks.
+- GitHub Actions CI.
+- Manual production workflow that migrates Turso, runs production preflight, builds a prebuilt Vercel artifact, deploys, and verifies health.
+- Public no-cache database health endpoint.
+- Production deployment runbook and environment contract.
+- Build-time font fallback so production builds do not depend on Google Fonts availability.
+
+Validation receipt:
+
+```text
+npm run db:generate     passed, no schema drift
+npm run lint            passed
+npm run typecheck       passed
+npm run test:coverage   passed, 28 tests
+npm run build           passed
+npm run test:e2e        passed, 3 Chromium tests
+npm audit               passed, 0 vulnerabilities
+```
+
+Known validation limitation:
+
+- The Codex in-app browser blocked `127.0.0.1` with `ERR_BLOCKED_BY_CLIENT`. Rendering and interaction were independently verified by the committed Playwright Chromium suite.
 
 ## Production Persistence Decision
 

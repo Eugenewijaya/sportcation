@@ -1,9 +1,10 @@
 import { betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
+import { getConfiguredAuthBaseURL, getTrustedAuthOrigins } from "@/lib/auth-config"
 import { getDb } from "@/lib/db"
 import * as schema from "@/lib/db/schema"
 
-const configuredBaseURL = process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL
+const configuredBaseURL = getConfiguredAuthBaseURL()
 const secret = process.env.BETTER_AUTH_SECRET ?? process.env.AUTH_SECRET
 
 if (secret && secret.length < 32) {
@@ -17,10 +18,7 @@ if (process.env.NODE_ENV === "production" && !configuredBaseURL) {
 }
 
 const baseURL = configuredBaseURL ?? "http://localhost:3000"
-const trustedOrigins = [
-  baseURL,
-  ...(process.env.AUTH_TRUSTED_ORIGINS?.split(",").map((origin) => origin.trim()).filter(Boolean) ?? []),
-]
+const trustedOrigins = getTrustedAuthOrigins(process.env, baseURL)
 
 export const auth = betterAuth({
   appName: "Sportcation",
