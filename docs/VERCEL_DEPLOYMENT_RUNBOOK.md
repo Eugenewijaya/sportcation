@@ -25,6 +25,23 @@ Separate projects become reasonable only when customer, merchant, and admin have
 
 Local SQLite is only for development. A file under `data/` is not durable on Vercel.
 
+## Current Provisioning Status
+
+Status verified on 11 June 2026:
+
+| Item | Status |
+| --- | --- |
+| GitHub `main` CI | Passing |
+| GitHub `production` environment | Created; deployment branch restricted to `main` |
+| GitHub production reviewers | Not configured |
+| GitHub production secrets | Not configured |
+| Vercel CLI authentication | Available locally |
+| Vercel project link | Not configured |
+| Production and preview Turso databases | Not configured |
+| Production domain | Not configured |
+
+Do not trigger the production workflow until every missing item above is configured.
+
 ## Vercel Environment Variables
 
 Configure these for Production:
@@ -92,7 +109,7 @@ npm run deploy:check
 
 The repository contains `.github/workflows/deploy-production.yml`.
 
-Create a GitHub Environment named `production` with required reviewers and these secrets:
+The GitHub Environment named `production` exists and only accepts deployments from `main`. Add required reviewers and these secrets:
 
 ```text
 VERCEL_TOKEN
