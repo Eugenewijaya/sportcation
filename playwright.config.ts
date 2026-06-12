@@ -6,6 +6,7 @@ type E2EContext = {
   authSecret: string
   admin: { email: string; password: string }
   merchant: { email: string; password: string }
+  customer: { email: string; password: string }
 }
 
 const e2eContext = JSON.parse(readFileSync(e2eContextPath, "utf8")) as E2EContext

@@ -143,7 +143,16 @@ export async function deleteSlot(db: SportcationDb, actor: MerchantActor, id: st
         metadata: { courtId: existing.slot.courtId },
       }),
     )
-    await deleteSlotRecord(tx, id)
+    try {
+      await deleteSlotRecord(tx, id)
+    } catch (error) {
+      if (isConstraintError(error, "FOREIGN KEY")) {
+        throw new DomainError("SLOT_IN_USE", "Slot memiliki riwayat booking dan tidak dapat dihapus.", 409, undefined, {
+          cause: error,
+        })
+      }
+      throw error
+    }
 
     return { id }
   })

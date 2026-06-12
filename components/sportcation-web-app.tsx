@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   ArrowLeft,
   BadgeCheck,
@@ -42,6 +42,7 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react"
+import type { CustomerBooking, CustomerPaymentMethod } from "@/lib/customer-bookings/types"
 import type { PublicCatalogPayload, PublicSlot, PublicVenue } from "@/lib/public-catalog/types"
 
 type View =
@@ -65,46 +66,6 @@ type View =
 
 type Venue = PublicVenue
 type Slot = PublicSlot
-
-type Booking = {
-  id: string
-  venue: string
-  date: string
-  time: string
-  price: number
-  status: "confirmed" | "completed" | "cancelled"
-  image: string
-}
-
-const bookings: Booking[] = [
-  {
-    id: "SP-77291",
-    venue: "PadelHub Senayan",
-    date: "Sat, 24 Oct 2024",
-    time: "08:00 - 10:00",
-    price: 350000,
-    status: "confirmed",
-    image: "/padel-court-modern.jpg",
-  },
-  {
-    id: "SP-88420",
-    venue: "Elite Tennis Club",
-    date: "Sun, 25 Oct 2024",
-    time: "16:00 - 18:00",
-    price: 280000,
-    status: "confirmed",
-    image: "/tennis-court-blue.jpg",
-  },
-  {
-    id: "SP-55210",
-    venue: "Arena Soccer Park",
-    date: "18 Oct 2024",
-    time: "19:00 - 21:00",
-    price: 190000,
-    status: "completed",
-    image: "/futsal-indoor-court.jpg",
-  },
-]
 
 const navItems: Array<{ view: View; label: string; icon: LucideIcon }> = [
   { view: "home", label: "Home", icon: Home },
@@ -157,6 +118,21 @@ function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ")
 }
 
+async function readApiData<T>(response: Response): Promise<T> {
+  const payload = (await response.json().catch(() => null)) as {
+    data?: T
+    error?: { message?: string }
+  } | null
+
+  if (!response.ok) {
+    throw new Error(payload?.error?.message ?? "Request gagal diproses.")
+  }
+  if (!payload || !("data" in payload)) {
+    throw new Error("Format response server tidak valid.")
+  }
+  return payload.data as T
+}
+
 type FlashDeal = Venue & { discount: string; ends: string }
 
 function buildFlashDeals(venueList: Venue[]): FlashDeal[] {
@@ -181,6 +157,48 @@ function formatSlotDate(slot?: Slot) {
   }).format(new Date(`${slot.slotDate}T00:00:00`))
 }
 
+function formatStoredDate(date: string) {
+  return new Intl.DateTimeFormat("id-ID", {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+  }).format(new Date(`${date}T00:00:00`))
+}
+
+function formatBookingWindow(booking: CustomerBooking) {
+  return `${booking.item.startTime} - ${booking.item.endTime}`
+}
+
+function paymentMethodToApi(label: string): CustomerPaymentMethod {
+  if (label.toLowerCase().includes("virtual")) return "virtual_account"
+  if (label.toLowerCase().includes("wallet")) return "wallet"
+  if (label.toLowerCase().includes("manual")) return "manual"
+  return "qris"
+}
+
+function paymentMethodLabel(method: CustomerPaymentMethod) {
+  if (method === "virtual_account") return "Virtual Account"
+  if (method === "wallet") return "Wallet"
+  if (method === "manual") return "Manual"
+  return "QRIS / OVO"
+}
+
+function bookingStatusLabel(status: CustomerBooking["status"]) {
+  const labels: Record<CustomerBooking["status"], string> = {
+    pending_payment: "Pending payment",
+    confirmed: "Confirmed",
+    checked_in: "Checked in",
+    completed: "Completed",
+    cancelled: "Cancelled",
+    refunded: "Refunded",
+  }
+  return labels[status]
+}
+
+function isUpcomingBooking(booking: CustomerBooking) {
+  return ["pending_payment", "confirmed", "checked_in"].includes(booking.status)
+}
+
 export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCatalogPayload }) {
   const [view, setView] = useState<View>("onboarding")
   const [catalog, setCatalog] = useState(initialCatalog)
@@ -190,6 +208,14 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
   const [category, setCategory] = useState("All Venues")
   const [query, setQuery] = useState("")
   const [selectedSlotId, setSelectedSlotId] = useState(initialCatalog.venues[0]?.slots[0]?.id ?? "")
+  const [activeBooking, setActiveBooking] = useState<CustomerBooking | null>(null)
+  const [bookingMutationStatus, setBookingMutationStatus] = useState<"idle" | "loading">("idle")
+  const [bookingMutationError, setBookingMutationError] = useState("")
+  const [paymentMutationStatus, setPaymentMutationStatus] = useState<"idle" | "loading">("idle")
+  const [paymentMutationError, setPaymentMutationError] = useState("")
+  const [customerBookings, setCustomerBookings] = useState<CustomerBooking[]>([])
+  const [customerBookingsStatus, setCustomerBookingsStatus] = useState<"idle" | "loading" | "error" | "unauthenticated">("idle")
+  const [customerBookingsError, setCustomerBookingsError] = useState("")
   const [paymentMethod, setPaymentMethod] = useState("QRIS / OVO")
   const [darkMode, setDarkMode] = useState(false)
   const [pushEnabled, setPushEnabled] = useState(true)
@@ -203,6 +229,32 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
   const flashDeals = useMemo(() => buildFlashDeals(catalog.venues), [catalog.venues])
   const selectedVenue = catalog.venues.find((venue) => venue.id === selectedVenueId) ?? catalog.venues[0]
   const selectedSlot = selectedVenue?.slots.find((slot) => slot.id === selectedSlotId) ?? selectedVenue?.slots[0]
+
+  const loadCustomerBookings = useCallback(async (signal?: AbortSignal) => {
+    setCustomerBookingsStatus("loading")
+    setCustomerBookingsError("")
+
+    try {
+      const response = await fetch("/api/bookings", {
+        signal,
+        headers: {
+          Accept: "application/json",
+        },
+      })
+      if (response.status === 401) {
+        setCustomerBookings([])
+        setCustomerBookingsStatus("unauthenticated")
+        return
+      }
+      const nextBookings = await readApiData<CustomerBooking[]>(response)
+      setCustomerBookings(nextBookings)
+      setCustomerBookingsStatus("idle")
+    } catch (error) {
+      if (signal?.aborted) return
+      setCustomerBookingsStatus("error")
+      setCustomerBookingsError(error instanceof Error ? error.message : "Booking tidak dapat dimuat.")
+    }
+  }, [])
 
   useEffect(() => {
     const screen = new URLSearchParams(window.location.search).get("screen")
@@ -247,6 +299,20 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
     }
   }, [query, selectedCategorySlug])
 
+  useEffect(() => {
+    if (view !== "bookings") return
+
+    const controller = new AbortController()
+    const timeout = window.setTimeout(() => {
+      void loadCustomerBookings(controller.signal)
+    }, 0)
+
+    return () => {
+      window.clearTimeout(timeout)
+      controller.abort()
+    }
+  }, [loadCustomerBookings, view])
+
   function go(next: View) {
     setView(next)
     if (typeof window !== "undefined") {
@@ -265,7 +331,114 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
     setSelectedVenueId(id)
     const venue = catalog.venues.find((item) => item.id === id)
     setSelectedSlotId(venue?.slots[0]?.id ?? "")
+    setBookingMutationError("")
+    setPaymentMutationError("")
     go("venue")
+  }
+
+  function redirectToLogin(returnView: View) {
+    const url = new URL(window.location.href)
+    url.searchParams.set("screen", returnView)
+    window.location.assign(`/login?next=${encodeURIComponent(`${url.pathname}${url.search}`)}`)
+  }
+
+  function removeSlotFromCatalog(slotId: string) {
+    setCatalog((current) => ({
+      ...current,
+      venues: current.venues.map((venue) => ({
+        ...venue,
+        slots: venue.slots.filter((slot) => slot.id !== slotId),
+      })),
+    }))
+    setSelectedSlotId((current) => (current === slotId ? "" : current))
+  }
+
+  async function startBookingPayment() {
+    if (!selectedSlot) {
+      setBookingMutationError("Pilih slot tersedia sebelum checkout.")
+      return
+    }
+
+    setBookingMutationStatus("loading")
+    setBookingMutationError("")
+    setPaymentMutationError("")
+
+    try {
+      const response = await fetch("/api/bookings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          slotId: selectedSlot.id,
+          paymentMethod: paymentMethodToApi(paymentMethod),
+        }),
+      })
+      if (response.status === 401) {
+        setBookingMutationStatus("idle")
+        redirectToLogin("checkout")
+        return
+      }
+
+      const booking = await readApiData<CustomerBooking>(response)
+      setActiveBooking(booking)
+      removeSlotFromCatalog(booking.item.slotId)
+      setBookingMutationStatus("idle")
+      go("payment")
+    } catch (error) {
+      setBookingMutationStatus("idle")
+      setBookingMutationError(error instanceof Error ? error.message : "Booking gagal dibuat.")
+    }
+  }
+
+  async function simulatePaymentResult(status: "paid" | "failed") {
+    if (!activeBooking) {
+      setPaymentMutationError("Booking belum dibuat. Kembali ke checkout dan coba lagi.")
+      return
+    }
+
+    setPaymentMutationStatus("loading")
+    setPaymentMutationError("")
+
+    try {
+      const response = await fetch(`/api/payments/${activeBooking.id}/simulate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ status }),
+      })
+      if (response.status === 401) {
+        setPaymentMutationStatus("idle")
+        redirectToLogin("payment")
+        return
+      }
+
+      const booking = await readApiData<CustomerBooking>(response)
+      setActiveBooking(booking)
+      setPaymentMutationStatus("idle")
+      await loadCustomerBookings()
+
+      if (status === "paid") {
+        go("success")
+      } else {
+        setPaymentMutationError("Simulasi pembayaran gagal. Slot dilepas kembali dan booking dibatalkan.")
+      }
+    } catch (error) {
+      setPaymentMutationStatus("idle")
+      setPaymentMutationError(error instanceof Error ? error.message : "Simulasi pembayaran gagal diproses.")
+    }
+  }
+
+  function openCustomerBooking(booking: CustomerBooking) {
+    setActiveBooking(booking)
+    if (booking.status === "pending_payment" && booking.payment.status === "pending") {
+      go("payment")
+      return
+    }
+    go("success")
   }
 
   const shouldShowBottomNav = ["home", "explore", "auction", "bookings", "notifications", "profile", "settings", "flash", "help"].includes(view)
@@ -325,7 +498,9 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
                 paymentMethod={paymentMethod}
                 onPaymentMethod={setPaymentMethod}
                 onBack={() => go("venue")}
-                onPay={() => go("payment")}
+                onPay={startBookingPayment}
+                mutationStatus={bookingMutationStatus}
+                mutationError={bookingMutationError}
               />
             )}
             {view === "checkout" && !selectedVenue && <CatalogEmptyState onExplore={() => go("explore")} />}
@@ -333,17 +508,31 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
               <PaymentScreen
                 venue={selectedVenue}
                 slot={selectedSlot}
+                booking={activeBooking}
+                mutationStatus={paymentMutationStatus}
+                mutationError={paymentMutationError}
                 onBack={() => go("checkout")}
-                onDone={() => go("success")}
+                onPaid={() => void simulatePaymentResult("paid")}
+                onFailed={() => void simulatePaymentResult("failed")}
               />
             )}
             {view === "payment" && !selectedVenue && <CatalogEmptyState onExplore={() => go("explore")} />}
             {view === "success" && selectedVenue && (
-              <SuccessScreen venue={selectedVenue} slot={selectedSlot} onTicket={() => go("bookings")} onHome={() => go("home")} />
+              <SuccessScreen booking={activeBooking} venue={selectedVenue} slot={selectedSlot} onTicket={() => go("bookings")} onHome={() => go("home")} />
             )}
             {view === "success" && !selectedVenue && <CatalogEmptyState onExplore={() => go("explore")} />}
             {view === "auction" && <AuctionScreen onNavigate={go} />}
-            {view === "bookings" && <BookingsScreen onNavigate={go} />}
+            {view === "bookings" && (
+              <BookingsScreen
+                bookings={customerBookings}
+                status={customerBookingsStatus}
+                error={customerBookingsError}
+                onNavigate={go}
+                onRefresh={() => void loadCustomerBookings()}
+                onLogin={() => redirectToLogin("bookings")}
+                onOpenBooking={openCustomerBooking}
+              />
+            )}
             {view === "notifications" && <NotificationsScreen onBack={() => go("profile")} />}
             {view === "profile" && <ProfileScreen onNavigate={go} />}
             {view === "settings" && (
@@ -1146,6 +1335,8 @@ function CheckoutScreen({
   onPaymentMethod,
   onBack,
   onPay,
+  mutationStatus,
+  mutationError,
 }: {
   venue: Venue
   slot?: Slot
@@ -1153,6 +1344,8 @@ function CheckoutScreen({
   onPaymentMethod: (method: string) => void
   onBack: () => void
   onPay: () => void
+  mutationStatus: "idle" | "loading"
+  mutationError: string
 }) {
   const serviceFee = 15000
   const slotPrice = slot?.price ?? venue.price
@@ -1173,7 +1366,7 @@ function CheckoutScreen({
                   <h2 className="text-2xl font-black tracking-[-0.04em]">{venue.name}</h2>
                   <p className="mt-1 flex max-w-[190px] items-start gap-1 text-sm font-semibold text-[#687073]">
                     <MapPin className="mt-1 h-4 w-4 shrink-0" />
-                    Kebayoran Baru, Jakarta Selatan
+                    {venue.location}
                   </p>
                 </div>
                 <CalendarDays className="h-7 w-7 text-[#007c61]" />
@@ -1243,9 +1436,14 @@ function CheckoutScreen({
               <ShieldCheck className="h-4 w-4" />
               Secure 256-bit encrypted payment
             </p>
-            <AppButton onClick={onPay} disabled={!slot} className="mt-8 h-16 w-full">
+            {mutationError && (
+              <div role="alert" className="mt-6 rounded-2xl border border-[#ffd0d6] bg-[#fff0f2] p-4 text-sm font-bold leading-relaxed text-[#c92034]">
+                {mutationError}
+              </div>
+            )}
+            <AppButton onClick={onPay} disabled={!slot || mutationStatus === "loading"} className="mt-8 h-16 w-full">
               <QrCode className="h-5 w-5" />
-              Pay Now
+              {mutationStatus === "loading" ? "Creating Booking..." : "Pay Now"}
             </AppButton>
           </aside>
         </div>
@@ -1254,21 +1452,44 @@ function CheckoutScreen({
   )
 }
 
-function PaymentScreen({ venue, slot, onBack, onDone }: { venue: Venue; slot?: Slot; onBack: () => void; onDone: () => void }) {
-  const total = (slot?.price ?? venue.price) + 15000
+function PaymentScreen({
+  venue,
+  slot,
+  booking,
+  mutationStatus,
+  mutationError,
+  onBack,
+  onPaid,
+  onFailed,
+}: {
+  venue: Venue
+  slot?: Slot
+  booking: CustomerBooking | null
+  mutationStatus: "idle" | "loading"
+  mutationError: string
+  onBack: () => void
+  onPaid: () => void
+  onFailed: () => void
+}) {
+  const total = booking?.totalAmount ?? (slot?.price ?? venue.price) + 15000
+  const venueName = booking?.venue.name ?? venue.name
+  const dateLabel = booking ? formatStoredDate(booking.item.slotDate) : formatSlotDate(slot)
+  const timeLabel = booking ? formatBookingWindow(booking) : formatSlotWindow(slot)
+  const methodLabel = booking ? paymentMethodLabel(booking.payment.method) : "QRIS / OVO"
 
   return (
     <div>
-      <MobileTopBar title="Pembayaran QRIS" back onBack={onBack} brand={false} />
+      <MobileTopBar title={`Pembayaran ${methodLabel}`} back onBack={onBack} brand={false} />
       <div className="px-6 py-8 lg:grid lg:grid-cols-[390px_minmax(0,1fr)] lg:gap-10 lg:px-0">
         <section className="rounded-[28px] bg-white p-7 shadow-sm">
           <p className="text-xs font-black uppercase tracking-[0.22em] text-[#687073]">Venue & Jadwal</p>
           <div className="mt-3 flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-black">{venue.name}</h1>
+              <h1 className="text-2xl font-black">{venueName}</h1>
+              {booking && <p className="mt-2 text-xs font-black uppercase tracking-[0.16em] text-[#007c61]">{booking.bookingCode}</p>}
               <p className="mt-4 flex flex-wrap gap-4 text-sm font-semibold text-[#5f666a]">
-                <span><CalendarDays className="mr-1 inline h-4 w-4" /> {formatSlotDate(slot)}</span>
-                <span><Clock className="mr-1 inline h-4 w-4" /> {formatSlotWindow(slot)}</span>
+                <span><CalendarDays className="mr-1 inline h-4 w-4" /> {dateLabel}</span>
+                <span><Clock className="mr-1 inline h-4 w-4" /> {timeLabel}</span>
               </p>
             </div>
             <span className="grid h-12 w-12 place-items-center rounded-xl bg-[#dcfff6] text-[#007c61]">
@@ -1285,6 +1506,7 @@ function PaymentScreen({ venue, slot, onBack, onDone }: { venue: Venue; slot?: S
               </div>
             </div>
             <p className="mx-auto mt-7 max-w-[260px] text-base font-semibold leading-relaxed text-[#687073]">Buka aplikasi e-wallet atau bank favoritmu, lalu scan QR di atas.</p>
+            <p className="mt-5 text-sm font-black text-[#007c61]">Status: {booking ? booking.payment.status : "pending"}</p>
             <p className="mt-8 text-xs font-black uppercase tracking-[0.22em] text-[#777d82]">Total Pembayaran</p>
             <p className="mt-2 text-4xl font-black tracking-[-0.05em]">{formatRp(total)}</p>
             <div className="mx-auto mt-6 max-w-[260px] rounded-full bg-[#ffe8ea] px-5 py-4 text-sm font-black text-[#c91f31]">
@@ -1297,16 +1519,44 @@ function PaymentScreen({ venue, slot, onBack, onDone }: { venue: Venue; slot?: S
             Simpan QR Code
           </button>
         </section>
-        <AppButton onClick={onDone} disabled={!slot} className="mt-12 w-full lg:col-start-2">
-          Selesai membayar
-        </AppButton>
+        <div className="mt-12 grid gap-3 lg:col-start-2 lg:grid-cols-2">
+          {mutationError && (
+            <div role="alert" className="rounded-2xl border border-[#ffd0d6] bg-[#fff0f2] p-4 text-sm font-bold leading-relaxed text-[#c92034] lg:col-span-2">
+              {mutationError}
+            </div>
+          )}
+          <AppButton onClick={onPaid} disabled={!booking || mutationStatus === "loading" || booking.payment.status !== "pending"} className="w-full">
+            {mutationStatus === "loading" ? "Memproses..." : "Selesai membayar"}
+          </AppButton>
+          <AppButton onClick={onFailed} disabled={!booking || mutationStatus === "loading" || booking.payment.status !== "pending"} variant="dark" className="w-full">
+            Simulasi gagal
+          </AppButton>
+        </div>
       </div>
     </div>
   )
 }
 
-function SuccessScreen({ venue, slot, onTicket, onHome }: { venue: Venue; slot?: Slot; onTicket: () => void; onHome: () => void }) {
-  const total = (slot?.price ?? venue.price) + 15000
+function SuccessScreen({
+  booking,
+  venue,
+  slot,
+  onTicket,
+  onHome,
+}: {
+  booking: CustomerBooking | null
+  venue: Venue
+  slot?: Slot
+  onTicket: () => void
+  onHome: () => void
+}) {
+  const total = booking?.totalAmount ?? (slot?.price ?? venue.price) + 15000
+  const bookingCode = booking?.bookingCode ?? "Belum tersedia"
+  const venueName = booking?.venue.name ?? venue.name
+  const venueImage = booking?.venue.image ?? venue.image
+  const dateLabel = booking ? formatStoredDate(booking.item.slotDate) : formatSlotDate(slot)
+  const timeLabel = booking ? formatBookingWindow(booking) : formatSlotWindow(slot)
+  const statusLabel = booking ? bookingStatusLabel(booking.status) : "Confirmed"
 
   return (
     <div className="grid min-h-screen place-items-center px-6 py-12 lg:min-h-[calc(100vh-80px)]">
@@ -1317,25 +1567,25 @@ function SuccessScreen({ venue, slot, onTicket, onHome }: { venue: Venue; slot?:
           </div>
         </div>
         <h1 className="mt-8 text-3xl font-black tracking-[-0.05em] lg:text-5xl">Pemesanan Berhasil!</h1>
-        <p className="mt-3 text-lg font-semibold">ID: <span className="font-black text-[#007c61]">SP-77291</span></p>
+        <p className="mt-3 text-lg font-semibold">ID: <span className="font-black text-[#007c61]">{bookingCode}</span></p>
         <div className="mt-10 overflow-hidden rounded-[34px] bg-white text-left shadow-sm">
           <div className="relative h-36 overflow-hidden">
-            <img src={venue.image} alt={venue.name} className="h-full w-full object-cover" />
+            <img src={venueImage} alt={venueName} className="h-full w-full object-cover" />
             <div className="absolute inset-0 bg-black/35" />
             <div className="absolute bottom-5 left-6">
-              <span className="rounded-full bg-[#49e7ba] px-3 py-1 text-xs font-black uppercase text-[#007c61]">Confirmed</span>
-              <h2 className="mt-2 text-2xl font-black text-white">{venue.name}</h2>
+              <span className="rounded-full bg-[#49e7ba] px-3 py-1 text-xs font-black uppercase text-[#007c61]">{statusLabel}</span>
+              <h2 className="mt-2 text-2xl font-black text-white">{venueName}</h2>
             </div>
           </div>
           <div className="p-7">
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-[#687073]">Date</p>
-                <p className="mt-2 font-black"><CalendarDays className="mr-1 inline h-4 w-4 text-[#007c61]" /> {formatSlotDate(slot)}</p>
+                <p className="mt-2 font-black"><CalendarDays className="mr-1 inline h-4 w-4 text-[#007c61]" /> {dateLabel}</p>
               </div>
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-[#687073]">Time</p>
-                <p className="mt-2 font-black"><Clock className="mr-1 inline h-4 w-4 text-[#007c61]" /> {formatSlotWindow(slot)} WIB</p>
+                <p className="mt-2 font-black"><Clock className="mr-1 inline h-4 w-4 text-[#007c61]" /> {timeLabel} WIB</p>
               </div>
             </div>
             <div className="my-8 border-t border-dashed border-[#dce2e2]" />
@@ -1447,7 +1697,30 @@ function AuctionScreen({ onNavigate }: { onNavigate: (view: View) => void }) {
   )
 }
 
-function BookingsScreen({ onNavigate }: { onNavigate: (view: View) => void }) {
+function BookingsScreen({
+  bookings,
+  status,
+  error,
+  onNavigate,
+  onRefresh,
+  onLogin,
+  onOpenBooking,
+}: {
+  bookings: CustomerBooking[]
+  status: "idle" | "loading" | "error" | "unauthenticated"
+  error: string
+  onNavigate: (view: View) => void
+  onRefresh: () => void
+  onLogin: () => void
+  onOpenBooking: (booking: CustomerBooking) => void
+}) {
+  const [tab, setTab] = useState<"upcoming" | "completed" | "cancelled">("upcoming")
+  const visibleBookings = bookings.filter((booking) => {
+    if (tab === "upcoming") return isUpcomingBooking(booking)
+    if (tab === "completed") return booking.status === "completed"
+    return ["cancelled", "refunded"].includes(booking.status)
+  })
+
   return (
     <>
       <MobileTopBar title="SPORTCATION" brand />
@@ -1455,49 +1728,91 @@ function BookingsScreen({ onNavigate }: { onNavigate: (view: View) => void }) {
         <p className="text-xs font-black uppercase tracking-[0.22em] text-[#007c61]">Your Activities</p>
         <h1 className="mt-3 text-5xl font-black tracking-[-0.08em]">My Bookings</h1>
         <div className="sportcation-scrollbar mt-8 flex gap-9 overflow-x-auto border-b border-[#dfe5e5] pb-2 text-lg font-bold text-[#5f666a]">
-          <button type="button" className="relative text-[#2d3234] after:absolute after:-bottom-2 after:left-0 after:h-1 after:w-8 after:rounded-full after:bg-[#007c61]">Upcoming</button>
-          <button type="button">Past Sessions</button>
-          <button type="button">Cancelled</button>
-        </div>
-        <div className="mt-8 grid gap-7 lg:grid-cols-2">
-          {bookings.filter((booking) => booking.status === "confirmed").map((booking) => (
-            <article key={booking.id} className="overflow-hidden rounded-[28px] bg-white shadow-sm">
-              <div className="relative h-52 overflow-hidden">
-                <img src={booking.image} alt={booking.venue} className="h-full w-full object-cover" />
-                <span className="absolute left-4 top-4 rounded-full bg-[#49e7ba] px-4 py-2 text-xs font-black uppercase text-[#007c61]">Confirmed</span>
-              </div>
-              <div className="p-6">
-                <div className="grid grid-cols-[1fr_auto] gap-4">
-                  <h2 className="text-3xl font-black leading-tight tracking-[-0.06em]">{booking.venue}</h2>
-                  <p className="text-right text-xl font-black text-[#007c61]">{formatRp(booking.price)}</p>
-                </div>
-                <p className="mt-4 flex flex-wrap gap-4 text-sm font-semibold text-[#5f666a]">
-                  <span><CalendarDays className="mr-1 inline h-4 w-4" /> {booking.date}</span>
-                  <span><Clock className="mr-1 inline h-4 w-4" /> {booking.time}</span>
-                </p>
-                <div className="mt-6 flex gap-4">
-                  <AppButton onClick={() => onNavigate("resell")} className="h-12 flex-1 normal-case tracking-normal">Manage</AppButton>
-                  <button type="button" className="grid h-12 w-12 place-items-center rounded-full bg-[#edf1f1]"><Share2 className="h-5 w-5" /></button>
-                </div>
-              </div>
-            </article>
+          {[
+            { id: "upcoming" as const, label: "Upcoming" },
+            { id: "completed" as const, label: "Past Sessions" },
+            { id: "cancelled" as const, label: "Cancelled" },
+          ].map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setTab(item.id)}
+              className={cx(tab === item.id && "relative text-[#2d3234] after:absolute after:-bottom-2 after:left-0 after:h-1 after:w-8 after:rounded-full after:bg-[#007c61]")}
+            >
+              {item.label}
+            </button>
           ))}
         </div>
-        <div className="mt-8 border-t border-[#dfe5e5] pt-8">
-          <p className="mb-5 text-xs font-black uppercase tracking-[0.24em] text-[#666b70]">Recently Completed</p>
-          <div className="grid gap-4 lg:grid-cols-2">
-            {bookings.filter((booking) => booking.status === "completed").map((booking) => (
-              <button key={booking.id} type="button" className="flex items-center gap-4 rounded-2xl bg-[#edf1f1] p-4 text-left">
-                <img src={booking.image} alt={booking.venue} className="h-16 w-16 rounded-xl object-cover" />
-                <span className="min-w-0 flex-1">
-                  <span className="block font-black">{booking.venue}</span>
-                  <span className="text-sm font-semibold text-[#687073]">Completed - {booking.date}</span>
-                </span>
-                <ChevronRight className="h-6 w-6 text-[#5f666a]" />
-              </button>
+        {status === "loading" && (
+          <div className="mt-8 rounded-[28px] bg-white p-10 text-center shadow-sm">
+            <Clock className="mx-auto h-9 w-9 animate-pulse text-[#007c61]" />
+            <h2 className="mt-4 text-xl font-black">Loading bookings</h2>
+            <p className="mt-2 text-sm font-semibold text-[#687073]">Mengambil riwayat booking dari database.</p>
+          </div>
+        )}
+        {status === "unauthenticated" && (
+          <div className="mt-8 rounded-[28px] bg-white p-10 text-center shadow-sm">
+            <LockKeyhole className="mx-auto h-10 w-10 text-[#007c61]" />
+            <h2 className="mt-4 text-xl font-black">Login diperlukan</h2>
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#687073]">My Bookings hanya menampilkan data booking customer yang sedang login.</p>
+            <AppButton onClick={onLogin} className="mt-6 w-full">Login Customer</AppButton>
+          </div>
+        )}
+        {status === "error" && (
+          <div className="mt-8 rounded-[28px] border border-[#ffd0d6] bg-white p-10 text-center shadow-sm">
+            <h2 className="text-xl font-black text-[#c92034]">Booking gagal dimuat</h2>
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#687073]">{error || "Coba refresh daftar booking."}</p>
+            <AppButton onClick={onRefresh} className="mt-6 w-full">Refresh</AppButton>
+          </div>
+        )}
+        {status === "idle" && visibleBookings.length === 0 && (
+          <div className="mt-8 rounded-[28px] border border-dashed border-[#d3dada] bg-white p-10 text-center shadow-sm">
+            <Ticket className="mx-auto h-10 w-10 text-[#a6adb0]" />
+            <h2 className="mt-4 text-xl font-black">Belum ada booking</h2>
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#687073]">
+              Booking persisted akan muncul di tab ini setelah checkout dan payment simulation.
+            </p>
+            <AppButton onClick={() => onNavigate("explore")} className="mt-6 w-full">Cari Venue</AppButton>
+          </div>
+        )}
+        {status === "idle" && visibleBookings.length > 0 && (
+          <div className="mt-8 grid gap-7 lg:grid-cols-2">
+            {visibleBookings.map((booking) => (
+              <article key={booking.id} className="overflow-hidden rounded-[28px] bg-white shadow-sm">
+                <div className="relative h-52 overflow-hidden">
+                  <img src={booking.venue.image} alt={booking.venue.name} className="h-full w-full object-cover" />
+                  <span className="absolute left-4 top-4 rounded-full bg-[#49e7ba] px-4 py-2 text-xs font-black uppercase text-[#007c61]">
+                    {bookingStatusLabel(booking.status)}
+                  </span>
+                </div>
+                <div className="p-6">
+                  <div className="grid grid-cols-[1fr_auto] gap-4">
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#007c61]">{booking.bookingCode}</p>
+                      <h2 className="mt-2 text-3xl font-black leading-tight tracking-[-0.06em]">{booking.venue.name}</h2>
+                    </div>
+                    <p className="text-right text-xl font-black text-[#007c61]">{formatRp(booking.totalAmount)}</p>
+                  </div>
+                  <p className="mt-4 flex flex-wrap gap-4 text-sm font-semibold text-[#5f666a]">
+                    <span><CalendarDays className="mr-1 inline h-4 w-4" /> {formatStoredDate(booking.item.slotDate)}</span>
+                    <span><Clock className="mr-1 inline h-4 w-4" /> {formatBookingWindow(booking)}</span>
+                  </p>
+                  <p className="mt-2 text-sm font-bold text-[#687073]">
+                    {booking.item.courtName} - {paymentMethodLabel(booking.payment.method)} - {booking.payment.status}
+                  </p>
+                  <div className="mt-6 flex gap-4">
+                    <AppButton onClick={() => onOpenBooking(booking)} className="h-12 flex-1 normal-case tracking-normal">
+                      {booking.status === "pending_payment" ? "Bayar" : "Manage"}
+                    </AppButton>
+                    <button type="button" onClick={() => onNavigate("resell")} className="grid h-12 w-12 place-items-center rounded-full bg-[#edf1f1]">
+                      <Share2 className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+              </article>
             ))}
           </div>
-        </div>
+        )}
       </div>
     </>
   )

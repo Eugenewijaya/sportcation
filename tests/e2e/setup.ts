@@ -30,6 +30,10 @@ export async function prepareE2E() {
       email: "merchant@sportcation.local",
       password: `Merchant-E2E-${crypto.randomUUID()}`,
     },
+    customer: {
+      email: "customer@sportcation.local",
+      password: `Customer-E2E-${crypto.randomUUID()}`,
+    },
   }
 
   const db = createDatabase({ url: toLibsqlFileUrl(e2eDatabasePath) })
@@ -47,6 +51,12 @@ export async function prepareE2E() {
       password: context.merchant.password,
       name: "Sportcation Merchant E2E",
       role: "merchant_owner",
+    },
+    {
+      email: context.customer.email,
+      password: context.customer.password,
+      name: "Alex Rivera E2E",
+      role: "customer",
     },
   ])
   await db.$client.close()

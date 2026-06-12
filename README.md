@@ -10,9 +10,10 @@ Sportcation is a responsive Next.js web app for sports venue discovery, booking 
 - Role protection for customer, merchant owner/staff, and admin.
 - Merchant membership permissions for owner, manager, staff, finance, and viewer.
 - Persistent merchant venue, court, and slot CRUD.
+- Persistent customer booking creation, payment simulation, booking success, and My Bookings.
 - Server-only service/repository boundaries with atomic mutation and audit-log transactions.
 - Vitest unit/integration tests, Playwright Chromium E2E, and GitHub Actions CI.
-- Client booking/payment and most admin modules remain mock UI.
+- Merchant booking/finance and most admin modules remain prototype UI.
 
 ## Local Setup
 
@@ -98,7 +99,7 @@ npm run deploy:check
 
 The check rejects local SQLite, insecure application URLs, placeholder auth secrets, unavailable databases, and missing production tables.
 
-The latest security review is in `docs/SECURITY_AUDIT_2026-06-11.md`. Preview/internal QA is supported after remote database setup; public booking and payment remain out of scope until their server-side state machines are implemented.
+The latest security review is in `docs/SECURITY_AUDIT_2026-06-11.md`. Preview/internal QA is supported after remote database setup. Customer booking and payment simulation are persistent, but real paid traffic remains out of scope until payment gateway, webhook, refund, and expiration workflows are implemented.
 
 ## Current Persistent APIs
 
@@ -110,9 +111,12 @@ PATCH, DELETE      /api/courts/:id
 GET, POST          /api/slots
 PATCH, DELETE      /api/slots/:id
 GET                /api/categories
+GET, POST          /api/bookings
+GET                /api/bookings/:id
+POST               /api/payments/:bookingId/simulate
 ```
 
-Mutation APIs require an active merchant session, verified merchant membership, ownership, and the required membership permission. See `docs/AUDIT_AND_IMPLEMENTATION_PLAN_SQLITE_LIBSQL.md` for verified status and the recommended next stage.
+Merchant mutation APIs require an active merchant session, verified merchant membership, ownership, and the required membership permission. Customer booking APIs require an active customer session and only expose the current user's bookings. See `docs/AUDIT_AND_IMPLEMENTATION_PLAN_SQLITE_LIBSQL.md` for verified status and the recommended next stage.
 
 ## Engineering Boundaries
 

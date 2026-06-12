@@ -10,6 +10,7 @@ type Credentials = {
 type E2EContext = {
   admin: Credentials
   merchant: Credentials
+  customer: Credentials
 }
 
 const e2eContext = JSON.parse(readFileSync(e2eContextPath, "utf8")) as E2EContext
@@ -137,6 +138,59 @@ test("serves the public catalog from persisted venue and slot data", async ({ pa
   await page.getByRole("button", { name: /Book Now/ }).click()
   await expect(page.getByRole("heading", { name: "Review & Checkout", exact: true })).toBeVisible()
   await expect(page.getByText("08:00 - 09:00")).toBeVisible()
+})
+
+test("creates a persisted customer booking and payment simulation", async ({ page }) => {
+  const unauthenticatedBookingResponse = await page.request.post("/api/bookings", {
+    data: {
+      slotId: "slot-padel-available",
+      paymentMethod: "qris",
+    },
+  })
+  expect(unauthenticatedBookingResponse.status()).toBe(401)
+
+  await login(page, e2eContext.customer, "/?screen=explore")
+  await expect(page.getByRole("heading", { name: "Find Your Next Arena.", exact: true })).toBeVisible()
+
+  await page.getByPlaceholder("Search venues, sports, or areas...").fill("Padel")
+  await expect(page.getByRole("heading", { name: "Padel Arena", exact: true })).toBeVisible()
+  await page.getByRole("button", { name: /Padel Arena/ }).first().click()
+  await expect(page.getByRole("button", { name: /08:00 (Selected|Available)/ })).toBeVisible()
+
+  await page.getByRole("button", { name: /Book Now/ }).click()
+  await expect(page.getByRole("heading", { name: "Review & Checkout", exact: true })).toBeVisible()
+
+  const bookingResponse = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      response.url().endsWith("/api/bookings"),
+  )
+  await page.getByRole("button", { name: /Pay Now/ }).click()
+  expect((await bookingResponse).status()).toBe(201)
+
+  const bookingCodeText = await page.getByText(/SP-[A-Z0-9]+/).first().textContent()
+  const bookingCode = bookingCodeText?.match(/SP-[A-Z0-9]+/)?.[0]
+  expect(bookingCode).toBeTruthy()
+  await expect(page.getByText(bookingCode!)).toBeVisible()
+  await expect(page.getByText("Status: pending")).toBeVisible()
+
+  const paymentResponse = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      response.url().includes("/api/payments/") &&
+      response.url().endsWith("/simulate"),
+  )
+  await page.getByRole("button", { name: /Selesai membayar/ }).click()
+  expect((await paymentResponse).status()).toBe(200)
+
+  await expect(page.getByRole("heading", { name: "Pemesanan Berhasil!", exact: true })).toBeVisible()
+  await expect(page.getByText("Padel Arena")).toBeVisible()
+  await page.getByRole("button", { name: "Lihat Tiket" }).click()
+
+  await expect(page.getByRole("heading", { name: "My Bookings", exact: true })).toBeVisible()
+  const persistedBookingCard = page.getByRole("article").filter({ hasText: bookingCode! })
+  await expect(persistedBookingCard.getByRole("heading", { name: "Padel Arena", exact: true })).toBeVisible()
+  await expect(persistedBookingCard.getByText("08:00 - 09:00")).toBeVisible()
 })
 
 test("enforces role boundaries for merchant and admin pages", async ({ browser }) => {

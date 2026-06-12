@@ -7,7 +7,7 @@ export type BootstrapAccount = {
   email: string
   password: string
   name: string
-  role: "admin" | "merchant_owner"
+  role: "admin" | "merchant_owner" | "customer"
 }
 
 export function readBootstrapAccounts(environment: NodeJS.ProcessEnv = process.env) {

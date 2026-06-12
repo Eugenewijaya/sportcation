@@ -198,4 +198,4 @@ If subdomains are added, initially point them to the same Vercel project and use
 - Error monitoring and uptime monitoring.
 - Object storage for uploaded venue images.
 - Email verification, password reset, and account recovery.
-- Real booking/payment state machine before accepting public transactions.
+- Real payment gateway, webhooks, payment expiry, refunds, and payout workflow before accepting public paid transactions.

@@ -4,9 +4,9 @@ Audit date: 11 June 2026
 
 ## Executive Decision
 
-Sportcation is runnable as a responsive Next.js web application. Stage 2 is complete: authentication, role authorization, merchant ownership checks, persistent SQLite/libSQL CRUD, service and repository boundaries, atomic audit transactions, migration, seed, lint, typecheck, coverage, production build, HTTP flow, and Chromium end-to-end checks pass. Stage 3 is also complete for the public catalog: client home, explore, venue detail, and slot selection now use read-only SQLite/libSQL-backed public catalog contracts.
+Sportcation is runnable as a responsive Next.js web application. Stage 2 is complete: authentication, role authorization, merchant ownership checks, persistent SQLite/libSQL CRUD, service and repository boundaries, atomic audit transactions, migration, seed, lint, typecheck, coverage, production build, HTTP flow, and Chromium end-to-end checks pass. Stage 3 is complete for the public catalog. Stage 4 is complete for customer booking and payment simulation persistence.
 
-The project is not ready for public booking traffic. The next product stage is authoritative booking and payment simulation persistence, but it should preserve the public catalog security rules implemented in Stage 3.
+The project is ready for internal preview of customer booking simulation. It is not ready for public paid traffic because real payment gateway, webhooks, payment expiry, refunds, production monitoring, and operational backup/restore are still not implemented.
 
 ## Current Architecture
 
@@ -21,7 +21,7 @@ The project is not ready for public booking traffic. The next product stage is a
 | Production persistence | Remote libSQL/Turso |
 | Future database reference | Neon PostgreSQL schema under `lib/db/postgres` |
 | File storage | Not implemented |
-| Payment | UI simulation only |
+| Payment | Persisted customer payment simulation only |
 | Notification delivery | Mock UI only |
 | Automated tests | Vitest unit/integration tests plus Playwright Chromium E2E |
 | CI | GitHub Actions migration, audit, lint, typecheck, test, build, and E2E gates |
@@ -38,9 +38,9 @@ The active schema has 17 tables, including users, profiles, auth accounts/sessio
 - ESLint: passed.
 - Next.js production build: passed.
 - npm dependency audit: passed with 0 known vulnerabilities.
-- Vitest: 5 test files and 28 tests passed.
-- Coverage: 90.90% statements, 76.56% branches, 100% functions, and 90.58% lines.
-- Playwright Chromium: 3 E2E tests passed.
+- Vitest: 7 test files and 36 tests passed.
+- Coverage: 86.19% statements, 71.98% branches, 93.33% functions, and 88.03% lines.
+- Playwright Chromium: 5 E2E tests passed.
 - Migration drift CI check: configured.
 - GitHub Actions CI: configured for migration, dependency audit, lint, typecheck, coverage, build, and E2E.
 - Public, merchant, and admin route smoke test: all expected routes returned `200` with the proper session.
@@ -73,6 +73,7 @@ Implemented:
 - Auth rate limits use database storage.
 - Current mutations create audit log records.
 - Venue, court, and slot mutations commit their resource change and audit event atomically.
+- Customer booking creation and payment simulation persist booking, booking item, payment, notification, slot state, and audit state inside server-controlled transactions.
 - API handlers are thin authentication, validation, service invocation, and response adapters.
 - Unit and integration tests use isolated temporary SQLite databases and do not write to the developer database.
 - Unsafe API methods reject browser requests from untrusted origins.
@@ -93,9 +94,9 @@ Remaining security work:
 
 ### Blocking Public Booking
 
-1. Booking creation and slot hold are not server-controlled or atomic.
-2. Payment simulation is not persisted as a protected state machine.
-3. My Bookings and ticket data are not connected to the authenticated customer.
+1. Real payment gateway, webhooks, settlement, refund, payout, and QR issuer are not implemented.
+2. Pending payment expiration and automatic slot release are not implemented.
+3. Booking cancellation and refund rules are not implemented.
 4. Admin resource screens are still mock UI.
 
 ### High Priority
@@ -103,7 +104,7 @@ Remaining security work:
 1. No image object storage or upload validation.
 2. No database pagination; venue search currently filters in application memory.
 3. Merchant UI does not yet hide actions based on membership permission, although the API enforces them.
-4. Booking, payment, booking success, ticket, and My Bookings still consume local flow state or mock records.
+4. Merchant booking management and admin booking/payment review still consume prototype records.
 5. Admin operational screens remain UI prototypes without persistent service/API contracts.
 
 ### Production Operations
@@ -115,26 +116,55 @@ Remaining security work:
 
 ## Recommended Next Stage
 
-Stage 2 and Stage 3 are complete for the current SQLite/libSQL direction. Proceed with **Stage 4: authoritative booking and payment simulation persistence**.
+Stage 2, Stage 3, and Stage 4 are complete for the current SQLite/libSQL direction. Proceed with **Stage 5A: pending payment expiration and customer cancellation** if booking reliability is the priority, or **Stage 5B: profile and notification persistence** if account experience is the priority.
 
 Scope:
 
-1. Add server-side booking creation from an available slot.
-2. Prevent double booking with transactions and existing booking-item slot uniqueness.
-3. Persist payment simulation state and transitions.
-4. Update slot state only through authorized server-side booking/payment flow.
-5. Connect Booking Success, ticket, and My Bookings to persisted customer booking records.
-6. Extend Vitest and Playwright coverage for booking creation, failed payment, successful payment, double-book prevention, and customer booking history.
+1. Add server-side customer cancellation for allowed booking states.
+2. Add pending payment expiry and slot release.
+3. Persist cancellation and expiry audit events.
+4. Connect cancellation actions to My Bookings.
+5. Add integration and E2E coverage for expiry, cancellation, and state protection.
 
 Exit criteria:
 
-- Booking API creates one pending booking for an eligible slot.
-- Payment simulation API transitions booking/payment status idempotently.
-- A slot cannot be double-booked.
-- Booking Success and My Bookings read persisted customer booking data.
-- Existing public catalog and merchant CRUD regression tests remain green.
+- Pending payment expiration releases slots safely.
+- Customer cancellation follows explicit state rules.
+- Confirmed/paid bookings cannot be mutated into unsafe states.
+- Existing booking/payment, public catalog, and merchant CRUD regression tests remain green.
 
-After Stage 4, continue to authenticated profile/notification persistence and only then expand persistent admin CRUD.
+After Stage 5A/5B, expand persistent merchant booking management and admin booking/payment review.
+
+## Stage 4 Implementation Receipt
+
+Implemented:
+
+- `lib/customer-bookings/types.ts` for customer booking DTO contracts.
+- `lib/validation/booking.ts` for booking and payment simulation validation.
+- `lib/services/booking-service.ts` for transactional booking creation, payment success, payment failure, customer booking detail, and customer booking list.
+- `app/api/bookings/route.ts`, `app/api/bookings/[id]/route.ts`, and `app/api/payments/[bookingId]/simulate/route.ts`.
+- `components/sportcation-web-app.tsx` checkout, payment simulation, booking success, and My Bookings integration with persisted customer booking data.
+- `drizzle/0003_whole_umar.sql` to replace global booking-item slot uniqueness with a non-unique slot history index.
+- `tests/integration/customer-booking.test.ts` for booking transaction and payment state tests.
+- Playwright customer booking E2E coverage in `tests/e2e/auth-and-crud.spec.ts`.
+
+Validation receipt:
+
+```text
+npm run db:generate     passed, no schema drift
+npm run db:migrate      passed
+npm run db:seed         passed
+npm run lint            passed
+npm run typecheck       passed
+npm run test:coverage   passed, 36 tests
+npm audit               passed, 0 vulnerabilities
+npm run build           passed with required auth env
+npm run test:e2e        passed, 5 Chromium tests
+```
+
+Known validation note:
+
+- A raw `npm run build` without `BETTER_AUTH_SECRET` failed as expected because production auth configuration requires a secret. The build passed when run with the same required auth environment variables used by CI.
 
 ## Stage 3 Implementation Receipt
 

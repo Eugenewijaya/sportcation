@@ -302,8 +302,8 @@ export const bookingItems = sqliteTable(
     ...timestamps,
   },
   (table) => [
-    uniqueIndex("booking_items_slot_unique").on(table.slotId),
     index("booking_items_booking_idx").on(table.bookingId),
+    index("booking_items_slot_idx").on(table.slotId),
   ],
 )
 

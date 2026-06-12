@@ -22,6 +22,13 @@
       "when": 1781103422786,
       "tag": "0002_backfill_auth_timestamps",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1781272405559,
+      "tag": "0003_whole_umar",
+      "breakpoints": true
     }
   ]
 }
