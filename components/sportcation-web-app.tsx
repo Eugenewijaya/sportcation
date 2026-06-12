@@ -216,6 +216,8 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
   const [customerBookings, setCustomerBookings] = useState<CustomerBooking[]>([])
   const [customerBookingsStatus, setCustomerBookingsStatus] = useState<"idle" | "loading" | "error" | "unauthenticated">("idle")
   const [customerBookingsError, setCustomerBookingsError] = useState("")
+  const [bookingActionId, setBookingActionId] = useState("")
+  const [bookingActionError, setBookingActionError] = useState("")
   const [paymentMethod, setPaymentMethod] = useState("QRIS / OVO")
   const [darkMode, setDarkMode] = useState(false)
   const [pushEnabled, setPushEnabled] = useState(true)
@@ -235,6 +237,22 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
     setCustomerBookingsError("")
 
     try {
+      const expirationResponse = await fetch("/api/bookings/expire-pending", {
+        method: "POST",
+        signal,
+        headers: {
+          Accept: "application/json",
+        },
+      })
+      if (expirationResponse.status === 401) {
+        setCustomerBookings([])
+        setCustomerBookingsStatus("unauthenticated")
+        return
+      }
+      if (!expirationResponse.ok) {
+        await readApiData(expirationResponse)
+      }
+
       const response = await fetch("/api/bookings", {
         signal,
         headers: {
@@ -441,6 +459,39 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
     go("success")
   }
 
+  async function cancelCustomerBooking(booking: CustomerBooking) {
+    setBookingActionId(booking.id)
+    setBookingActionError("")
+
+    try {
+      const response = await fetch(`/api/bookings/${booking.id}/cancel`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          reason: "Customer requested cancellation from My Bookings.",
+        }),
+      })
+      if (response.status === 401) {
+        redirectToLogin("bookings")
+        return
+      }
+
+      const cancelledBooking = await readApiData<CustomerBooking>(response)
+      setActiveBooking((current) => (current?.id === cancelledBooking.id ? cancelledBooking : current))
+      setCustomerBookings((current) =>
+        current.map((item) => (item.id === cancelledBooking.id ? cancelledBooking : item)),
+      )
+      await loadCustomerBookings()
+    } catch (error) {
+      setBookingActionError(error instanceof Error ? error.message : "Booking gagal dibatalkan.")
+    } finally {
+      setBookingActionId("")
+    }
+  }
+
   const shouldShowBottomNav = ["home", "explore", "auction", "bookings", "notifications", "profile", "settings", "flash", "help"].includes(view)
 
   if (view === "onboarding") {
@@ -531,6 +582,9 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
                 onRefresh={() => void loadCustomerBookings()}
                 onLogin={() => redirectToLogin("bookings")}
                 onOpenBooking={openCustomerBooking}
+                onCancelBooking={(booking) => void cancelCustomerBooking(booking)}
+                actionBookingId={bookingActionId}
+                actionError={bookingActionError}
               />
             )}
             {view === "notifications" && <NotificationsScreen onBack={() => go("profile")} />}
@@ -1705,6 +1759,9 @@ function BookingsScreen({
   onRefresh,
   onLogin,
   onOpenBooking,
+  onCancelBooking,
+  actionBookingId,
+  actionError,
 }: {
   bookings: CustomerBooking[]
   status: "idle" | "loading" | "error" | "unauthenticated"
@@ -1713,6 +1770,9 @@ function BookingsScreen({
   onRefresh: () => void
   onLogin: () => void
   onOpenBooking: (booking: CustomerBooking) => void
+  onCancelBooking: (booking: CustomerBooking) => void
+  actionBookingId: string
+  actionError: string
 }) {
   const [tab, setTab] = useState<"upcoming" | "completed" | "cancelled">("upcoming")
   const visibleBookings = bookings.filter((booking) => {
@@ -1777,6 +1837,11 @@ function BookingsScreen({
         )}
         {status === "idle" && visibleBookings.length > 0 && (
           <div className="mt-8 grid gap-7 lg:grid-cols-2">
+            {actionError && (
+              <div role="alert" className="rounded-2xl border border-[#ffd0d6] bg-white p-4 text-sm font-bold leading-relaxed text-[#c92034] lg:col-span-2">
+                {actionError}
+              </div>
+            )}
             {visibleBookings.map((booking) => (
               <article key={booking.id} className="overflow-hidden rounded-[28px] bg-white shadow-sm">
                 <div className="relative h-52 overflow-hidden">
@@ -1804,6 +1869,16 @@ function BookingsScreen({
                     <AppButton onClick={() => onOpenBooking(booking)} className="h-12 flex-1 normal-case tracking-normal">
                       {booking.status === "pending_payment" ? "Bayar" : "Manage"}
                     </AppButton>
+                    {["pending_payment", "confirmed"].includes(booking.status) && (
+                      <button
+                        type="button"
+                        onClick={() => onCancelBooking(booking)}
+                        disabled={actionBookingId === booking.id}
+                        className="h-12 rounded-full bg-[#ffe8ea] px-5 text-sm font-black text-[#c92034] disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {actionBookingId === booking.id ? "Cancelling" : "Cancel"}
+                      </button>
+                    )}
                     <button type="button" onClick={() => onNavigate("resell")} className="grid h-12 w-12 place-items-center rounded-full bg-[#edf1f1]">
                       <Share2 className="h-5 w-5" />
                     </button>

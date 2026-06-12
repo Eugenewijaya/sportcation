@@ -2,9 +2,11 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { eq } from "drizzle-orm"
 import type { SportcationDb } from "@/lib/db"
 import { seedIds } from "@/lib/db/seed-data"
-import { slots } from "@/lib/db/schema"
+import { bookings, payments, slots } from "@/lib/db/schema"
 import {
+  cancelCustomerBooking,
   createCustomerBooking,
+  expirePendingCustomerBookings,
   listCustomerBookings,
   simulateCustomerPayment,
 } from "@/lib/services/booking-service"
@@ -175,13 +177,136 @@ describe("customer booking service", () => {
       status: 409,
     })
   })
+
+  it("cancels a pending booking and releases the slot", async () => {
+    const booking = await createCustomerBooking(
+      db,
+      actor,
+      {
+        slotId: seedIds.slotAvailable,
+        paymentMethod: "qris",
+      },
+      deterministicOptions("pending-cancel"),
+    )
+
+    const cancelled = await cancelCustomerBooking(
+      db,
+      actor,
+      booking.id,
+      { reason: "Changed schedule" },
+      deterministicOptions("cancel-pending"),
+    )
+
+    expect(cancelled.status).toBe("cancelled")
+    expect(cancelled.payment.status).toBe("failed")
+    expect((await db.select().from(slots).where(eq(slots.id, seedIds.slotAvailable)).get())?.status).toBe("available")
+  })
+
+  it("cancels a confirmed booking as refunded and releases the slot", async () => {
+    const booking = await createCustomerBooking(
+      db,
+      actor,
+      {
+        slotId: seedIds.slotAvailable,
+        paymentMethod: "qris",
+      },
+      deterministicOptions("confirm-cancel"),
+    )
+    const confirmed = await simulateCustomerPayment(
+      db,
+      actor,
+      booking.id,
+      { status: "paid" },
+      deterministicOptions("confirm-paid"),
+    )
+
+    const cancelled = await cancelCustomerBooking(
+      db,
+      actor,
+      confirmed.id,
+      { reason: "Weather issue" },
+      deterministicOptions("cancel-paid"),
+    )
+
+    expect(cancelled.status).toBe("cancelled")
+    expect(cancelled.payment.status).toBe("refunded")
+    expect((await db.select().from(slots).where(eq(slots.id, seedIds.slotAvailable)).get())?.status).toBe("available")
+  })
+
+  it("rejects cancellation after a booking reaches completed state", async () => {
+    await db.update(bookings).set({ status: "completed" }).where(eq(bookings.id, seedIds.booking))
+    await db.update(payments).set({ status: "paid" }).where(eq(payments.bookingId, seedIds.booking))
+
+    await expect(
+      cancelCustomerBooking(
+        db,
+        actor,
+        seedIds.booking,
+        { reason: "Too late" },
+        deterministicOptions("late-cancel"),
+      ),
+    ).rejects.toMatchObject({
+      code: "BOOKING_CANNOT_CANCEL",
+      status: 409,
+    })
+  })
+
+  it("expires overdue pending payments and releases slots", async () => {
+    const booking = await createCustomerBooking(
+      db,
+      actor,
+      {
+        slotId: seedIds.slotAvailable,
+        paymentMethod: "qris",
+      },
+      deterministicOptions("old-book", "2026-06-15T09:00:00.000Z"),
+    )
+
+    const result = await expirePendingCustomerBookings(
+      db,
+      actor,
+      deterministicOptions("expire-old", "2026-06-15T09:20:00.000Z"),
+    )
+
+    expect(result).toEqual({
+      expiredCount: 1,
+      bookingIds: [booking.id],
+    })
+
+    const listed = await listCustomerBookings(db, actor.userId)
+    const expiredBooking = listed.find((item) => item.id === booking.id)
+    expect(expiredBooking?.status).toBe("cancelled")
+    expect(expiredBooking?.payment.status).toBe("expired")
+    expect((await db.select().from(slots).where(eq(slots.id, seedIds.slotAvailable)).get())?.status).toBe("available")
+  })
+
+  it("keeps fresh pending payments reserved before the expiry window", async () => {
+    await createCustomerBooking(
+      db,
+      actor,
+      {
+        slotId: seedIds.slotAvailable,
+        paymentMethod: "qris",
+      },
+      deterministicOptions("fresh-book", "2026-06-15T09:00:00.000Z"),
+    )
+
+    const result = await expirePendingCustomerBookings(
+      db,
+      actor,
+      deterministicOptions("expire-fresh", "2026-06-15T09:05:00.000Z"),
+    )
+
+    expect(result.expiredCount).toBe(0)
+    expect((await db.select().from(slots).where(eq(slots.id, seedIds.slotAvailable)).get())?.status).toBe("booked")
+  })
 })
 
-function deterministicOptions(label: string) {
+function deterministicOptions(label: string, now = "2026-06-15T09:00:00.000Z") {
   let counter = 0
   return {
     newId: () => `${label}-id-${counter++}`,
-    now: () => new Date("2026-06-15T09:00:00.000Z"),
+    now: () => new Date(now),
     bookingCode: () => `SP-${label.replaceAll("-", "").slice(0, 8).toUpperCase()}`,
   }
 }

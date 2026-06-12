@@ -1,10 +1,10 @@
-import { and, desc, eq } from "drizzle-orm"
+import { and, desc, eq, lte } from "drizzle-orm"
 import type { SportcationDb, SportcationDbExecutor } from "@/lib/db"
 import { auditLogs, bookingItems, bookings, courts, notifications, payments, slots, venues } from "@/lib/db/schema"
 import type { CustomerBooking } from "@/lib/customer-bookings/types"
 import { DomainError, isConstraintError } from "@/lib/domain/errors"
 import { createAuditRecord } from "@/lib/services/audit-service"
-import type { CreateBookingInput, PaymentSimulationInput } from "@/lib/validation/booking"
+import type { CancelBookingInput, CreateBookingInput, PaymentSimulationInput } from "@/lib/validation/booking"
 
 type CustomerActor = {
   userId: string
@@ -14,10 +14,12 @@ type BookingServiceOptions = {
   newId?: () => string
   now?: () => Date
   bookingCode?: () => string
+  paymentExpiresInMinutes?: number
 }
 
 const defaultImage = "/padel-court-modern.jpg"
 const platformFee = 15_000
+const defaultPaymentExpiresInMinutes = 15
 
 export async function listCustomerBookings(db: SportcationDbExecutor, userId: string): Promise<CustomerBooking[]> {
   const rows = await selectCustomerBookingRows(db)
@@ -303,6 +305,159 @@ export async function simulateCustomerPayment(
     const booking = await getCustomerBooking(tx, actor.userId, bookingId)
     if (!booking) throw new DomainError("BOOKING_NOT_FOUND", "Booking tidak ditemukan.", 404)
     return booking
+  })
+}
+
+export async function cancelCustomerBooking(
+  db: SportcationDb,
+  actor: CustomerActor,
+  bookingId: string,
+  input: CancelBookingInput = {},
+  options: BookingServiceOptions = {},
+) {
+  const nowDate = options.now ?? (() => new Date())
+  const newId = options.newId ?? (() => crypto.randomUUID())
+
+  return db.transaction(async (tx) => {
+    const current = await getCustomerBooking(tx, actor.userId, bookingId)
+    if (!current) {
+      throw new DomainError("BOOKING_NOT_FOUND", "Booking tidak ditemukan.", 404)
+    }
+    if (current.status === "cancelled") {
+      return current
+    }
+    if (!["pending_payment", "confirmed"].includes(current.status)) {
+      throw new DomainError("BOOKING_CANNOT_CANCEL", "Booking tidak dapat dibatalkan pada status ini.", 409)
+    }
+
+    const now = nowDate().toISOString()
+    const paymentStatus = current.payment.status === "paid" ? "refunded" : "failed"
+
+    await tx
+      .update(payments)
+      .set({
+        status: paymentStatus,
+        updatedAt: now,
+      })
+      .where(eq(payments.id, current.payment.id))
+    await tx
+      .update(bookings)
+      .set({
+        status: "cancelled",
+        updatedAt: now,
+      })
+      .where(eq(bookings.id, current.id))
+    await tx
+      .update(slots)
+      .set({
+        status: "available",
+        updatedAt: now,
+      })
+      .where(eq(slots.id, current.item.slotId))
+    await tx.insert(notifications).values({
+      id: newId(),
+      userId: actor.userId,
+      type: "booking",
+      title: "Booking Cancelled",
+      body: `Booking ${current.bookingCode} sudah dibatalkan.`,
+      actionUrl: "/?screen=bookings",
+      createdAt: now,
+    })
+    await tx.insert(auditLogs).values(
+      createAuditRecord({
+        actorUserId: actor.userId,
+        action: "booking.cancelled",
+        entityType: "booking",
+        entityId: current.id,
+        metadata: {
+          paymentStatus,
+          reason: input.reason ?? null,
+          slotId: current.item.slotId,
+        },
+      }),
+    )
+
+    const booking = await getCustomerBooking(tx, actor.userId, bookingId)
+    if (!booking) throw new DomainError("BOOKING_NOT_FOUND", "Booking tidak ditemukan.", 404)
+    return booking
+  })
+}
+
+export async function expirePendingCustomerBookings(
+  db: SportcationDb,
+  actor: CustomerActor,
+  options: BookingServiceOptions = {},
+) {
+  const newId = options.newId ?? (() => crypto.randomUUID())
+  const nowDate = options.now ?? (() => new Date())
+  const expiresInMinutes = options.paymentExpiresInMinutes ?? defaultPaymentExpiresInMinutes
+  const nowDateValue = nowDate()
+  const now = nowDateValue.toISOString()
+  const cutoff = new Date(nowDateValue.getTime() - expiresInMinutes * 60_000).toISOString()
+
+  return db.transaction(async (tx) => {
+    const expired = await selectCustomerBookingRows(tx)
+      .where(
+        and(
+          eq(bookings.userId, actor.userId),
+          eq(bookings.status, "pending_payment"),
+          eq(payments.status, "pending"),
+          lte(payments.createdAt, cutoff),
+        ),
+      )
+      .orderBy(desc(bookings.createdAt))
+
+    const expiredBookings = expired.map(mapCustomerBooking)
+
+    for (const booking of expiredBookings) {
+      await tx
+        .update(payments)
+        .set({
+          status: "expired",
+          updatedAt: now,
+        })
+        .where(eq(payments.id, booking.payment.id))
+      await tx
+        .update(bookings)
+        .set({
+          status: "cancelled",
+          updatedAt: now,
+        })
+        .where(eq(bookings.id, booking.id))
+      await tx
+        .update(slots)
+        .set({
+          status: "available",
+          updatedAt: now,
+        })
+        .where(eq(slots.id, booking.item.slotId))
+      await tx.insert(notifications).values({
+        id: newId(),
+        userId: actor.userId,
+        type: "payment",
+        title: "Payment Expired",
+        body: `Booking ${booking.bookingCode} kedaluwarsa dan slot sudah dilepas kembali.`,
+        actionUrl: "/?screen=bookings",
+        createdAt: now,
+      })
+      await tx.insert(auditLogs).values(
+        createAuditRecord({
+          actorUserId: actor.userId,
+          action: "payment.expired",
+          entityType: "booking",
+          entityId: booking.id,
+          metadata: {
+            cutoff,
+            slotId: booking.item.slotId,
+          },
+        }),
+      )
+    }
+
+    return {
+      expiredCount: expiredBookings.length,
+      bookingIds: expiredBookings.map((booking) => booking.id),
+    }
   })
 }
 

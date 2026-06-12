@@ -154,18 +154,18 @@ Not ready for public paid traffic:
 
 ## Recommended Next Stage
 
-Proceed to Stage 5: profile and notification persistence, or Stage 5A: payment expiry and booking cancellation if booking reliability is the priority.
+Stage 5A has been implemented after this report. Proceed to Stage 5B: profile and notification persistence, or Stage 6: merchant booking management if operational workflows are the priority.
 
 Suggested next prompt:
 
 ```text
-Start Stage 5A only: implement pending payment expiration and customer booking cancellation for Sportcation.
+Start Stage 5B only: implement persistent profile and notification management for Sportcation.
 
 Requirements:
 - Keep SQLite/libSQL active.
-- Add server-side cancellation for pending and confirmed bookings with safe state rules.
-- Add payment expiration logic that releases slots for expired pending payments.
-- Connect cancellation UI in My Bookings.
+- Add customer profile read/update APIs.
+- Add notification list, mark-read, and mark-all-read APIs.
+- Connect Profile and Notifications screens to persisted records.
 - Add integration and E2E tests.
 - Run lint, typecheck, coverage, build, E2E, audit, commit, push, and verify CI.
 ```

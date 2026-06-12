@@ -4,9 +4,9 @@ Audit date: 11 June 2026
 
 ## Executive Decision
 
-Sportcation is runnable as a responsive Next.js web application. Stage 2 is complete: authentication, role authorization, merchant ownership checks, persistent SQLite/libSQL CRUD, service and repository boundaries, atomic audit transactions, migration, seed, lint, typecheck, coverage, production build, HTTP flow, and Chromium end-to-end checks pass. Stage 3 is complete for the public catalog. Stage 4 is complete for customer booking and payment simulation persistence.
+Sportcation is runnable as a responsive Next.js web application. Stage 2 is complete: authentication, role authorization, merchant ownership checks, persistent SQLite/libSQL CRUD, service and repository boundaries, atomic audit transactions, migration, seed, lint, typecheck, coverage, production build, HTTP flow, and Chromium end-to-end checks pass. Stage 3 is complete for the public catalog. Stage 4 is complete for customer booking and payment simulation persistence. Stage 5A is complete for customer cancellation and pending-payment expiry.
 
-The project is ready for internal preview of customer booking simulation. It is not ready for public paid traffic because real payment gateway, webhooks, payment expiry, refunds, production monitoring, and operational backup/restore are still not implemented.
+The project is ready for internal preview of customer booking simulation. It is not ready for public paid traffic because real payment gateway, webhooks, real refunds, production monitoring, and operational backup/restore are still not implemented.
 
 ## Current Architecture
 
@@ -21,7 +21,7 @@ The project is ready for internal preview of customer booking simulation. It is 
 | Production persistence | Remote libSQL/Turso |
 | Future database reference | Neon PostgreSQL schema under `lib/db/postgres` |
 | File storage | Not implemented |
-| Payment | Persisted customer payment simulation only |
+| Payment | Persisted customer payment simulation with cancellation and expiry |
 | Notification delivery | Mock UI only |
 | Automated tests | Vitest unit/integration tests plus Playwright Chromium E2E |
 | CI | GitHub Actions migration, audit, lint, typecheck, test, build, and E2E gates |
@@ -95,8 +95,8 @@ Remaining security work:
 ### Blocking Public Booking
 
 1. Real payment gateway, webhooks, settlement, refund, payout, and QR issuer are not implemented.
-2. Pending payment expiration and automatic slot release are not implemented.
-3. Booking cancellation and refund rules are not implemented.
+2. Pending payment expiration is request-driven; no Vercel Cron or background worker is configured yet.
+3. Booking cancellation has MVP rules only; no cutoff, penalty, or merchant approval workflow exists.
 4. Admin resource screens are still mock UI.
 
 ### High Priority
@@ -116,24 +116,50 @@ Remaining security work:
 
 ## Recommended Next Stage
 
-Stage 2, Stage 3, and Stage 4 are complete for the current SQLite/libSQL direction. Proceed with **Stage 5A: pending payment expiration and customer cancellation** if booking reliability is the priority, or **Stage 5B: profile and notification persistence** if account experience is the priority.
+Stage 2, Stage 3, Stage 4, and Stage 5A are complete for the current SQLite/libSQL direction. Proceed with **Stage 5B: profile and notification persistence** if account experience is the priority, or **Stage 6: merchant booking management** if operational workflows are the priority.
 
 Scope:
 
-1. Add server-side customer cancellation for allowed booking states.
-2. Add pending payment expiry and slot release.
-3. Persist cancellation and expiry audit events.
-4. Connect cancellation actions to My Bookings.
-5. Add integration and E2E coverage for expiry, cancellation, and state protection.
+1. Add customer profile read/update APIs.
+2. Persist Profile and Edit Profile screen changes.
+3. Add notification list API and mark-read/mark-all-read APIs.
+4. Connect Notification screen to persisted notifications.
+5. Add integration and E2E coverage for profile and notification state.
 
 Exit criteria:
 
-- Pending payment expiration releases slots safely.
-- Customer cancellation follows explicit state rules.
-- Confirmed/paid bookings cannot be mutated into unsafe states.
+- Profile updates persist and survive reloads.
+- Notification read state persists.
+- Users can only access their own profile and notifications.
 - Existing booking/payment, public catalog, and merchant CRUD regression tests remain green.
 
-After Stage 5A/5B, expand persistent merchant booking management and admin booking/payment review.
+After Stage 5B, expand persistent merchant booking management and admin booking/payment review.
+
+## Stage 5A Implementation Receipt
+
+Implemented:
+
+- `cancelCustomerBooking` service transaction for pending and confirmed booking cancellation.
+- `expirePendingCustomerBookings` service transaction for pending payment expiry.
+- `POST /api/bookings/[id]/cancel`.
+- `POST /api/bookings/expire-pending`.
+- My Bookings cancellation UI and request-driven expiry before booking list load.
+- Integration tests for pending cancellation, confirmed cancellation, finalized-state rejection, overdue expiry, and fresh-pending retention.
+- Playwright coverage for cancelling a booking created in the customer browser flow.
+- `docs/STAGE_5A_BOOKING_CANCELLATION_EXPIRY_AUDIT.md`.
+
+Validation receipt:
+
+```text
+npm run typecheck       passed
+npx vitest run tests/integration/customer-booking.test.ts passed, 10 tests
+npm run lint            passed
+npm run db:generate     passed, no schema drift
+npm run test:coverage   passed, 41 tests
+npm audit               passed, 0 vulnerabilities
+npm run build           passed with required auth env
+npm run test:e2e        passed, 5 Chromium tests
+```
 
 ## Stage 4 Implementation Receipt
 

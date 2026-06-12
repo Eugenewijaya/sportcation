@@ -191,6 +191,20 @@ test("creates a persisted customer booking and payment simulation", async ({ pag
   const persistedBookingCard = page.getByRole("article").filter({ hasText: bookingCode! })
   await expect(persistedBookingCard.getByRole("heading", { name: "Padel Arena", exact: true })).toBeVisible()
   await expect(persistedBookingCard.getByText("08:00 - 09:00")).toBeVisible()
+
+  const cancellationResponse = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      response.url().includes(`/api/bookings/`) &&
+      response.url().endsWith("/cancel"),
+  )
+  await persistedBookingCard.getByRole("button", { name: "Cancel", exact: true }).click()
+  expect((await cancellationResponse).status()).toBe(200)
+
+  await page.getByRole("button", { name: "Cancelled", exact: true }).click()
+  const cancelledBookingCard = page.getByRole("article").filter({ hasText: bookingCode! })
+  await expect(cancelledBookingCard.getByText("Cancelled")).toBeVisible()
+  await expect(cancelledBookingCard.getByText("refunded")).toBeVisible()
 })
 
 test("enforces role boundaries for merchant and admin pages", async ({ browser }) => {

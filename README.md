@@ -11,6 +11,7 @@ Sportcation is a responsive Next.js web app for sports venue discovery, booking 
 - Merchant membership permissions for owner, manager, staff, finance, and viewer.
 - Persistent merchant venue, court, and slot CRUD.
 - Persistent customer booking creation, payment simulation, booking success, and My Bookings.
+- Customer booking cancellation and pending-payment expiry for local/libSQL booking simulation.
 - Server-only service/repository boundaries with atomic mutation and audit-log transactions.
 - Vitest unit/integration tests, Playwright Chromium E2E, and GitHub Actions CI.
 - Merchant booking/finance and most admin modules remain prototype UI.
@@ -113,6 +114,8 @@ PATCH, DELETE      /api/slots/:id
 GET                /api/categories
 GET, POST          /api/bookings
 GET                /api/bookings/:id
+POST               /api/bookings/:id/cancel
+POST               /api/bookings/expire-pending
 POST               /api/payments/:bookingId/simulate
 ```
 
