@@ -4,9 +4,9 @@ Audit date: 11 June 2026
 
 ## Executive Decision
 
-Sportcation is runnable as a responsive Next.js web application. Stage 2 is complete: authentication, role authorization, merchant ownership checks, persistent SQLite/libSQL CRUD, service and repository boundaries, atomic audit transactions, migration, seed, lint, typecheck, coverage, production build, HTTP flow, and Chromium end-to-end checks pass.
+Sportcation is runnable as a responsive Next.js web application. Stage 2 is complete: authentication, role authorization, merchant ownership checks, persistent SQLite/libSQL CRUD, service and repository boundaries, atomic audit transactions, migration, seed, lint, typecheck, coverage, production build, HTTP flow, and Chromium end-to-end checks pass. Stage 3 is also complete for the public catalog: client home, explore, venue detail, and slot selection now use read-only SQLite/libSQL-backed public catalog contracts.
 
-The project is not ready for public booking traffic. The next product stage is client catalog integration, but it should start only after the requested repository-wide Codex Security audit is completed and any reportable findings are remediated.
+The project is not ready for public booking traffic. The next product stage is authoritative booking and payment simulation persistence, but it should preserve the public catalog security rules implemented in Stage 3.
 
 ## Current Architecture
 
@@ -93,18 +93,17 @@ Remaining security work:
 
 ### Blocking Public Booking
 
-1. Client catalog still uses mock venue and slot data.
-2. Booking creation and slot hold are not server-controlled or atomic.
-3. Payment simulation is not persisted as a protected state machine.
-4. My Bookings and ticket data are not connected to the authenticated customer.
-5. Admin resource screens are still mock UI.
+1. Booking creation and slot hold are not server-controlled or atomic.
+2. Payment simulation is not persisted as a protected state machine.
+3. My Bookings and ticket data are not connected to the authenticated customer.
+4. Admin resource screens are still mock UI.
 
 ### High Priority
 
 1. No image object storage or upload validation.
 2. No database pagination; venue search currently filters in application memory.
 3. Merchant UI does not yet hide actions based on membership permission, although the API enforces them.
-4. Client catalog and booking screens still consume mock/local product data.
+4. Booking, payment, booking success, ticket, and My Bookings still consume local flow state or mock records.
 5. Admin operational screens remain UI prototypes without persistent service/API contracts.
 
 ### Production Operations
@@ -116,27 +115,56 @@ Remaining security work:
 
 ## Recommended Next Stage
 
-Stage 2 is complete. After the repository-wide security audit closes, proceed with **Stage 3: persistent client catalog integration**.
+Stage 2 and Stage 3 are complete for the current SQLite/libSQL direction. Proceed with **Stage 4: authoritative booking and payment simulation persistence**.
 
 Scope:
 
-1. Add public read-only venue, category, court, and slot availability service contracts.
-2. Replace client home, explore, venue detail, and slot-selection mock data with API-backed queries.
-3. Add server-side pagination, search, category, location, price, and availability filters.
-4. Preserve the current responsive Figma-aligned UI while adding loading, empty, and recoverable error states.
-5. Add cache/revalidation rules that do not expose unpublished merchant data.
-6. Extend Vitest and Playwright coverage for public catalog search and venue-to-slot navigation.
+1. Add server-side booking creation from an available slot.
+2. Prevent double booking with transactions and existing booking-item slot uniqueness.
+3. Persist payment simulation state and transitions.
+4. Update slot state only through authorized server-side booking/payment flow.
+5. Connect Booking Success, ticket, and My Bookings to persisted customer booking records.
+6. Extend Vitest and Playwright coverage for booking creation, failed payment, successful payment, double-book prevention, and customer booking history.
 
 Exit criteria:
 
-- Public APIs return only published venues and eligible slots.
-- Search and filters run in the database with bounded page sizes.
-- Client screens no longer duplicate venue or slot mock records.
-- Merchant draft/review/rejected records cannot leak to public routes.
-- Loading, empty, error, and mobile/desktop navigation states are covered by E2E tests.
-- Existing merchant authorization and CRUD regression tests remain green.
+- Booking API creates one pending booking for an eligible slot.
+- Payment simulation API transitions booking/payment status idempotently.
+- A slot cannot be double-booked.
+- Booking Success and My Bookings read persisted customer booking data.
+- Existing public catalog and merchant CRUD regression tests remain green.
 
-After Stage 3, continue to atomic booking and payment persistence, then authenticated customer bookings/tickets, and only then expand persistent admin CRUD.
+After Stage 4, continue to authenticated profile/notification persistence and only then expand persistent admin CRUD.
+
+## Stage 3 Implementation Receipt
+
+Implemented:
+
+- `lib/services/public-catalog-service.ts` for read-only public catalog queries.
+- `lib/validation/public-catalog.ts` for bounded public filter validation.
+- `lib/public-catalog/types.ts` for DTO contracts shared by server and client.
+- `app/api/public/catalog/route.ts` and `app/api/public/venues/[id]/route.ts`.
+- `app/page.tsx` dynamic server data loading from SQLite/libSQL.
+- `components/sportcation-web-app.tsx` catalog state, API-backed search/category filters, DB-backed venue detail, DB-backed available slot selection, and catalog loading/error/empty states.
+- `tests/integration/public-catalog.test.ts` leak-prevention and filter tests.
+- Playwright public catalog E2E coverage in `tests/e2e/auth-and-crud.spec.ts`.
+
+Validation receipt:
+
+```text
+npm run lint            passed
+npm run typecheck       passed
+npm run test:coverage   passed, 31 tests
+npm audit               passed, 0 vulnerabilities
+npm run build           passed
+npm run test:e2e        passed, 4 Chromium tests
+```
+
+Security receipt:
+
+- Codex Security parent-agent fallback scan completed with no reportable findings.
+- Formal subagent-assisted scan remains a follow-up because the approved subagents failed with quota/auth runtime errors.
+- Final scan artifacts: `C:\tmp\codex-security-scans\v0-landing-page-sportcation\8e31e3d_20260611-161721`.
 
 ## Stage 2 Implementation Receipt
 

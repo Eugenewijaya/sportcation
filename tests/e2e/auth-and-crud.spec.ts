@@ -102,6 +102,43 @@ test("protects merchant routes and supports persistent merchant CRUD", async ({ 
   expect((await page.request.get(`/api/venues/${createdPayload.data.id}`)).status()).toBe(404)
 })
 
+test("serves the public catalog from persisted venue and slot data", async ({ page }) => {
+  const catalogResponse = await page.request.get("/api/public/catalog?q=Padel")
+  expect(catalogResponse.status()).toBe(200)
+  await expect(catalogResponse.json()).resolves.toMatchObject({
+    venues: [
+      {
+        id: "venue-padel-arena",
+        name: "Padel Arena",
+        slots: [
+          {
+            id: "slot-padel-available",
+            status: "available",
+          },
+        ],
+      },
+    ],
+  })
+
+  const hiddenResponse = await page.request.get("/api/public/catalog?q=Draft")
+  expect(hiddenResponse.status()).toBe(200)
+  await expect(hiddenResponse.json()).resolves.toMatchObject({
+    venues: [],
+  })
+
+  await page.goto("/?screen=explore")
+  await expect(page.getByRole("heading", { name: "Find Your Next Arena.", exact: true })).toBeVisible()
+  await page.getByPlaceholder("Search venues, sports, or areas...").fill("Padel")
+  await expect(page.getByRole("heading", { name: "Padel Arena", exact: true })).toBeVisible()
+  await page.getByRole("button", { name: /Padel Arena/ }).first().click()
+
+  await expect(page.getByRole("heading", { name: "Padel Arena", exact: true }).first()).toBeVisible()
+  await expect(page.getByRole("button", { name: /08:00 (Selected|Available)/ })).toBeVisible()
+  await page.getByRole("button", { name: /Book Now/ }).click()
+  await expect(page.getByRole("heading", { name: "Review & Checkout", exact: true })).toBeVisible()
+  await expect(page.getByText("08:00 - 09:00")).toBeVisible()
+})
+
 test("enforces role boundaries for merchant and admin pages", async ({ browser }) => {
   const merchantContext = await browser.newContext()
   const merchantPage = await merchantContext.newPage()

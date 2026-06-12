@@ -42,6 +42,7 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react"
+import type { PublicCatalogPayload, PublicSlot, PublicVenue } from "@/lib/public-catalog/types"
 
 type View =
   | "onboarding"
@@ -62,21 +63,8 @@ type View =
   | "help"
   | "privacy"
 
-type Venue = {
-  id: string
-  name: string
-  category: string
-  location: string
-  area: string
-  price: number
-  oldPrice?: number
-  rating: number
-  distance: string
-  image: string
-  tag: string
-  description: string
-  facilities: string[]
-}
+type Venue = PublicVenue
+type Slot = PublicSlot
 
 type Booking = {
   id: string
@@ -87,94 +75,6 @@ type Booking = {
   status: "confirmed" | "completed" | "cancelled"
   image: string
 }
-
-const venues: Venue[] = [
-  {
-    id: "padelhub",
-    name: "PadelHub Jakarta Selatan",
-    category: "Padel",
-    location: "Kebayoran Baru, Jakarta",
-    area: "Jakarta Selatan",
-    price: 350000,
-    oldPrice: 500000,
-    rating: 4.9,
-    distance: "2.4 km away",
-    image: "/padel-court-modern.jpg",
-    tag: "Premium Venue",
-    description:
-      "Experience Jakarta's most premium padel facility with state-of-the-art turf and professional coaching staff.",
-    facilities: ["Parking", "Locker", "Shower", "Cafe", "Indoor"],
-  },
-  {
-    id: "elite-tennis",
-    name: "Elite Tennis SCBD",
-    category: "Tennis",
-    location: "Sudirman, Jakarta",
-    area: "Jakarta Pusat",
-    price: 75000,
-    oldPrice: 250000,
-    rating: 4.9,
-    distance: "1.8 km away",
-    image: "/tennis-court-blue.jpg",
-    tag: "Hot Deal",
-    description:
-      "Blue hard court with city access, clean changing room, and fast slot confirmation for busy players.",
-    facilities: ["Parking", "Shower", "Outdoor"],
-  },
-  {
-    id: "elite-futsal",
-    name: "Elite Futsal Hub",
-    category: "Futsal",
-    location: "Jl. Senopati, Jakarta Selatan",
-    area: "Jakarta Selatan",
-    price: 150000,
-    rating: 4.8,
-    distance: "3.1 km away",
-    image: "/futsal-indoor-court.jpg",
-    tag: "Featured",
-    description:
-      "Indoor futsal arena with bright lighting, solid turf, and late evening availability.",
-    facilities: ["Indoor", "Locker", "Parking"],
-  },
-  {
-    id: "urban-drive",
-    name: "Urban Drive Range",
-    category: "Golf",
-    location: "Setiabudi, Jakarta Pusat",
-    area: "Jakarta Pusat",
-    price: 300000,
-    rating: 4.9,
-    distance: "4.8 km away",
-    image: "/golf-course-green.png",
-    tag: "Prime",
-    description:
-      "Open-air golf range for after-office sessions with calm green views and club rental.",
-    facilities: ["Parking", "Cafe", "Locker"],
-  },
-  {
-    id: "aqua-splendor",
-    name: "Aqua Splendor Center",
-    category: "Swimming",
-    location: "Kemang, Jakarta Selatan",
-    area: "Jakarta Selatan",
-    price: 67500,
-    oldPrice: 150000,
-    rating: 4.7,
-    distance: "5.2 km away",
-    image: "/badminton-court.png",
-    tag: "Flash",
-    description:
-      "Limited promo access for morning training and recovery sessions.",
-    facilities: ["Shower", "Locker", "Cafe"],
-  },
-]
-
-const flashDeals = [
-  { ...venues[1], discount: "-60%", ends: "02:45:12" },
-  { ...venues[2], name: "The Pitch Menteng", discount: "-45%", ends: "00:15:45" },
-  { ...venues[0], name: "Skyline Tennis Court", price: 150000, oldPrice: 300000, discount: "-50%", ends: "01:02:18" },
-  { ...venues[3], name: "Prime Performance Hub", price: 720000, oldPrice: 1200000, discount: "-40%", ends: "04:40:00" },
-]
 
 const bookings: Booking[] = [
   {
@@ -243,8 +143,6 @@ const quickActions: Array<{ view: View; label: string; icon: LucideIcon; hot?: b
   { view: "checkout", label: "Order", icon: Wallet },
 ]
 
-const categories = ["All Venues", "Padel", "Futsal", "Tennis", "Golf"]
-
 function formatRp(value: number) {
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
@@ -259,30 +157,52 @@ function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ")
 }
 
-export function SportcationWebApp() {
+type FlashDeal = Venue & { discount: string; ends: string }
+
+function buildFlashDeals(venueList: Venue[]): FlashDeal[] {
+  return venueList.slice(0, 4).map((venue, index) => ({
+    ...venue,
+    discount: ["-60%", "-45%", "-50%", "-40%"][index] ?? "-35%",
+    ends: ["02:45:12", "00:15:45", "01:02:18", "04:40:00"][index] ?? "03:10:00",
+  }))
+}
+
+function formatSlotWindow(slot?: Slot) {
+  if (!slot) return "Pilih slot"
+  return `${slot.startTime} - ${slot.endTime}`
+}
+
+function formatSlotDate(slot?: Slot) {
+  if (!slot) return "Tanggal belum dipilih"
+  return new Intl.DateTimeFormat("id-ID", {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+  }).format(new Date(`${slot.slotDate}T00:00:00`))
+}
+
+export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCatalogPayload }) {
   const [view, setView] = useState<View>("onboarding")
-  const [selectedVenueId, setSelectedVenueId] = useState("padelhub")
+  const [catalog, setCatalog] = useState(initialCatalog)
+  const [catalogStatus, setCatalogStatus] = useState<"idle" | "loading" | "error">("idle")
+  const [catalogError, setCatalogError] = useState("")
+  const [selectedVenueId, setSelectedVenueId] = useState(initialCatalog.venues[0]?.id ?? "")
   const [category, setCategory] = useState("All Venues")
   const [query, setQuery] = useState("")
-  const [selectedSlot, setSelectedSlot] = useState("10:00")
+  const [selectedSlotId, setSelectedSlotId] = useState(initialCatalog.venues[0]?.slots[0]?.id ?? "")
   const [paymentMethod, setPaymentMethod] = useState("QRIS / OVO")
   const [darkMode, setDarkMode] = useState(false)
   const [pushEnabled, setPushEnabled] = useState(true)
   const [biometricEnabled, setBiometricEnabled] = useState(true)
 
-  const selectedVenue = venues.find((venue) => venue.id === selectedVenueId) ?? venues[0]
-  const filteredVenues = useMemo(() => {
-    const search = query.trim().toLowerCase()
-    return venues.filter((venue) => {
-      const categoryMatch = category === "All Venues" || venue.category === category
-      const searchMatch =
-        search.length === 0 ||
-        [venue.name, venue.category, venue.location, venue.area].some((value) =>
-          value.toLowerCase().includes(search),
-        )
-      return categoryMatch && searchMatch
-    })
-  }, [category, query])
+  const categories = useMemo(() => ["All Venues", ...catalog.categories.map((item) => item.name)], [catalog.categories])
+  const selectedCategorySlug = useMemo(() => {
+    if (category === "All Venues") return ""
+    return catalog.categories.find((item) => item.name === category)?.slug ?? ""
+  }, [catalog.categories, category])
+  const flashDeals = useMemo(() => buildFlashDeals(catalog.venues), [catalog.venues])
+  const selectedVenue = catalog.venues.find((venue) => venue.id === selectedVenueId) ?? catalog.venues[0]
+  const selectedSlot = selectedVenue?.slots.find((slot) => slot.id === selectedSlotId) ?? selectedVenue?.slots[0]
 
   useEffect(() => {
     const screen = new URLSearchParams(window.location.search).get("screen")
@@ -291,6 +211,41 @@ export function SportcationWebApp() {
       return () => window.cancelAnimationFrame(frame)
     }
   }, [])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    const timeout = window.setTimeout(async () => {
+      setCatalogStatus("loading")
+      setCatalogError("")
+
+      try {
+        const params = new URLSearchParams({
+          pageSize: "12",
+        })
+        const trimmedQuery = query.trim()
+        if (trimmedQuery) params.set("q", trimmedQuery)
+        if (selectedCategorySlug) params.set("category", selectedCategorySlug)
+
+        const response = await fetch(`/api/public/catalog?${params.toString()}`, {
+          signal: controller.signal,
+        })
+        if (!response.ok) throw new Error("Catalog request failed")
+        const nextCatalog = (await response.json()) as PublicCatalogPayload
+        setCatalog(nextCatalog)
+        setSelectedVenueId((current) => nextCatalog.venues.some((venue) => venue.id === current) ? current : nextCatalog.venues[0]?.id ?? "")
+        setCatalogStatus("idle")
+      } catch (error) {
+        if (controller.signal.aborted) return
+        setCatalogStatus("error")
+        setCatalogError(error instanceof Error ? error.message : "Catalog request failed")
+      }
+    }, 220)
+
+    return () => {
+      controller.abort()
+      window.clearTimeout(timeout)
+    }
+  }, [query, selectedCategorySlug])
 
   function go(next: View) {
     setView(next)
@@ -308,6 +263,8 @@ export function SportcationWebApp() {
 
   function openVenue(id: string) {
     setSelectedVenueId(id)
+    const venue = catalog.venues.find((item) => item.id === id)
+    setSelectedSlotId(venue?.slots[0]?.id ?? "")
     go("venue")
   }
 
@@ -328,27 +285,40 @@ export function SportcationWebApp() {
         <main className="min-h-screen flex-1 lg:pl-[280px]">
           <DesktopTopBar onNavigate={go} />
           <div className="mx-auto min-h-screen w-full max-w-[430px] bg-[#f3f6f6] pb-10 lg:max-w-none lg:bg-transparent lg:px-8 lg:pb-12">
-            {view === "home" && <HomeScreen onNavigate={go} onVenue={openVenue} />}
+            {view === "home" && (
+              <HomeScreen
+                venues={catalog.venues}
+                flashDeals={flashDeals}
+                catalogStatus={catalogStatus}
+                catalogError={catalogError}
+                onNavigate={go}
+                onVenue={openVenue}
+              />
+            )}
             {view === "explore" && (
               <ExploreScreen
                 category={category}
                 onCategoryChange={setCategory}
+                categories={categories}
                 query={query}
                 onQueryChange={setQuery}
-                venues={filteredVenues}
+                venues={catalog.venues}
+                catalogStatus={catalogStatus}
+                catalogError={catalogError}
                 onVenue={openVenue}
               />
             )}
-            {view === "venue" && (
+            {view === "venue" && selectedVenue && (
               <VenueDetailScreen
                 venue={selectedVenue}
                 selectedSlot={selectedSlot}
-                onSelectSlot={setSelectedSlot}
+                onSelectSlot={setSelectedSlotId}
                 onBack={() => go("explore")}
                 onCheckout={() => go("checkout")}
               />
             )}
-            {view === "checkout" && (
+            {view === "venue" && !selectedVenue && <CatalogEmptyState onExplore={() => go("explore")} />}
+            {view === "checkout" && selectedVenue && (
               <CheckoutScreen
                 venue={selectedVenue}
                 slot={selectedSlot}
@@ -358,7 +328,8 @@ export function SportcationWebApp() {
                 onPay={() => go("payment")}
               />
             )}
-            {view === "payment" && (
+            {view === "checkout" && !selectedVenue && <CatalogEmptyState onExplore={() => go("explore")} />}
+            {view === "payment" && selectedVenue && (
               <PaymentScreen
                 venue={selectedVenue}
                 slot={selectedSlot}
@@ -366,9 +337,11 @@ export function SportcationWebApp() {
                 onDone={() => go("success")}
               />
             )}
-            {view === "success" && (
+            {view === "payment" && !selectedVenue && <CatalogEmptyState onExplore={() => go("explore")} />}
+            {view === "success" && selectedVenue && (
               <SuccessScreen venue={selectedVenue} slot={selectedSlot} onTicket={() => go("bookings")} onHome={() => go("home")} />
             )}
+            {view === "success" && !selectedVenue && <CatalogEmptyState onExplore={() => go("explore")} />}
             {view === "auction" && <AuctionScreen onNavigate={go} />}
             {view === "bookings" && <BookingsScreen onNavigate={go} />}
             {view === "notifications" && <NotificationsScreen onBack={() => go("profile")} />}
@@ -384,7 +357,7 @@ export function SportcationWebApp() {
                 onBiometricEnabled={setBiometricEnabled}
               />
             )}
-            {view === "flash" && <FlashSaleScreen onVenue={openVenue} />}
+            {view === "flash" && <FlashSaleScreen deals={flashDeals} onVenue={openVenue} />}
             {view === "resell" && <ResellScreen onBack={() => go("bookings")} onPublish={() => go("auction")} />}
             {view === "help" && <HelpScreen onBack={() => go("profile")} />}
             {view === "privacy" && <PrivacyScreen onBack={() => go("settings")} />}
@@ -693,7 +666,23 @@ function LoginScreen({ onBack, onSubmit }: { onBack: () => void; onSubmit: () =>
   )
 }
 
-function HomeScreen({ onNavigate, onVenue }: { onNavigate: (view: View) => void; onVenue: (id: string) => void }) {
+function HomeScreen({
+  venues,
+  flashDeals,
+  catalogStatus,
+  catalogError,
+  onNavigate,
+  onVenue,
+}: {
+  venues: Venue[]
+  flashDeals: FlashDeal[]
+  catalogStatus: "idle" | "loading" | "error"
+  catalogError: string
+  onNavigate: (view: View) => void
+  onVenue: (id: string) => void
+}) {
+  const recommended = venues[0]
+
   return (
     <>
       <MobileTopBar title="Jakarta" brand={false} onBell={() => onNavigate("notifications")} />
@@ -745,15 +734,24 @@ function HomeScreen({ onNavigate, onVenue }: { onNavigate: (view: View) => void;
 
             <SectionTitle title="Flash Sale" subtitle="Snatched these deals before they're gone" action="See all" onAction={() => onNavigate("flash")} />
             <div className="sportcation-scrollbar -mx-6 flex snap-x gap-4 overflow-x-auto px-6 lg:mx-0 lg:grid lg:grid-cols-2 lg:overflow-visible lg:px-0">
-              {flashDeals.slice(0, 2).map((deal) => (
+              {catalogStatus === "loading" && <CatalogInlineState title="Loading venues" message="Mengambil katalog terbaru dari database." />}
+              {catalogStatus === "error" && <CatalogInlineState title="Catalog unavailable" message={catalogError || "Gagal memuat katalog."} />}
+              {catalogStatus !== "error" && flashDeals.slice(0, 2).map((deal) => (
                 <DealCard key={deal.id + deal.name} deal={deal} onClick={() => onVenue(deal.id)} />
               ))}
+              {catalogStatus !== "loading" && catalogStatus !== "error" && flashDeals.length === 0 && (
+                <CatalogInlineState title="No public venues" message="Belum ada venue published untuk ditampilkan." />
+              )}
             </div>
           </div>
 
           <aside className="mt-10 lg:mt-0">
             <SectionTitle title="Recommended" subtitle="Selected for your lifestyle" />
-            <RecommendedCard venue={venues[0]} onBook={() => onVenue("padelhub")} />
+            {recommended ? (
+              <RecommendedCard venue={recommended} onBook={() => onVenue(recommended.id)} />
+            ) : (
+              <CatalogInlineState title="No recommendation yet" message="Venue published akan muncul di area ini." />
+            )}
             <button
               type="button"
               onClick={() => onNavigate("resell")}
@@ -784,7 +782,34 @@ function SectionTitle({ title, subtitle, action, onAction }: { title: string; su
   )
 }
 
-function DealCard({ deal, onClick }: { deal: Venue & { discount?: string; ends?: string }; onClick: () => void }) {
+function CatalogInlineState({ title, message }: { title: string; message: string }) {
+  return (
+    <div className="min-w-[264px] rounded-[28px] border border-dashed border-[#d9dfdf] bg-white p-8 text-center shadow-sm lg:col-span-2 lg:min-w-0">
+      <Search className="mx-auto h-8 w-8 text-[#a4aaae]" />
+      <h3 className="mt-4 text-lg font-black">{title}</h3>
+      <p className="mt-2 text-sm font-semibold leading-relaxed text-[#777d82]">{message}</p>
+    </div>
+  )
+}
+
+function CatalogEmptyState({ onExplore }: { onExplore: () => void }) {
+  return (
+    <div className="grid min-h-[calc(100vh-80px)] place-items-center px-6 py-12">
+      <section className="w-full max-w-md rounded-[30px] bg-white p-8 text-center shadow-sm">
+        <Search className="mx-auto h-10 w-10 text-[#9aa0a4]" />
+        <h1 className="mt-5 text-2xl font-black">Catalog belum tersedia</h1>
+        <p className="mt-3 text-sm font-semibold leading-relaxed text-[#687073]">
+          Venue published dari database akan muncul setelah merchant mengaktifkan katalog publik.
+        </p>
+        <AppButton onClick={onExplore} className="mt-6 w-full">
+          Kembali ke Explore
+        </AppButton>
+      </section>
+    </div>
+  )
+}
+
+function DealCard({ deal, onClick }: { deal: FlashDeal; onClick: () => void }) {
   return (
     <article className="min-w-[264px] snap-start overflow-hidden rounded-[28px] bg-white shadow-sm lg:min-w-0">
       <div className="relative h-40 overflow-hidden">
@@ -855,16 +880,22 @@ function RecommendedCard({ venue, onBook }: { venue: Venue; onBook: () => void }
 function ExploreScreen({
   category,
   onCategoryChange,
+  categories,
   query,
   onQueryChange,
   venues: list,
+  catalogStatus,
+  catalogError,
   onVenue,
 }: {
   category: string
   onCategoryChange: (value: string) => void
+  categories: string[]
   query: string
   onQueryChange: (value: string) => void
   venues: Venue[]
+  catalogStatus: "idle" | "loading" | "error"
+  catalogError: string
   onVenue: (id: string) => void
 }) {
   return (
@@ -896,7 +927,11 @@ function ExploreScreen({
             </div>
           </aside>
           <section className="mt-8 grid gap-7 lg:mt-0 lg:grid-cols-2">
-            {list.length === 0 ? (
+            {catalogStatus === "loading" ? (
+              <CatalogInlineState title="Loading catalog" message="Mencari venue sesuai filter..." />
+            ) : catalogStatus === "error" ? (
+              <CatalogInlineState title="Catalog error" message={catalogError || "Katalog tidak dapat dimuat."} />
+            ) : list.length === 0 ? (
               <div className="rounded-[28px] border border-dashed border-[#d9dfdf] bg-white p-10 text-center lg:col-span-2">
                 <Search className="mx-auto h-9 w-9 text-[#a4aaae]" />
                 <h2 className="mt-4 text-xl font-black">No venue found</h2>
@@ -977,20 +1012,19 @@ function VenueDetailScreen({
   onCheckout,
 }: {
   venue: Venue
-  selectedSlot: string
-  onSelectSlot: (slot: string) => void
+  selectedSlot?: Slot
+  onSelectSlot: (slotId: string) => void
   onBack: () => void
   onCheckout: () => void
 }) {
-  const dates = ["24 Thu", "25 Fri", "26 Sat", "27 Sun", "28 Mon"]
-  const slots = [
-    { time: "08:00", status: "available" },
-    { time: "09:00", status: "booked" },
-    { time: "10:00", status: "available" },
-    { time: "11:00", status: "available" },
-    { time: "12:00", status: "available" },
-    { time: "13:00", status: "booked" },
-  ]
+  const selectedDate = selectedSlot?.slotDate ?? venue.slots[0]?.slotDate
+  const dates = [...new Set(venue.slots.map((slot) => slot.slotDate))].slice(0, 5)
+  const slots = selectedDate ? venue.slots.filter((slot) => slot.slotDate === selectedDate) : venue.slots
+  const facilityIcons: Record<string, LucideIcon> = {
+    Parking: Car,
+    Locker: LockKeyhole,
+    Shower: ShowerHead,
+  }
 
   return (
     <div>
@@ -1010,16 +1044,12 @@ function VenueDetailScreen({
             </div>
           </div>
           <div className="-mt-8 grid grid-cols-3 gap-4 px-6 lg:relative lg:mt-6 lg:px-0">
-            {[
-              { label: "Parking", icon: Car },
-              { label: "Locker", icon: LockKeyhole },
-              { label: "Shower", icon: ShowerHead },
-            ].map((item) => {
-              const Icon = item.icon
+            {venue.facilities.slice(0, 3).map((label) => {
+              const Icon = facilityIcons[label] ?? BadgeCheck
               return (
-                <div key={item.label} className="relative grid min-h-[92px] place-items-center rounded-2xl bg-white p-4 text-center shadow-sm">
+                <div key={label} className="relative grid min-h-[92px] place-items-center rounded-2xl bg-white p-4 text-center shadow-sm">
                   <Icon className="h-8 w-8 text-[#007c61]" />
-                  <span className="mt-2 text-[11px] font-black uppercase tracking-wide text-[#666b70]">{item.label}</span>
+                  <span className="mt-2 text-[11px] font-black uppercase tracking-wide text-[#666b70]">{label}</span>
                 </div>
               )
             })}
@@ -1034,36 +1064,47 @@ function VenueDetailScreen({
             </div>
             <div className="sportcation-scrollbar flex gap-3 overflow-x-auto pb-1">
               {dates.map((date, index) => {
-                const [day, label] = date.split(" ")
+                const parsedDate = new Date(`${date}T00:00:00`)
+                const day = new Intl.DateTimeFormat("id-ID", { day: "2-digit" }).format(parsedDate)
+                const month = new Intl.DateTimeFormat("id-ID", { month: "short" }).format(parsedDate)
+                const label = new Intl.DateTimeFormat("id-ID", { weekday: "short" }).format(parsedDate)
+                const selected = selectedDate === date
                 return (
-                  <button key={date} type="button" className={cx("h-20 min-w-[66px] rounded-2xl text-center shadow-sm", index === 0 ? "bg-[#56e8bf] text-[#007c61] ring-2 ring-[#007c61]" : "bg-[#edf1f1] text-[#2d3234]")}>
-                    <span className="block text-[10px] font-black uppercase">Oct</span>
+                  <button
+                    key={date}
+                    type="button"
+                    onClick={() => onSelectSlot(venue.slots.find((slot) => slot.slotDate === date)?.id ?? "")}
+                    className={cx("h-20 min-w-[66px] rounded-2xl text-center shadow-sm", selected || (!selectedDate && index === 0) ? "bg-[#56e8bf] text-[#007c61] ring-2 ring-[#007c61]" : "bg-[#edf1f1] text-[#2d3234]")}
+                  >
+                    <span className="block text-[10px] font-black uppercase">{month}</span>
                     <span className="block text-2xl font-black">{day}</span>
                     <span className="block text-xs">{label}</span>
                   </button>
                 )
               })}
+              {dates.length === 0 && (
+                <div className="rounded-2xl bg-white px-5 py-4 text-sm font-bold text-[#687073] shadow-sm">
+                  Tidak ada slot tersedia.
+                </div>
+              )}
             </div>
             <div className="mt-8 grid grid-cols-3 gap-4">
               {slots.map((slot) => {
-                const isSelected = selectedSlot === slot.time
-                const isBooked = slot.status === "booked"
+                const isSelected = selectedSlot?.id === slot.id
                 return (
                   <button
-                    key={slot.time}
+                    key={slot.id}
                     type="button"
-                    disabled={isBooked}
-                    onClick={() => onSelectSlot(slot.time)}
+                    onClick={() => onSelectSlot(slot.id)}
                     className={cx(
                       "h-18 rounded-2xl text-center text-sm font-black transition disabled:cursor-not-allowed",
-                      isSelected && !isBooked && "bg-[#007c61] text-white ring-4 ring-white outline outline-2 outline-[#007c61]",
-                      !isSelected && !isBooked && "bg-[#edf1f1] text-[#2d3234]",
-                      isBooked && "bg-[#f2f4f4] text-[#b3b6b8]",
+                      isSelected && "bg-[#007c61] text-white ring-4 ring-white outline outline-2 outline-[#007c61]",
+                      !isSelected && "bg-[#edf1f1] text-[#2d3234]",
                     )}
                   >
-                    <span className={cx("block", isBooked && "line-through")}>{slot.time}</span>
-                    <span className={cx("mt-1 block text-[10px] font-bold", isBooked ? "text-[#e69aa3]" : isSelected ? "text-[#56e8bf]" : "text-[#697075]")}>
-                      {isBooked ? "Booked" : isSelected ? "Selected" : "Available"}
+                    <span className="block">{slot.startTime}</span>
+                    <span className={cx("mt-1 block text-[10px] font-bold", isSelected ? "text-[#56e8bf]" : "text-[#697075]")}>
+                      {isSelected ? "Selected" : "Available"}
                     </span>
                   </button>
                 )
@@ -1079,7 +1120,7 @@ function VenueDetailScreen({
                 <div className="absolute left-1/2 top-1/2 grid h-16 w-16 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-[#007c61] text-white ring-4 ring-white">
                   <MapPin className="h-8 w-8" />
                 </div>
-                <div className="absolute bottom-4 left-4 right-4 rounded-2xl bg-white p-4 text-sm font-black">Jl. Suryo No. 12, Senopati, Kebayoran Baru, Jakarta Selatan</div>
+                <div className="absolute bottom-4 left-4 right-4 rounded-2xl bg-white p-4 text-sm font-black">{venue.location}</div>
               </div>
             </div>
           </div>
@@ -1087,8 +1128,8 @@ function VenueDetailScreen({
         <aside className="mx-6 mb-8 rounded-[30px] bg-white px-6 py-5 shadow-[0_18px_40px_rgb(0_0_0/0.08)] lg:sticky lg:top-28 lg:mx-0 lg:mb-0 lg:h-fit lg:rounded-[32px] lg:p-7 lg:shadow-sm">
           <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#687073]">Total Price</p>
           <div className="mt-1 flex items-center justify-between gap-5">
-            <p className="text-2xl font-black tracking-[-0.05em]"><span className="text-base text-[#007c61]">Rp</span> {venue.price.toLocaleString("id-ID")}<span className="text-xs font-bold text-[#687073]">/hr</span></p>
-            <AppButton onClick={onCheckout} className="min-w-[170px] normal-case tracking-normal">
+            <p className="text-2xl font-black tracking-[-0.05em]"><span className="text-base text-[#007c61]">Rp</span> {(selectedSlot?.price ?? venue.price).toLocaleString("id-ID")}<span className="text-xs font-bold text-[#687073]">/hr</span></p>
+            <AppButton onClick={onCheckout} disabled={!selectedSlot} className="min-w-[170px] normal-case tracking-normal">
               Book Now
             </AppButton>
           </div>
@@ -1107,14 +1148,15 @@ function CheckoutScreen({
   onPay,
 }: {
   venue: Venue
-  slot: string
+  slot?: Slot
   paymentMethod: string
   onPaymentMethod: (method: string) => void
   onBack: () => void
   onPay: () => void
 }) {
   const serviceFee = 15000
-  const total = venue.price + serviceFee
+  const slotPrice = slot?.price ?? venue.price
+  const total = slotPrice + serviceFee
 
   return (
     <div>
@@ -1128,7 +1170,7 @@ function CheckoutScreen({
               <span className="rounded-full bg-[#49e7ba] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[#007c61]">Confirmed Venue</span>
               <div className="mt-8 grid gap-8 border-b border-[#e2e7e7] pb-8 lg:grid-cols-[1fr_auto]">
                 <div>
-                  <h2 className="text-2xl font-black tracking-[-0.04em]">Padel Arena</h2>
+                  <h2 className="text-2xl font-black tracking-[-0.04em]">{venue.name}</h2>
                   <p className="mt-1 flex max-w-[190px] items-start gap-1 text-sm font-semibold text-[#687073]">
                     <MapPin className="mt-1 h-4 w-4 shrink-0" />
                     Kebayoran Baru, Jakarta Selatan
@@ -1138,7 +1180,7 @@ function CheckoutScreen({
               </div>
               <div className="mt-6">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#687073]">Date & Time</p>
-                <p className="mt-1 text-lg font-black text-[#007c61]">Sat, 24 Oct - {slot}</p>
+                <p className="mt-1 text-lg font-black text-[#007c61]">{formatSlotDate(slot)} - {formatSlotWindow(slot)}</p>
               </div>
             </div>
             <div className="mt-2 h-52 overflow-hidden rounded-[24px]">
@@ -1185,8 +1227,8 @@ function CheckoutScreen({
             <p className="text-xs font-black uppercase tracking-[0.22em] text-[#687073]">Payment Summary</p>
             <div className="mt-7 space-y-5 text-base">
               <div className="flex justify-between gap-4">
-                <span className="text-[#687073]">Court Fee (2 Hours)</span>
-                <strong>{formatRp(venue.price)}</strong>
+                <span className="text-[#687073]">Court Fee</span>
+                <strong>{formatRp(slotPrice)}</strong>
               </div>
               <div className="flex justify-between gap-4">
                 <span className="text-[#687073]">Service Fee</span>
@@ -1201,7 +1243,7 @@ function CheckoutScreen({
               <ShieldCheck className="h-4 w-4" />
               Secure 256-bit encrypted payment
             </p>
-            <AppButton onClick={onPay} className="mt-8 h-16 w-full">
+            <AppButton onClick={onPay} disabled={!slot} className="mt-8 h-16 w-full">
               <QrCode className="h-5 w-5" />
               Pay Now
             </AppButton>
@@ -1212,7 +1254,9 @@ function CheckoutScreen({
   )
 }
 
-function PaymentScreen({ venue, slot, onBack, onDone }: { venue: Venue; slot: string; onBack: () => void; onDone: () => void }) {
+function PaymentScreen({ venue, slot, onBack, onDone }: { venue: Venue; slot?: Slot; onBack: () => void; onDone: () => void }) {
+  const total = (slot?.price ?? venue.price) + 15000
+
   return (
     <div>
       <MobileTopBar title="Pembayaran QRIS" back onBack={onBack} brand={false} />
@@ -1221,10 +1265,10 @@ function PaymentScreen({ venue, slot, onBack, onDone }: { venue: Venue; slot: st
           <p className="text-xs font-black uppercase tracking-[0.22em] text-[#687073]">Venue & Jadwal</p>
           <div className="mt-3 flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-black">Padel Arena</h1>
+              <h1 className="text-2xl font-black">{venue.name}</h1>
               <p className="mt-4 flex flex-wrap gap-4 text-sm font-semibold text-[#5f666a]">
-                <span><CalendarDays className="mr-1 inline h-4 w-4" /> Kamis 24 Okt</span>
-                <span><Clock className="mr-1 inline h-4 w-4" /> {slot} - 11:00</span>
+                <span><CalendarDays className="mr-1 inline h-4 w-4" /> {formatSlotDate(slot)}</span>
+                <span><Clock className="mr-1 inline h-4 w-4" /> {formatSlotWindow(slot)}</span>
               </p>
             </div>
             <span className="grid h-12 w-12 place-items-center rounded-xl bg-[#dcfff6] text-[#007c61]">
@@ -1242,7 +1286,7 @@ function PaymentScreen({ venue, slot, onBack, onDone }: { venue: Venue; slot: st
             </div>
             <p className="mx-auto mt-7 max-w-[260px] text-base font-semibold leading-relaxed text-[#687073]">Buka aplikasi e-wallet atau bank favoritmu, lalu scan QR di atas.</p>
             <p className="mt-8 text-xs font-black uppercase tracking-[0.22em] text-[#777d82]">Total Pembayaran</p>
-            <p className="mt-2 text-4xl font-black tracking-[-0.05em]">{formatRp(venue.price + 15000)}</p>
+            <p className="mt-2 text-4xl font-black tracking-[-0.05em]">{formatRp(total)}</p>
             <div className="mx-auto mt-6 max-w-[260px] rounded-full bg-[#ffe8ea] px-5 py-4 text-sm font-black text-[#c91f31]">
               <Timer className="mr-2 inline h-4 w-4" />
               Berlaku hingga 14:55 (0h 14m)
@@ -1253,7 +1297,7 @@ function PaymentScreen({ venue, slot, onBack, onDone }: { venue: Venue; slot: st
             Simpan QR Code
           </button>
         </section>
-        <AppButton onClick={onDone} className="mt-12 w-full lg:col-start-2">
+        <AppButton onClick={onDone} disabled={!slot} className="mt-12 w-full lg:col-start-2">
           Selesai membayar
         </AppButton>
       </div>
@@ -1261,7 +1305,9 @@ function PaymentScreen({ venue, slot, onBack, onDone }: { venue: Venue; slot: st
   )
 }
 
-function SuccessScreen({ venue, slot, onTicket, onHome }: { venue: Venue; slot: string; onTicket: () => void; onHome: () => void }) {
+function SuccessScreen({ venue, slot, onTicket, onHome }: { venue: Venue; slot?: Slot; onTicket: () => void; onHome: () => void }) {
+  const total = (slot?.price ?? venue.price) + 15000
+
   return (
     <div className="grid min-h-screen place-items-center px-6 py-12 lg:min-h-[calc(100vh-80px)]">
       <section className="w-full max-w-[520px] text-center">
@@ -1278,18 +1324,18 @@ function SuccessScreen({ venue, slot, onTicket, onHome }: { venue: Venue; slot: 
             <div className="absolute inset-0 bg-black/35" />
             <div className="absolute bottom-5 left-6">
               <span className="rounded-full bg-[#49e7ba] px-3 py-1 text-xs font-black uppercase text-[#007c61]">Confirmed</span>
-              <h2 className="mt-2 text-2xl font-black text-white">Padel Arena</h2>
+              <h2 className="mt-2 text-2xl font-black text-white">{venue.name}</h2>
             </div>
           </div>
           <div className="p-7">
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-[#687073]">Date</p>
-                <p className="mt-2 font-black"><CalendarDays className="mr-1 inline h-4 w-4 text-[#007c61]" /> 24 Oct 2024</p>
+                <p className="mt-2 font-black"><CalendarDays className="mr-1 inline h-4 w-4 text-[#007c61]" /> {formatSlotDate(slot)}</p>
               </div>
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-[#687073]">Time</p>
-                <p className="mt-2 font-black"><Clock className="mr-1 inline h-4 w-4 text-[#007c61]" /> {slot} WIB</p>
+                <p className="mt-2 font-black"><Clock className="mr-1 inline h-4 w-4 text-[#007c61]" /> {formatSlotWindow(slot)} WIB</p>
               </div>
             </div>
             <div className="my-8 border-t border-dashed border-[#dce2e2]" />
@@ -1300,7 +1346,7 @@ function SuccessScreen({ venue, slot, onTicket, onHome }: { venue: Venue; slot: 
             </div>
             <p className="mt-6 text-center text-sm font-semibold text-[#687073]">Tunjukkan QR Code ini pada petugas lapangan untuk check-in.</p>
             <div className="mt-8 rounded-2xl bg-[#f3f6f6] p-5 text-center text-lg font-black">
-              Total Pembayaran <span className="text-2xl text-[#007c61]">{formatRp(venue.price + 15000)}</span>
+              Total Pembayaran <span className="text-2xl text-[#007c61]">{formatRp(total)}</span>
             </div>
           </div>
         </div>
@@ -1675,7 +1721,7 @@ function SettingsRow({
   )
 }
 
-function FlashSaleScreen({ onVenue }: { onVenue: (id: string) => void }) {
+function FlashSaleScreen({ deals, onVenue }: { deals: FlashDeal[]; onVenue: (id: string) => void }) {
   return (
     <>
       <MobileTopBar title="Jakarta, ID" brand={false} />
@@ -1693,9 +1739,10 @@ function FlashSaleScreen({ onVenue }: { onVenue: (id: string) => void }) {
           ))}
         </div>
         <div className="mt-8 grid gap-7 lg:grid-cols-3">
-          {flashDeals.map((deal) => (
+          {deals.map((deal) => (
             <DealCard key={deal.name} deal={deal} onClick={() => onVenue(deal.id)} />
           ))}
+          {deals.length === 0 && <CatalogInlineState title="No deals yet" message="Flash sale akan muncul dari venue published." />}
         </div>
       </div>
     </>
