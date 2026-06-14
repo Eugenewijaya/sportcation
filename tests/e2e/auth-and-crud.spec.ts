@@ -140,6 +140,69 @@ test("serves the public catalog from persisted venue and slot data", async ({ pa
   await expect(page.getByText("08:00 - 09:00")).toBeVisible()
 })
 
+test("supports persistent merchant booking management", async ({ page }) => {
+  await login(page, e2eContext.merchant, "/merchant/bookings")
+  await expect(page.getByRole("heading", { name: "Booking Operations", exact: true })).toBeVisible()
+  await expect(page.getByText("SP-77291")).toBeVisible()
+
+  const listResponse = await page.request.get("/api/merchant/bookings")
+  expect(listResponse.status()).toBe(200)
+  await expect(listResponse.json()).resolves.toMatchObject({
+    data: [
+      {
+        id: "booking-demo-confirmed",
+        bookingCode: "SP-77291",
+        status: "confirmed",
+        actions: {
+          canCheckIn: true,
+          canComplete: false,
+        },
+      },
+    ],
+  })
+
+  const detailResponse = page.waitForResponse(
+    (response) =>
+      response.request().method() === "GET" &&
+      response.url().endsWith("/api/merchant/bookings/booking-demo-confirmed"),
+  )
+  await page.getByRole("button", { name: "Detail", exact: true }).first().click()
+  expect((await detailResponse).status()).toBe(200)
+  await expect(page.getByText("Alex Rivera E2E", { exact: true })).toBeVisible()
+  await expect(page.getByText("Payment paid")).toBeVisible()
+
+  const checkInResponse = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      response.url().endsWith("/api/merchant/bookings/booking-demo-confirmed/status"),
+  )
+  await page.getByRole("button", { name: "Mark Checked In", exact: true }).click()
+  expect((await checkInResponse).status()).toBe(200)
+  await expect(page.getByText("Checked in", { exact: true }).first()).toBeVisible()
+
+  const completeResponse = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      response.url().endsWith("/api/merchant/bookings/booking-demo-confirmed/status"),
+  )
+  await page.getByRole("button", { name: "Mark Completed", exact: true }).click()
+  expect((await completeResponse).status()).toBe(200)
+  await expect(page.getByText("Completed", { exact: true }).first()).toBeVisible()
+
+  const persistedDetail = await page.request.get("/api/merchant/bookings/booking-demo-confirmed")
+  expect(persistedDetail.status()).toBe(200)
+  await expect(persistedDetail.json()).resolves.toMatchObject({
+    data: {
+      id: "booking-demo-confirmed",
+      status: "completed",
+      actions: {
+        canCheckIn: false,
+        canComplete: false,
+      },
+    },
+  })
+})
+
 test("creates a persisted customer booking and payment simulation", async ({ page }) => {
   const unauthenticatedBookingResponse = await page.request.post("/api/bookings", {
     data: {

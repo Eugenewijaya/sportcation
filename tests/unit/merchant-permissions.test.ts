@@ -14,17 +14,21 @@ describe("merchant permissions", () => {
     }
   })
 
-  it("allows staff to manage slots but not venue catalog mutations", () => {
+  it("allows staff to manage slots and booking operations but not venue catalog mutations", () => {
     expect(hasMerchantPermission("staff", "catalog:read")).toBe(true)
     expect(hasMerchantPermission("staff", "slots:write")).toBe(true)
+    expect(hasMerchantPermission("staff", "bookings:read")).toBe(true)
+    expect(hasMerchantPermission("staff", "bookings:write")).toBe(true)
     expect(hasMerchantPermission("staff", "catalog:write")).toBe(false)
   })
 
   it("keeps finance and viewer roles read-only", () => {
     for (const role of ["finance", "viewer"] as const) {
       expect(hasMerchantPermission(role, "catalog:read")).toBe(true)
+      expect(hasMerchantPermission(role, "bookings:read")).toBe(true)
       expect(hasMerchantPermission(role, "catalog:write")).toBe(false)
       expect(hasMerchantPermission(role, "slots:write")).toBe(false)
+      expect(hasMerchantPermission(role, "bookings:write")).toBe(false)
     }
   })
 

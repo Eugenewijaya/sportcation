@@ -13,9 +13,10 @@ Sportcation is a responsive Next.js web app for sports venue discovery, booking 
 - Persistent customer booking creation, payment simulation, booking success, and My Bookings.
 - Customer booking cancellation and pending-payment expiry for local/libSQL booking simulation.
 - Persistent customer profile and notification read-state management.
+- Persistent merchant booking list, detail, check-in, and completion actions.
 - Server-only service/repository boundaries with atomic mutation and audit-log transactions.
 - Vitest unit/integration tests, Playwright Chromium E2E, and GitHub Actions CI.
-- Merchant booking/finance and most admin modules remain prototype UI.
+- Merchant finance and most admin modules remain prototype UI.
 
 ## Local Setup
 
@@ -56,7 +57,7 @@ Supported variables are documented in `.env.example`. Passwords must contain at 
 /merchant               Protected merchant dashboard
 /merchant/venues        Persistent venue CRUD
 /merchant/slots         Persistent slot CRUD
-/merchant/bookings      Merchant booking UI prototype
+/merchant/bookings      Persistent merchant booking operations
 /merchant/finance       Merchant finance UI prototype
 /admin                  Protected admin dashboard
 /admin/users            Admin user UI prototype
@@ -122,9 +123,12 @@ GET, PATCH         /api/profile
 GET                /api/notifications
 POST               /api/notifications/:id/read
 POST               /api/notifications/mark-all-read
+GET                /api/merchant/bookings
+GET                /api/merchant/bookings/:id
+POST               /api/merchant/bookings/:id/status
 ```
 
-Merchant mutation APIs require an active merchant session, verified merchant membership, ownership, and the required membership permission. Customer booking, profile, and notification APIs require an active customer session and only expose the current user's records. See `docs/AUDIT_AND_IMPLEMENTATION_PLAN_SQLITE_LIBSQL.md` for verified status and the recommended next stage.
+Merchant APIs require an active merchant session, verified merchant membership, ownership, and the required membership permission. Customer booking, profile, and notification APIs require an active customer session and only expose the current user's records. See `docs/AUDIT_AND_IMPLEMENTATION_PLAN_SQLITE_LIBSQL.md` for verified status and the recommended next stage.
 
 ## Engineering Boundaries
 

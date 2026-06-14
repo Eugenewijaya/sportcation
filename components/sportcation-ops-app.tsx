@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useMemo, useState } from "react"
+import { MerchantBookingWorkspace } from "@/components/merchant-booking-workspace"
 import { MerchantPersistentWorkspace } from "@/components/merchant-persistent-workspace"
 import { OpsAccountControls } from "@/components/ops-account-controls"
 import {
@@ -392,6 +393,7 @@ function renderOpsSection(
     if (section === "venues" || section === "slots") {
       return <MerchantPersistentWorkspace resource={section} onAction={onAction} />
     }
+    if (section === "bookings") return <MerchantBookingWorkspace onAction={onAction} />
     return <CrudWorkspace config={merchantResources[section as Exclude<MerchantSection, "overview" | "settings">]} role="merchant" onAction={onAction} />
   }
 
