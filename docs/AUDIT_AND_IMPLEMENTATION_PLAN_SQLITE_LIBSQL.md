@@ -4,7 +4,7 @@ Audit date: 11 June 2026
 
 ## Executive Decision
 
-Sportcation is runnable as a responsive Next.js web application. Stage 2 is complete: authentication, role authorization, merchant ownership checks, persistent SQLite/libSQL CRUD, service and repository boundaries, atomic audit transactions, migration, seed, lint, typecheck, coverage, production build, HTTP flow, and Chromium end-to-end checks pass. Stage 3 is complete for the public catalog. Stage 4 is complete for customer booking and payment simulation persistence. Stage 5A is complete for customer cancellation and pending-payment expiry.
+Sportcation is runnable as a responsive Next.js web application. Stage 2 is complete: authentication, role authorization, merchant ownership checks, persistent SQLite/libSQL CRUD, service and repository boundaries, atomic audit transactions, migration, seed, lint, typecheck, coverage, production build, HTTP flow, and Chromium end-to-end checks pass. Stage 3 is complete for the public catalog. Stage 4 is complete for customer booking and payment simulation persistence. Stage 5A is complete for customer cancellation and pending-payment expiry. Stage 5B is complete for customer profile and notification persistence.
 
 The project is ready for internal preview of customer booking simulation. It is not ready for public paid traffic because real payment gateway, webhooks, real refunds, production monitoring, and operational backup/restore are still not implemented.
 
@@ -22,7 +22,7 @@ The project is ready for internal preview of customer booking simulation. It is 
 | Future database reference | Neon PostgreSQL schema under `lib/db/postgres` |
 | File storage | Not implemented |
 | Payment | Persisted customer payment simulation with cancellation and expiry |
-| Notification delivery | Mock UI only |
+| Notification delivery | Persisted in-app notification list and read state; no push delivery yet |
 | Automated tests | Vitest unit/integration tests plus Playwright Chromium E2E |
 | CI | GitHub Actions migration, audit, lint, typecheck, test, build, and E2E gates |
 
@@ -38,9 +38,9 @@ The active schema has 17 tables, including users, profiles, auth accounts/sessio
 - ESLint: passed.
 - Next.js production build: passed.
 - npm dependency audit: passed with 0 known vulnerabilities.
-- Vitest: 7 test files and 36 tests passed.
-- Coverage: 86.19% statements, 71.98% branches, 93.33% functions, and 88.03% lines.
-- Playwright Chromium: 5 E2E tests passed.
+- Vitest: 9 test files and 51 tests passed.
+- Coverage: 86.86% statements, 70.96% branches, 88.46% functions, and 89.89% lines.
+- Playwright Chromium: 6 E2E tests passed.
 - Migration drift CI check: configured.
 - GitHub Actions CI: configured for migration, dependency audit, lint, typecheck, coverage, build, and E2E.
 - Public, merchant, and admin route smoke test: all expected routes returned `200` with the proper session.
@@ -74,6 +74,7 @@ Implemented:
 - Current mutations create audit log records.
 - Venue, court, and slot mutations commit their resource change and audit event atomically.
 - Customer booking creation and payment simulation persist booking, booking item, payment, notification, slot state, and audit state inside server-controlled transactions.
+- Customer profile updates and notification read-state mutations are protected, ownership-scoped, validated, and audited.
 - API handlers are thin authentication, validation, service invocation, and response adapters.
 - Unit and integration tests use isolated temporary SQLite databases and do not write to the developer database.
 - Unsafe API methods reject browser requests from untrusted origins.
@@ -97,7 +98,7 @@ Remaining security work:
 1. Real payment gateway, webhooks, settlement, refund, payout, and QR issuer are not implemented.
 2. Pending payment expiration is request-driven; no Vercel Cron or background worker is configured yet.
 3. Booking cancellation has MVP rules only; no cutoff, penalty, or merchant approval workflow exists.
-4. Admin resource screens are still mock UI.
+4. Merchant and admin operational booking screens are still prototype UI.
 
 ### High Priority
 
@@ -116,24 +117,54 @@ Remaining security work:
 
 ## Recommended Next Stage
 
-Stage 2, Stage 3, Stage 4, and Stage 5A are complete for the current SQLite/libSQL direction. Proceed with **Stage 5B: profile and notification persistence** if account experience is the priority, or **Stage 6: merchant booking management** if operational workflows are the priority.
+Stage 2, Stage 3, Stage 4, Stage 5A, and Stage 5B are complete for the current SQLite/libSQL direction. Proceed with **Stage 6: merchant booking management**.
 
 Scope:
 
-1. Add customer profile read/update APIs.
-2. Persist Profile and Edit Profile screen changes.
-3. Add notification list API and mark-read/mark-all-read APIs.
-4. Connect Notification screen to persisted notifications.
-5. Add integration and E2E coverage for profile and notification state.
+1. Add merchant booking list API filtered by merchant ownership.
+2. Add merchant booking detail API.
+3. Connect Merchant Bookings UI to persisted booking data.
+4. Add safe MVP merchant booking actions if needed, such as marking check-in or completed.
+5. Add integration and E2E coverage for merchant booking visibility and authorization.
 
 Exit criteria:
 
-- Profile updates persist and survive reloads.
-- Notification read state persists.
-- Users can only access their own profile and notifications.
-- Existing booking/payment, public catalog, and merchant CRUD regression tests remain green.
+- Merchant users can only see bookings for venues owned by their merchant.
+- Merchant booking UI consumes persisted records.
+- Customer, public catalog, profile, notification, and merchant CRUD regression tests remain green.
 
-After Stage 5B, expand persistent merchant booking management and admin booking/payment review.
+After Stage 6, expand admin booking/payment review and operational reporting.
+
+## Stage 5B Implementation Receipt
+
+Implemented:
+
+- `lib/customer-account/types.ts` for customer profile and notification DTO contracts.
+- `lib/validation/account.ts` for profile update validation.
+- `lib/services/account-service.ts` for profile read/update, notification list, mark-read, and mark-all-read service logic.
+- `app/api/profile/route.ts`.
+- `app/api/notifications/route.ts`.
+- `app/api/notifications/[id]/read/route.ts`.
+- `app/api/notifications/mark-all-read/route.ts`.
+- `components/sportcation-web-app.tsx` Profile, Edit Profile, Settings Personal Info, and Notifications integration with persisted account data.
+- `tests/integration/customer-account.test.ts`.
+- Playwright customer profile and notification E2E coverage in `tests/e2e/auth-and-crud.spec.ts`.
+- `docs/STAGE_5B_PROFILE_NOTIFICATION_AUDIT.md`.
+- `package.json` and `package-lock.json` to pin `esbuild@0.28.1` across direct and transitive toolchain installs after npm audit flagged high-severity `esbuild <=0.28.0`.
+
+Validation receipt:
+
+```text
+npm run typecheck       passed
+npx vitest run tests/integration/customer-account.test.ts passed, 7 tests
+npm run lint            passed
+npm run db:generate     passed, no schema drift
+npm run test:coverage   passed, 51 tests
+npm audit               passed, 0 vulnerabilities
+npm ls esbuild          passed, all resolved to 0.28.1
+npm run build           passed with required auth env
+npm run test:e2e        passed, 6 Chromium tests
+```
 
 ## Stage 5A Implementation Receipt
 

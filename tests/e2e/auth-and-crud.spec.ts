@@ -207,6 +207,56 @@ test("creates a persisted customer booking and payment simulation", async ({ pag
   await expect(cancelledBookingCard.getByText("refunded")).toBeVisible()
 })
 
+test("supports persisted customer profile and notification management", async ({ page }) => {
+  await login(page, e2eContext.customer, "/?screen=profile")
+
+  await expect(page.getByRole("heading", { name: "Alex Rivera E2E", exact: true })).toBeVisible()
+  await expect(page.getByText(e2eContext.customer.email)).toBeVisible()
+
+  await page.getByRole("button", { name: /Edit Profile/ }).click()
+  await expect(page.getByRole("heading", { name: "Personal Info", exact: true })).toBeVisible()
+  await page.getByLabel("Account name").fill("Alex Profile E2E")
+  await page.getByLabel("Full name").fill("Alex Profile E2E")
+  await page.getByLabel("Phone").fill("+62 812 0000 9000")
+  await page.getByLabel("City").fill("Jakarta")
+
+  const profileUpdateResponse = page.waitForResponse(
+    (response) =>
+      response.request().method() === "PATCH" &&
+      response.url().endsWith("/api/profile"),
+  )
+  await page.getByRole("button", { name: "Save Profile", exact: true }).click()
+  expect((await profileUpdateResponse).status()).toBe(200)
+
+  await expect(page.getByRole("heading", { name: "Alex Profile E2E", exact: true })).toBeVisible()
+  await expect(page.getByText("+62 812 0000 9000")).toBeVisible()
+
+  await page.getByRole("button", { name: /Notifications/ }).click()
+  await expect(page.getByRole("heading", { name: "Updates", exact: true })).toBeVisible()
+  await expect(page.getByText("Booking Confirmed").first()).toBeVisible()
+
+  const markAllResponse = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      response.url().endsWith("/api/notifications/mark-all-read"),
+  )
+  await page.getByRole("button", { name: "Mark all as read", exact: true }).click()
+  expect((await markAllResponse).status()).toBe(200)
+  await expect(page.getByText("Read").first()).toBeVisible()
+
+  const profileResponse = await page.request.get("/api/profile")
+  expect(profileResponse.status()).toBe(200)
+  await expect(profileResponse.json()).resolves.toMatchObject({
+    data: {
+      name: "Alex Profile E2E",
+      phone: "+62 812 0000 9000",
+      stats: {
+        unreadNotifications: 0,
+      },
+    },
+  })
+})
+
 test("enforces role boundaries for merchant and admin pages", async ({ browser }) => {
   const merchantContext = await browser.newContext()
   const merchantPage = await merchantContext.newPage()

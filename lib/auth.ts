@@ -19,6 +19,8 @@ if (process.env.NODE_ENV === "production" && !configuredBaseURL) {
 
 const baseURL = configuredBaseURL ?? "http://localhost:3000"
 const trustedOrigins = getTrustedAuthOrigins(process.env, baseURL)
+const signInEmailRateLimitMax = readPositiveInteger(process.env.AUTH_SIGN_IN_RATE_LIMIT_MAX, 5)
+const signUpEmailRateLimitMax = readPositiveInteger(process.env.AUTH_SIGN_UP_RATE_LIMIT_MAX, 3)
 
 export const auth = betterAuth({
   appName: "Sportcation",
@@ -78,11 +80,11 @@ export const auth = betterAuth({
     customRules: {
       "/sign-in/email": {
         window: 60,
-        max: 5,
+        max: signInEmailRateLimitMax,
       },
       "/sign-up/email": {
         window: 60,
-        max: 3,
+        max: signUpEmailRateLimitMax,
       },
     },
   },
@@ -108,3 +110,9 @@ export const auth = betterAuth({
 })
 
 export type AuthSession = typeof auth.$Infer.Session
+
+function readPositiveInteger(value: string | undefined, fallback: number) {
+  if (!value) return fallback
+  const parsed = Number.parseInt(value, 10)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
+}

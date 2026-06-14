@@ -22,6 +22,7 @@ async function main() {
     BETTER_AUTH_SECRET: e2eContext.authSecret,
     BETTER_AUTH_URL: baseURL,
     AUTH_TRUSTED_ORIGINS: baseURL,
+    AUTH_SIGN_IN_RATE_LIMIT_MAX: "20",
     NEXT_PUBLIC_APP_URL: baseURL,
     TURSO_DATABASE_URL: toLibsqlFileUrl(e2eDatabasePath),
   }

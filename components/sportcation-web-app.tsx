@@ -42,6 +42,7 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react"
+import type { CustomerNotification, CustomerProfile } from "@/lib/customer-account/types"
 import type { CustomerBooking, CustomerPaymentMethod } from "@/lib/customer-bookings/types"
 import type { PublicCatalogPayload, PublicSlot, PublicVenue } from "@/lib/public-catalog/types"
 
@@ -58,6 +59,7 @@ type View =
   | "bookings"
   | "notifications"
   | "profile"
+  | "edit-profile"
   | "settings"
   | "flash"
   | "resell"
@@ -88,6 +90,7 @@ const views: View[] = [
   "bookings",
   "notifications",
   "profile",
+  "edit-profile",
   "settings",
   "flash",
   "resell",
@@ -169,6 +172,22 @@ function formatBookingWindow(booking: CustomerBooking) {
   return `${booking.item.startTime} - ${booking.item.endTime}`
 }
 
+function formatCompactNumber(value: number) {
+  if (value >= 1000) return `${(value / 1000).toFixed(value % 1000 === 0 ? 0 : 1)}k`
+  return `${value}`
+}
+
+function formatNotificationTime(value: string) {
+  const timestamp = new Date(value).getTime()
+  if (Number.isNaN(timestamp)) return "Now"
+  const minutes = Math.max(0, Math.round((Date.now() - timestamp) / 60_000))
+  if (minutes < 1) return "Now"
+  if (minutes < 60) return `${minutes}M AGO`
+  const hours = Math.round(minutes / 60)
+  if (hours < 24) return `${hours}H AGO`
+  return `${Math.round(hours / 24)}D AGO`
+}
+
 function paymentMethodToApi(label: string): CustomerPaymentMethod {
   if (label.toLowerCase().includes("virtual")) return "virtual_account"
   if (label.toLowerCase().includes("wallet")) return "wallet"
@@ -199,6 +218,14 @@ function isUpcomingBooking(booking: CustomerBooking) {
   return ["pending_payment", "confirmed", "checked_in"].includes(booking.status)
 }
 
+type ProfileUpdatePayload = {
+  name?: string
+  fullName?: string
+  phone?: string
+  city?: string
+  avatarUrl?: string
+}
+
 export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCatalogPayload }) {
   const [view, setView] = useState<View>("onboarding")
   const [catalog, setCatalog] = useState(initialCatalog)
@@ -218,6 +245,15 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
   const [customerBookingsError, setCustomerBookingsError] = useState("")
   const [bookingActionId, setBookingActionId] = useState("")
   const [bookingActionError, setBookingActionError] = useState("")
+  const [customerProfile, setCustomerProfile] = useState<CustomerProfile | null>(null)
+  const [customerProfileStatus, setCustomerProfileStatus] = useState<"idle" | "loading" | "error" | "unauthenticated">("idle")
+  const [customerProfileError, setCustomerProfileError] = useState("")
+  const [profileMutationStatus, setProfileMutationStatus] = useState<"idle" | "loading">("idle")
+  const [profileMutationError, setProfileMutationError] = useState("")
+  const [customerNotifications, setCustomerNotifications] = useState<CustomerNotification[]>([])
+  const [customerNotificationsStatus, setCustomerNotificationsStatus] = useState<"idle" | "loading" | "error" | "unauthenticated">("idle")
+  const [customerNotificationsError, setCustomerNotificationsError] = useState("")
+  const [notificationActionStatus, setNotificationActionStatus] = useState<"idle" | "loading">("idle")
   const [paymentMethod, setPaymentMethod] = useState("QRIS / OVO")
   const [darkMode, setDarkMode] = useState(false)
   const [pushEnabled, setPushEnabled] = useState(true)
@@ -231,6 +267,60 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
   const flashDeals = useMemo(() => buildFlashDeals(catalog.venues), [catalog.venues])
   const selectedVenue = catalog.venues.find((venue) => venue.id === selectedVenueId) ?? catalog.venues[0]
   const selectedSlot = selectedVenue?.slots.find((slot) => slot.id === selectedSlotId) ?? selectedVenue?.slots[0]
+
+  const loadCustomerProfile = useCallback(async (signal?: AbortSignal) => {
+    setCustomerProfileStatus("loading")
+    setCustomerProfileError("")
+
+    try {
+      const response = await fetch("/api/profile", {
+        signal,
+        headers: {
+          Accept: "application/json",
+        },
+      })
+      if (response.status === 401) {
+        setCustomerProfile(null)
+        setCustomerProfileStatus("unauthenticated")
+        return
+      }
+
+      const profile = await readApiData<CustomerProfile>(response)
+      setCustomerProfile(profile)
+      setCustomerProfileStatus("idle")
+    } catch (error) {
+      if (signal?.aborted) return
+      setCustomerProfileStatus("error")
+      setCustomerProfileError(error instanceof Error ? error.message : "Profil tidak dapat dimuat.")
+    }
+  }, [])
+
+  const loadCustomerNotifications = useCallback(async (signal?: AbortSignal) => {
+    setCustomerNotificationsStatus("loading")
+    setCustomerNotificationsError("")
+
+    try {
+      const response = await fetch("/api/notifications", {
+        signal,
+        headers: {
+          Accept: "application/json",
+        },
+      })
+      if (response.status === 401) {
+        setCustomerNotifications([])
+        setCustomerNotificationsStatus("unauthenticated")
+        return
+      }
+
+      const notifications = await readApiData<CustomerNotification[]>(response)
+      setCustomerNotifications(notifications)
+      setCustomerNotificationsStatus("idle")
+    } catch (error) {
+      if (signal?.aborted) return
+      setCustomerNotificationsStatus("error")
+      setCustomerNotificationsError(error instanceof Error ? error.message : "Notifikasi tidak dapat dimuat.")
+    }
+  }, [])
 
   const loadCustomerBookings = useCallback(async (signal?: AbortSignal) => {
     setCustomerBookingsStatus("loading")
@@ -330,6 +420,34 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
       controller.abort()
     }
   }, [loadCustomerBookings, view])
+
+  useEffect(() => {
+    if (!["profile", "edit-profile", "settings"].includes(view)) return
+
+    const controller = new AbortController()
+    const timeout = window.setTimeout(() => {
+      void loadCustomerProfile(controller.signal)
+    }, 0)
+
+    return () => {
+      window.clearTimeout(timeout)
+      controller.abort()
+    }
+  }, [loadCustomerProfile, view])
+
+  useEffect(() => {
+    if (view !== "notifications") return
+
+    const controller = new AbortController()
+    const timeout = window.setTimeout(() => {
+      void loadCustomerNotifications(controller.signal)
+    }, 0)
+
+    return () => {
+      window.clearTimeout(timeout)
+      controller.abort()
+    }
+  }, [loadCustomerNotifications, view])
 
   function go(next: View) {
     setView(next)
@@ -492,6 +610,118 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
     }
   }
 
+  async function saveCustomerProfile(input: ProfileUpdatePayload) {
+    setProfileMutationStatus("loading")
+    setProfileMutationError("")
+
+    try {
+      const response = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(input),
+      })
+      if (response.status === 401) {
+        setProfileMutationStatus("idle")
+        redirectToLogin("edit-profile")
+        return
+      }
+
+      const profile = await readApiData<CustomerProfile>(response)
+      setCustomerProfile(profile)
+      setProfileMutationStatus("idle")
+      go("profile")
+    } catch (error) {
+      setProfileMutationStatus("idle")
+      setProfileMutationError(error instanceof Error ? error.message : "Profil gagal disimpan.")
+    }
+  }
+
+  async function markAllCustomerNotificationsRead() {
+    setNotificationActionStatus("loading")
+
+    try {
+      const response = await fetch("/api/notifications/mark-all-read", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+        },
+      })
+      if (response.status === 401) {
+        setNotificationActionStatus("idle")
+        redirectToLogin("notifications")
+        return
+      }
+
+      const notifications = await readApiData<CustomerNotification[]>(response)
+      setCustomerNotifications(notifications)
+      setCustomerProfile((current) =>
+        current
+          ? {
+              ...current,
+              stats: {
+                ...current.stats,
+                unreadNotifications: 0,
+              },
+            }
+          : current,
+      )
+    } catch (error) {
+      setCustomerNotificationsStatus("error")
+      setCustomerNotificationsError(error instanceof Error ? error.message : "Notifikasi gagal diperbarui.")
+    } finally {
+      setNotificationActionStatus("idle")
+    }
+  }
+
+  async function openCustomerNotification(notification: CustomerNotification) {
+    setNotificationActionStatus("loading")
+
+    try {
+      if (!notification.readAt) {
+        const response = await fetch(`/api/notifications/${notification.id}/read`, {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+          },
+        })
+        if (response.status === 401) {
+          setNotificationActionStatus("idle")
+          redirectToLogin("notifications")
+          return
+        }
+
+        const updated = await readApiData<CustomerNotification>(response)
+        setCustomerNotifications((current) => current.map((item) => (item.id === updated.id ? updated : item)))
+        setCustomerProfile((current) =>
+          current
+            ? {
+                ...current,
+                stats: {
+                  ...current.stats,
+                  unreadNotifications: Math.max(0, current.stats.unreadNotifications - 1),
+                },
+              }
+            : current,
+        )
+      }
+
+      if (notification.actionUrl) {
+        const target = new URL(notification.actionUrl, window.location.origin).searchParams.get("screen")
+        if (views.includes(target as View)) {
+          go(target as View)
+        }
+      }
+    } catch (error) {
+      setCustomerNotificationsStatus("error")
+      setCustomerNotificationsError(error instanceof Error ? error.message : "Notifikasi gagal dibuka.")
+    } finally {
+      setNotificationActionStatus("idle")
+    }
+  }
+
   const shouldShowBottomNav = ["home", "explore", "auction", "bookings", "notifications", "profile", "settings", "flash", "help"].includes(view)
 
   if (view === "onboarding") {
@@ -587,11 +817,46 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
                 actionError={bookingActionError}
               />
             )}
-            {view === "notifications" && <NotificationsScreen onBack={() => go("profile")} />}
-            {view === "profile" && <ProfileScreen onNavigate={go} />}
+            {view === "notifications" && (
+              <NotificationsScreen
+                notifications={customerNotifications}
+                status={customerNotificationsStatus}
+                error={customerNotificationsError}
+                actionStatus={notificationActionStatus}
+                onBack={() => go("profile")}
+                onLogin={() => redirectToLogin("notifications")}
+                onRefresh={() => void loadCustomerNotifications()}
+                onMarkAll={() => void markAllCustomerNotificationsRead()}
+                onOpen={(notification) => void openCustomerNotification(notification)}
+              />
+            )}
+            {view === "profile" && (
+              <ProfileScreen
+                profile={customerProfile}
+                status={customerProfileStatus}
+                error={customerProfileError}
+                onNavigate={go}
+                onRefresh={() => void loadCustomerProfile()}
+                onLogin={() => redirectToLogin("profile")}
+              />
+            )}
+            {view === "edit-profile" && (
+              <EditProfileScreen
+                key={customerProfile?.id ?? customerProfileStatus}
+                profile={customerProfile}
+                status={customerProfileStatus}
+                error={customerProfileError}
+                mutationStatus={profileMutationStatus}
+                mutationError={profileMutationError}
+                onBack={() => go("profile")}
+                onLogin={() => redirectToLogin("edit-profile")}
+                onSave={(input) => void saveCustomerProfile(input)}
+              />
+            )}
             {view === "settings" && (
               <SettingsScreen
                 onNavigate={go}
+                profile={customerProfile}
                 darkMode={darkMode}
                 onDarkMode={setDarkMode}
                 pushEnabled={pushEnabled}
@@ -626,7 +891,15 @@ function Brand({ compact = false, inverse = false }: { compact?: boolean; invers
   )
 }
 
-function Avatar({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
+function Avatar({
+  size = "md",
+  src = "/placeholder-user.jpg",
+  alt = "Sportcation user avatar",
+}: {
+  size?: "sm" | "md" | "lg"
+  src?: string | null
+  alt?: string
+}) {
   return (
     <div
       className={cx(
@@ -636,7 +909,7 @@ function Avatar({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
         size === "lg" && "h-28 w-28 border-4",
       )}
     >
-      <img src="/placeholder-user.jpg" alt="Alex Rivera avatar" className="h-full w-full object-cover" />
+      <img src={src || "/placeholder-user.jpg"} alt={alt} className="h-full w-full object-cover" />
     </div>
   )
 }
@@ -1893,12 +2166,28 @@ function BookingsScreen({
   )
 }
 
-function NotificationsScreen({ onBack }: { onBack: () => void }) {
-  const items = [
-    { title: "Auction Outbid", body: "Someone just raised the stakes for the Pro Surfer Suite in Bali. Act fast to reclaim your lead!", tone: "red", icon: Gavel, time: "2M AGO" },
-    { title: "Booking Confirmed", body: "Your session at The Kinetic Lab is locked in for Friday at 09:00. Get ready to move.", tone: "green", icon: BadgeCheck, time: "1H AGO" },
-    { title: "Flash Sale Alert", body: "40% OFF all mountain biking excursions this weekend. Use code VELOCITY40.", tone: "yellow", icon: Zap, time: "4H AGO" },
-  ]
+function NotificationsScreen({
+  notifications,
+  status,
+  error,
+  actionStatus,
+  onBack,
+  onLogin,
+  onRefresh,
+  onMarkAll,
+  onOpen,
+}: {
+  notifications: CustomerNotification[]
+  status: "idle" | "loading" | "error" | "unauthenticated"
+  error: string
+  actionStatus: "idle" | "loading"
+  onBack: () => void
+  onLogin: () => void
+  onRefresh: () => void
+  onMarkAll: () => void
+  onOpen: (notification: CustomerNotification) => void
+}) {
+  const unreadCount = notifications.filter((item) => !item.readAt).length
   return (
     <>
       <MobileTopBar title="Notifications" back onBack={onBack} onBell={() => undefined} brand={false} />
@@ -1908,113 +2197,382 @@ function NotificationsScreen({ onBack }: { onBack: () => void }) {
             <p className="text-xs font-black uppercase tracking-[0.22em] text-[#687073]">Activity Feed</p>
             <h1 className="mt-3 text-4xl font-black tracking-[-0.07em]">Updates</h1>
           </div>
-          <button type="button" className="text-sm font-black text-[#007c61]">Mark all as read</button>
+          <button
+            type="button"
+            disabled={!unreadCount || actionStatus === "loading"}
+            onClick={onMarkAll}
+            className="text-sm font-black text-[#007c61] disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {actionStatus === "loading" ? "Updating..." : "Mark all as read"}
+          </button>
         </div>
-        <div className="mt-8 grid gap-5 lg:grid-cols-3">
-          {items.map((item) => {
-            const Icon = item.icon
-            return (
-              <article key={item.title} className={cx("rounded-[22px] bg-white p-6 shadow-sm", item.tone === "red" && "border-l-4 border-[#c92034]", item.tone === "green" && "border-l-4 border-[#007c61]", item.tone === "yellow" && "border-l-4 border-[#8a6f00]")}>
-                <div className="flex items-start gap-5">
-                  <span className={cx("grid h-14 w-14 shrink-0 place-items-center rounded-full", item.tone === "red" && "bg-[#ffe0e5] text-[#c92034]", item.tone === "green" && "bg-[#dcfff6] text-[#007c61]", item.tone === "yellow" && "bg-[#fff2c9] text-[#8a6f00]")}>
-                    <Icon className="h-6 w-6" />
-                  </span>
-                  <div>
-                    <div className="flex items-start justify-between gap-4">
-                      <h2 className="text-lg font-black">{item.title}</h2>
-                      <span className="text-[10px] font-black text-[#777d82]">{item.time}</span>
+
+        {status === "unauthenticated" && (
+          <StatePanel
+            title="Login required"
+            body="Masuk terlebih dahulu untuk melihat notifikasi booking, promo, dan aktivitas akun."
+            actionLabel="Login"
+            onAction={onLogin}
+          />
+        )}
+
+        {status === "loading" && notifications.length === 0 && (
+          <StatePanel title="Loading notifications" body="Mengambil update terbaru dari akun Sportcation Anda." />
+        )}
+
+        {status === "error" && notifications.length === 0 && (
+          <StatePanel title="Notifications unavailable" body={error} actionLabel="Retry" onAction={onRefresh} />
+        )}
+
+        {status !== "unauthenticated" && status !== "loading" && notifications.length === 0 && (
+          <StatePanel title="No notifications yet" body="Kami akan menampilkan update booking, payment, promo, dan sistem di sini." />
+        )}
+
+        {notifications.length > 0 && (
+          <div className="mt-8 grid gap-5 lg:grid-cols-3">
+            {notifications.map((item) => {
+              const meta = notificationMeta(item.type)
+              const Icon = meta.icon
+              const unread = !item.readAt
+              return (
+                <article
+                  key={item.id}
+                  className={cx(
+                    "rounded-[22px] bg-white p-6 shadow-sm",
+                    unread && meta.borderClass,
+                    !unread && "opacity-75",
+                  )}
+                >
+                  <div className="flex items-start gap-5">
+                    <span className={cx("grid h-14 w-14 shrink-0 place-items-center rounded-full", meta.iconClass)}>
+                      <Icon className="h-6 w-6" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-4">
+                        <h2 className="text-lg font-black">{item.title}</h2>
+                        <span className="shrink-0 text-[10px] font-black text-[#777d82]">{formatNotificationTime(item.createdAt)}</span>
+                      </div>
+                      <p className="mt-1 text-base font-semibold leading-relaxed text-[#687073]">{item.body}</p>
+                      <div className="mt-5 flex flex-wrap items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => onOpen(item)}
+                          disabled={actionStatus === "loading"}
+                          className="h-10 rounded-full bg-[#007c61] px-5 text-xs font-black uppercase text-white disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {item.actionUrl ? "Open" : unread ? "Mark read" : "Read"}
+                        </button>
+                        <span className={cx("rounded-full px-3 py-1 text-[10px] font-black uppercase", unread ? "bg-[#dcfff6] text-[#007c61]" : "bg-[#edf1f1] text-[#687073]")}>
+                          {unread ? "Unread" : "Read"}
+                        </span>
+                      </div>
                     </div>
-                    <p className="mt-1 text-base font-semibold leading-relaxed text-[#687073]">{item.body}</p>
-                    {item.title === "Auction Outbid" && <AppButton className="mt-5 h-11 text-xs">Rebid Now</AppButton>}
                   </div>
-                </div>
-              </article>
-            )
-          })}
-        </div>
-        <div className="mt-14">
-          <p className="mb-5 text-xs font-black uppercase tracking-[0.24em] text-[#b0b5b8]">Earlier this week</p>
-          <div className="grid min-h-[220px] place-items-center rounded-[26px] border border-dashed border-[#d3dada] p-8 text-center">
-            <div>
-              <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#e7ecec] text-[#c3c8ca]"><Clock className="h-8 w-8" /></span>
-              <p className="mt-6 font-semibold text-[#687073]">No older notifications to show.</p>
-              <p className="mt-1 text-sm text-[#9aa0a4]">We will keep you posted on your next adventure.</p>
+                </article>
+              )
+            })}
+          </div>
+        )}
+
+        {notifications.length > 0 && (
+          <div className="mt-14">
+            <p className="mb-5 text-xs font-black uppercase tracking-[0.24em] text-[#b0b5b8]">Earlier this week</p>
+            <div className="grid min-h-[220px] place-items-center rounded-[26px] border border-dashed border-[#d3dada] p-8 text-center">
+              <div>
+                <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#e7ecec] text-[#c3c8ca]"><Clock className="h-8 w-8" /></span>
+                <p className="mt-6 font-semibold text-[#687073]">No older notifications to show.</p>
+                <p className="mt-1 text-sm text-[#9aa0a4]">We will keep you posted on your next adventure.</p>
+              </div>
             </div>
           </div>
+        )}
+      </div>
+    </>
+  )
+}
+
+function notificationMeta(type: CustomerNotification["type"]) {
+  if (type === "auction") {
+    return {
+      icon: Gavel,
+      borderClass: "border-l-4 border-[#c92034]",
+      iconClass: "bg-[#ffe0e5] text-[#c92034]",
+    }
+  }
+  if (type === "promo") {
+    return {
+      icon: Zap,
+      borderClass: "border-l-4 border-[#8a6f00]",
+      iconClass: "bg-[#fff2c9] text-[#8a6f00]",
+    }
+  }
+  if (type === "payment") {
+    return {
+      icon: Wallet,
+      borderClass: "border-l-4 border-[#007c61]",
+      iconClass: "bg-[#dcfff6] text-[#007c61]",
+    }
+  }
+  if (type === "system") {
+    return {
+      icon: Bell,
+      borderClass: "border-l-4 border-[#64707a]",
+      iconClass: "bg-[#e8eeee] text-[#64707a]",
+    }
+  }
+  return {
+    icon: BadgeCheck,
+    borderClass: "border-l-4 border-[#007c61]",
+    iconClass: "bg-[#dcfff6] text-[#007c61]",
+  }
+}
+
+function ProfileScreen({
+  profile,
+  status,
+  error,
+  onNavigate,
+  onRefresh,
+  onLogin,
+}: {
+  profile: CustomerProfile | null
+  status: "idle" | "loading" | "error" | "unauthenticated"
+  error: string
+  onNavigate: (view: View) => void
+  onRefresh: () => void
+  onLogin: () => void
+}) {
+  const menu = [
+    { label: "Edit Profile", view: "edit-profile" as View, icon: User },
+    { label: "My Bookings", view: "bookings" as View, icon: CalendarDays },
+    { label: "Payment Methods", view: "checkout" as View, icon: Wallet },
+    { label: "My Auctions", view: "auction" as View, icon: Gavel, badge: "2 Active" },
+    { label: "Notifications", view: "notifications" as View, icon: Bell, badge: profile?.stats.unreadNotifications ? `${profile.stats.unreadNotifications} New` : undefined },
+    { label: "Help Center", view: "help" as View, icon: HelpCircle },
+    { label: "Settings", view: "settings" as View, icon: Settings },
+  ]
+  const displayName = profile?.profile.fullName || profile?.name || "Sportcation Member"
+  const contact = profile?.email ?? profile?.phone ?? "Lengkapi email atau nomor HP"
+  const avatar = profile?.profile.avatarUrl ?? profile?.image
+
+  return (
+    <>
+      <MobileTopBar title={profile?.profile.city ? `${profile.profile.city} ID` : "Jakarta ID"} brand={false} />
+      <div className="px-6 py-7 text-center lg:px-0">
+        {status === "unauthenticated" && (
+          <StatePanel title="Login required" body="Masuk untuk membuka profil, booking, dan preferensi akun." actionLabel="Login" onAction={onLogin} />
+        )}
+        {status === "loading" && !profile && (
+          <StatePanel title="Loading profile" body="Mengambil profil customer dari database lokal." />
+        )}
+        {status === "error" && !profile && (
+          <StatePanel title="Profile unavailable" body={error} actionLabel="Retry" onAction={onRefresh} />
+        )}
+        {profile && (
+          <div className="mx-auto max-w-4xl lg:grid lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-8 lg:text-left">
+            <section className="lg:rounded-[32px] lg:bg-white lg:p-8 lg:shadow-sm">
+              <div className="relative mx-auto w-fit">
+                <Avatar size="lg" src={avatar} alt={`${displayName} avatar`} />
+                <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-[#007c61] px-5 py-1 text-xs font-black uppercase text-white">Pro</span>
+              </div>
+              <h1 className="mt-7 text-3xl font-black tracking-[-0.06em] lg:text-center">{displayName}</h1>
+              <p className="mt-1 text-lg font-semibold text-[#687073] lg:text-center">{contact}</p>
+              {profile.phone && profile.email && (
+                <p className="mt-1 text-sm font-bold text-[#007c61] lg:text-center">{profile.phone}</p>
+              )}
+              <div className="mt-9 grid grid-cols-3 gap-3">
+                {[
+                  [formatCompactNumber(profile.stats.bookings), "Bookings"],
+                  [formatCompactNumber(profile.stats.unreadNotifications), "Unread"],
+                  [formatCompactNumber(profile.stats.points), "Points"],
+                ].map(([value, label]) => (
+                  <div key={label} className="rounded-2xl bg-white p-5 text-center shadow-sm lg:bg-[#f3f6f6]">
+                    <p className="text-2xl font-black text-[#007c61]">{value}</p>
+                    <p className="mt-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#666b70]">{label}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+            <section className="mt-9 grid gap-4 lg:mt-0">
+              {menu.map((item) => {
+                const Icon = item.icon
+                return (
+                  <button key={item.label} type="button" onClick={() => onNavigate(item.view)} className="flex items-center gap-4 rounded-[22px] bg-white p-5 text-left shadow-sm">
+                    <span className="grid h-12 w-12 place-items-center rounded-xl bg-[#dcfff6] text-[#007c61]"><Icon className="h-6 w-6" /></span>
+                    <span className="min-w-0 flex-1 text-base font-black">{item.label}</span>
+                    {item.badge && <span className="rounded-full bg-[#ffc107] px-3 py-1 text-[10px] font-black uppercase">{item.badge}</span>}
+                    <ChevronRight className="h-5 w-5 text-[#a1a7aa]" />
+                  </button>
+                )
+              })}
+              <a href="/merchant" className="flex items-center gap-4 rounded-[22px] bg-white p-5 text-left shadow-sm">
+                <span className="grid h-12 w-12 place-items-center rounded-xl bg-[#dcfff6] text-[#007c61]"><Store className="h-6 w-6" /></span>
+                <span className="min-w-0 flex-1 text-base font-black">Merchant Studio</span>
+                <ChevronRight className="h-5 w-5 text-[#a1a7aa]" />
+              </a>
+              <a href="/admin" className="flex items-center gap-4 rounded-[22px] bg-white p-5 text-left shadow-sm">
+                <span className="grid h-12 w-12 place-items-center rounded-xl bg-[#071413] text-[#49e7ba]"><ShieldCheck className="h-6 w-6" /></span>
+                <span className="min-w-0 flex-1 text-base font-black">Admin Command</span>
+                <ChevronRight className="h-5 w-5 text-[#a1a7aa]" />
+              </a>
+              <button type="button" onClick={() => onNavigate("onboarding")} className="flex items-center gap-4 rounded-[22px] bg-white p-5 text-left shadow-sm">
+                <span className="grid h-12 w-12 place-items-center rounded-xl bg-[#f8e3e6] text-[#c41226]"><LogOut className="h-6 w-6" /></span>
+                <span className="min-w-0 flex-1 text-base font-black text-[#c41226]">Logout</span>
+              </button>
+            </section>
+          </div>
+        )}
+      </div>
+    </>
+  )
+}
+
+function EditProfileScreen({
+  profile,
+  status,
+  error,
+  mutationStatus,
+  mutationError,
+  onBack,
+  onLogin,
+  onSave,
+}: {
+  profile: CustomerProfile | null
+  status: "idle" | "loading" | "error" | "unauthenticated"
+  error: string
+  mutationStatus: "idle" | "loading"
+  mutationError: string
+  onBack: () => void
+  onLogin: () => void
+  onSave: (input: ProfileUpdatePayload) => void
+}) {
+  const [name, setName] = useState(profile?.name ?? "")
+  const [fullName, setFullName] = useState(profile?.profile.fullName ?? "")
+  const [phone, setPhone] = useState(profile?.phone ?? "")
+  const [city, setCity] = useState(profile?.profile.city ?? "")
+  const [avatarUrl, setAvatarUrl] = useState(profile?.profile.avatarUrl ?? profile?.image ?? "")
+  const [localError, setLocalError] = useState("")
+
+  function submit() {
+    if (!name.trim() || !fullName.trim()) {
+      setLocalError("Nama akun dan nama lengkap wajib diisi.")
+      return
+    }
+    setLocalError("")
+    onSave({
+      name,
+      fullName,
+      phone,
+      city,
+      avatarUrl,
+    })
+  }
+
+  return (
+    <>
+      <MobileTopBar title="Edit Profile" back onBack={onBack} brand={false} />
+      <div className="px-6 py-7 lg:px-0">
+        <div className="mx-auto max-w-2xl">
+          {status === "unauthenticated" && (
+            <StatePanel title="Login required" body="Masuk untuk mengubah profil customer." actionLabel="Login" onAction={onLogin} />
+          )}
+          {status === "loading" && !profile && <StatePanel title="Loading profile" body="Menyiapkan form profil." />}
+          {status === "error" && !profile && <StatePanel title="Profile unavailable" body={error} />}
+
+          {profile && (
+            <section className="rounded-[28px] bg-white p-6 shadow-sm">
+              <div className="flex items-center gap-4">
+                <Avatar src={avatarUrl || profile.profile.avatarUrl || profile.image} alt={`${fullName || profile.name} avatar`} />
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-[#007c61]">Customer Profile</p>
+                  <h1 className="mt-1 text-3xl font-black tracking-[-0.06em]">Personal Info</h1>
+                </div>
+              </div>
+
+              <div className="mt-8 grid gap-5">
+                <ProfileField label="Account name" value={name} onChange={setName} placeholder="Alex Rivera" />
+                <ProfileField label="Full name" value={fullName} onChange={setFullName} placeholder="Alex Rivera" />
+                <ProfileField label="Phone" value={phone} onChange={setPhone} placeholder="+62 812 3456 7890" />
+                <ProfileField label="City" value={city} onChange={setCity} placeholder="Jakarta" />
+                <ProfileField label="Avatar URL" value={avatarUrl} onChange={setAvatarUrl} placeholder="https://example.com/avatar.jpg" />
+              </div>
+
+              {(localError || mutationError) && (
+                <p className="mt-5 rounded-2xl bg-[#ffe0e5] p-4 text-sm font-bold text-[#c41226]">
+                  {localError || mutationError}
+                </p>
+              )}
+
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <AppButton onClick={submit} disabled={mutationStatus === "loading"} className="flex-1">
+                  {mutationStatus === "loading" ? "Saving..." : "Save Profile"}
+                </AppButton>
+                <AppButton onClick={onBack} variant="light" className="flex-1">Cancel</AppButton>
+              </div>
+            </section>
+          )}
         </div>
       </div>
     </>
   )
 }
 
-function ProfileScreen({ onNavigate }: { onNavigate: (view: View) => void }) {
-  const menu = [
-    { label: "Payment Methods", view: "checkout" as View, icon: Wallet },
-    { label: "My Auctions", view: "auction" as View, icon: Gavel, badge: "2 Active" },
-    { label: "Notifications", view: "notifications" as View, icon: Bell },
-    { label: "Help Center", view: "help" as View, icon: HelpCircle },
-    { label: "Settings", view: "settings" as View, icon: Settings },
-  ]
+function ProfileField({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  placeholder: string
+}) {
   return (
-    <>
-      <MobileTopBar title="Jakarta ID" brand={false} />
-      <div className="px-6 py-7 text-center lg:px-0">
-        <div className="mx-auto max-w-4xl lg:grid lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-8 lg:text-left">
-          <section className="lg:rounded-[32px] lg:bg-white lg:p-8 lg:shadow-sm">
-            <div className="relative mx-auto w-fit">
-              <Avatar size="lg" />
-              <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-[#007c61] px-5 py-1 text-xs font-black uppercase text-white">Pro</span>
-            </div>
-            <h1 className="mt-7 text-3xl font-black tracking-[-0.06em] lg:text-center">Alex Rivera</h1>
-            <p className="mt-1 text-lg font-semibold text-[#687073] lg:text-center">alex.rivera@sportcation.com</p>
-            <div className="mt-9 grid grid-cols-3 gap-3">
-              {[
-                ["24", "Bookings"],
-                ["12", "Reviews"],
-                ["8.4k", "Points"],
-              ].map(([value, label]) => (
-                <div key={label} className="rounded-2xl bg-white p-5 text-center shadow-sm lg:bg-[#f3f6f6]">
-                  <p className="text-2xl font-black text-[#007c61]">{value}</p>
-                  <p className="mt-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#666b70]">{label}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-          <section className="mt-9 grid gap-4 lg:mt-0">
-            {menu.map((item) => {
-              const Icon = item.icon
-              return (
-                <button key={item.label} type="button" onClick={() => onNavigate(item.view)} className="flex items-center gap-4 rounded-[22px] bg-white p-5 text-left shadow-sm">
-                  <span className="grid h-12 w-12 place-items-center rounded-xl bg-[#dcfff6] text-[#007c61]"><Icon className="h-6 w-6" /></span>
-                  <span className="min-w-0 flex-1 text-base font-black">{item.label}</span>
-                  {item.badge && <span className="rounded-full bg-[#ffc107] px-3 py-1 text-[10px] font-black uppercase">{item.badge}</span>}
-                  <ChevronRight className="h-5 w-5 text-[#a1a7aa]" />
-                </button>
-              )
-            })}
-            <a href="/merchant" className="flex items-center gap-4 rounded-[22px] bg-white p-5 text-left shadow-sm">
-              <span className="grid h-12 w-12 place-items-center rounded-xl bg-[#dcfff6] text-[#007c61]"><Store className="h-6 w-6" /></span>
-              <span className="min-w-0 flex-1 text-base font-black">Merchant Studio</span>
-              <ChevronRight className="h-5 w-5 text-[#a1a7aa]" />
-            </a>
-            <a href="/admin" className="flex items-center gap-4 rounded-[22px] bg-white p-5 text-left shadow-sm">
-              <span className="grid h-12 w-12 place-items-center rounded-xl bg-[#071413] text-[#49e7ba]"><ShieldCheck className="h-6 w-6" /></span>
-              <span className="min-w-0 flex-1 text-base font-black">Admin Command</span>
-              <ChevronRight className="h-5 w-5 text-[#a1a7aa]" />
-            </a>
-            <button type="button" onClick={() => onNavigate("onboarding")} className="flex items-center gap-4 rounded-[22px] bg-white p-5 text-left shadow-sm">
-              <span className="grid h-12 w-12 place-items-center rounded-xl bg-[#f8e3e6] text-[#c41226]"><LogOut className="h-6 w-6" /></span>
-              <span className="min-w-0 flex-1 text-base font-black text-[#c41226]">Logout</span>
-            </button>
-          </section>
-        </div>
+    <label className="block">
+      <span className="text-xs font-black uppercase tracking-[0.2em] text-[#687073]">{label}</span>
+      <input
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        className="mt-2 h-14 w-full rounded-2xl bg-[#f3f6f6] px-5 text-base font-bold outline-none ring-[#49e7ba] transition focus:ring-2"
+      />
+    </label>
+  )
+}
+
+function StatePanel({
+  title,
+  body,
+  actionLabel,
+  onAction,
+}: {
+  title: string
+  body: string
+  actionLabel?: string
+  onAction?: () => void
+}) {
+  return (
+    <div className="mt-8 grid min-h-[220px] place-items-center rounded-[26px] border border-dashed border-[#d3dada] bg-white p-8 text-center shadow-sm">
+      <div>
+        <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#dcfff6] text-[#007c61]">
+          <Bell className="h-8 w-8" />
+        </span>
+        <h2 className="mt-6 text-xl font-black">{title}</h2>
+        <p className="mx-auto mt-2 max-w-md text-sm font-semibold leading-relaxed text-[#687073]">{body}</p>
+        {actionLabel && onAction && (
+          <AppButton onClick={onAction} className="mt-6 h-12 px-8 text-xs">
+            {actionLabel}
+          </AppButton>
+        )}
       </div>
-    </>
+    </div>
   )
 }
 
 function SettingsScreen({
   onNavigate,
+  profile,
   darkMode,
   onDarkMode,
   pushEnabled,
@@ -2023,6 +2581,7 @@ function SettingsScreen({
   onBiometricEnabled,
 }: {
   onNavigate: (view: View) => void
+  profile: CustomerProfile | null
   darkMode: boolean
   onDarkMode: (value: boolean) => void
   pushEnabled: boolean
@@ -2038,7 +2597,12 @@ function SettingsScreen({
         <p className="mt-2 text-base font-semibold text-[#687073]">Manage your elite sport vacation experience</p>
         <div className="mt-9 grid gap-8 lg:grid-cols-2">
           <SettingsGroup title="Account" meta="Priority">
-            <SettingsRow icon={User} title="Personal Info" subtitle="Name, Email, Phone" />
+            <SettingsRow
+              icon={User}
+              title="Personal Info"
+              subtitle={profile?.email ?? profile?.phone ?? "Name, Email, Phone"}
+              onClick={() => onNavigate("edit-profile")}
+            />
           </SettingsGroup>
           <SettingsGroup title="Preferences">
             <SettingsRow icon={Moon} title="Dark Mode" toggle checked={darkMode} onToggle={() => onDarkMode(!darkMode)} />
