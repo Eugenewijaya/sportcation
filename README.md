@@ -15,9 +15,10 @@ Sportcation is a responsive Next.js web app for sports venue discovery, booking 
 - Persistent customer profile and notification read-state management.
 - Persistent merchant booking list, detail, check-in, and completion actions.
 - Persistent admin booking and simulated payment review.
+- Persistent admin user directory and venue moderation review.
 - Server-only service/repository boundaries with atomic mutation and audit-log transactions.
 - Vitest unit/integration tests, Playwright Chromium E2E, and GitHub Actions CI.
-- Merchant finance, admin users, admin venue moderation, reports, content, and settings remain prototype UI.
+- Merchant finance, admin reports, content, and settings remain prototype UI.
 
 ## Local Setup
 
@@ -61,8 +62,8 @@ Supported variables are documented in `.env.example`. Passwords must contain at 
 /merchant/bookings      Persistent merchant booking operations
 /merchant/finance       Merchant finance UI prototype
 /admin                  Protected admin dashboard
-/admin/users            Admin user UI prototype
-/admin/venues           Admin moderation UI prototype
+/admin/users            Persistent admin user directory
+/admin/venues           Persistent admin venue moderation
 /admin/bookings         Persistent admin booking review
 /admin/payments         Persistent admin payment review
 ```
@@ -131,6 +132,10 @@ GET                /api/admin/bookings
 GET                /api/admin/bookings/:id
 GET                /api/admin/payments
 GET                /api/admin/payments/:id
+GET                /api/admin/users
+GET                /api/admin/users/:id
+GET                /api/admin/venues
+GET                /api/admin/venues/:id
 ```
 
 Merchant APIs require an active merchant session, verified merchant membership, ownership, and the required membership permission. Admin review APIs require an active admin session and are read-only in the MVP. Customer booking, profile, and notification APIs require an active customer session and only expose the current user's records. See `docs/AUDIT_AND_IMPLEMENTATION_PLAN_SQLITE_LIBSQL.md` for verified status and the recommended next stage.

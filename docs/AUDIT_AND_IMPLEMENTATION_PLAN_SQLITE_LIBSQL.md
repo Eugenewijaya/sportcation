@@ -4,7 +4,7 @@ Audit date: 11 June 2026
 
 ## Executive Decision
 
-Sportcation is runnable as a responsive Next.js web application. Stage 2 is complete: authentication, role authorization, merchant ownership checks, persistent SQLite/libSQL CRUD, service and repository boundaries, atomic audit transactions, migration, seed, lint, typecheck, coverage, production build, HTTP flow, and Chromium end-to-end checks pass. Stage 3 is complete for the public catalog. Stage 4 is complete for customer booking and payment simulation persistence. Stage 5A is complete for customer cancellation and pending-payment expiry. Stage 5B is complete for customer profile and notification persistence. Stage 6 is complete for merchant booking management persistence. Stage 7 is complete for admin booking and payment review persistence.
+Sportcation is runnable as a responsive Next.js web application. Stage 2 is complete: authentication, role authorization, merchant ownership checks, persistent SQLite/libSQL CRUD, service and repository boundaries, atomic audit transactions, migration, seed, lint, typecheck, coverage, production build, HTTP flow, and Chromium end-to-end checks pass. Stage 3 is complete for the public catalog. Stage 4 is complete for customer booking and payment simulation persistence. Stage 5A is complete for customer cancellation and pending-payment expiry. Stage 5B is complete for customer profile and notification persistence. Stage 6 is complete for merchant booking management persistence. Stage 7 is complete for admin booking and payment review persistence. Stage 8 is complete for admin user directory and venue moderation persistence.
 
 The project is ready for internal preview of customer booking simulation. It is not ready for public paid traffic because real payment gateway, webhooks, real refunds, production monitoring, and operational backup/restore are still not implemented.
 
@@ -24,7 +24,7 @@ The project is ready for internal preview of customer booking simulation. It is 
 | Payment | Persisted customer payment simulation with cancellation and expiry |
 | Notification delivery | Persisted in-app notification list and read state; no push delivery yet |
 | Merchant operations | Persisted venue, court, slot, and booking management |
-| Admin operations | Persisted booking and simulated payment review |
+| Admin operations | Persisted booking/payment review plus user directory and venue moderation review |
 | Automated tests | Vitest unit/integration tests plus Playwright Chromium E2E |
 | CI | GitHub Actions migration, audit, lint, typecheck, test, build, and E2E gates |
 
@@ -78,7 +78,7 @@ Implemented:
 - Customer booking creation and payment simulation persist booking, booking item, payment, notification, slot state, and audit state inside server-controlled transactions.
 - Customer profile updates and notification read-state mutations are protected, ownership-scoped, validated, and audited.
 - Merchant booking list/detail and safe status actions are protected by merchant ownership and membership permissions.
-- Admin booking/payment review APIs are admin-only, read-only, and backed by persisted SQLite/libSQL records.
+- Admin booking/payment/user/venue review APIs are admin-only, read-only, and backed by persisted SQLite/libSQL records.
 - API handlers are thin authentication, validation, service invocation, and response adapters.
 - Unit and integration tests use isolated temporary SQLite databases and do not write to the developer database.
 - Unsafe API methods reject browser requests from untrusted origins.
@@ -102,15 +102,14 @@ Remaining security work:
 1. Real payment gateway, webhooks, settlement, refund, payout, and QR issuer are not implemented.
 2. Pending payment expiration is request-driven; no Vercel Cron or background worker is configured yet.
 3. Booking cancellation has MVP rules only; no cutoff, penalty, or merchant approval workflow exists.
-4. Admin user, venue moderation, report, content, and settings screens are still prototype UI.
+4. Admin report, content, and settings screens are still prototype UI.
 
 ### High Priority
 
 1. No image object storage or upload validation.
 2. No database pagination; venue search currently filters in application memory.
 3. Merchant UI does not yet hide actions based on membership permission, although the API enforces them.
-4. Admin user and venue moderation still consume prototype records.
-5. Admin reports/content/settings remain UI prototypes without persistent service/API contracts.
+4. Admin reports/content/settings remain UI prototypes without persistent service/API contracts.
 
 ### Production Operations
 
@@ -121,23 +120,52 @@ Remaining security work:
 
 ## Recommended Next Stage
 
-Stage 2, Stage 3, Stage 4, Stage 5A, Stage 5B, Stage 6, and Stage 7 are complete for the current SQLite/libSQL direction. Proceed with **Stage 8: admin user and venue moderation persistence**.
+Stage 2, Stage 3, Stage 4, Stage 5A, Stage 5B, Stage 6, Stage 7, and Stage 8 are complete for the current SQLite/libSQL direction. Proceed with **Stage 9: merchant finance and payout foundation**.
 
 Scope:
 
-1. Add admin user list/detail API with role/status filters.
-2. Add admin venue moderation list/detail API with merchant and venue status filters.
-3. Connect Admin Users and Admin Venues UI to persisted records.
-4. Keep admin mutations out of scope unless a safe MVP action is explicitly scoped.
-5. Add integration and E2E coverage for admin visibility and role boundaries.
+1. Add read-only merchant finance API for payouts, settlement summary, and refund holds from persisted bookings/payments.
+2. Connect `/merchant/finance` to persisted finance data.
+3. Keep payout mutations out of scope unless a safe MVP action is explicitly scoped.
+4. Add integration and E2E coverage for merchant ownership and role boundaries.
 
 Exit criteria:
 
-- Admin users can inspect persisted users and venue moderation data.
-- Non-admin users cannot access admin user/venue moderation records.
+- Merchant users can inspect persisted finance records for owned venues only.
+- Non-merchant users cannot access merchant finance data.
 - Customer, merchant, public catalog, profile, notification, and booking regression tests remain green.
 
-After Stage 8, expand operational reporting, merchant finance, payout foundations, and production observability.
+After Stage 9, expand admin reports/content/settings, production observability, and payment gateway planning.
+
+## Stage 8 Implementation Receipt
+
+Implemented:
+
+- `lib/admin-directory/types.ts` for admin user and venue moderation DTO contracts.
+- `lib/validation/admin-directory.ts` for admin user and venue moderation query validation.
+- `lib/services/admin-directory-service.ts` for admin-scoped, read-only user and venue moderation queries.
+- `app/api/admin/users/route.ts`.
+- `app/api/admin/users/[id]/route.ts`.
+- `app/api/admin/venues/route.ts`.
+- `app/api/admin/venues/[id]/route.ts`.
+- `components/admin-directory-workspace.tsx` connected to persisted admin user and venue data.
+- Admin dashboard routing from `/admin/users` and `/admin/venues` to persisted review workspaces.
+- `tests/integration/admin-directory.test.ts`.
+- Playwright admin user/venue E2E coverage in `tests/e2e/auth-and-crud.spec.ts`.
+- `docs/STAGE_8_ADMIN_DIRECTORY_AUDIT.md`.
+
+Validation receipt:
+
+```text
+npm run typecheck       passed
+npx vitest run tests/integration/admin-directory.test.ts passed, 4 tests
+npm run lint            passed
+npm run test:coverage   passed, 63 tests
+npm run db:generate     passed, no schema drift
+npm audit --audit-level=high passed, 0 vulnerabilities
+npm run build           passed with required auth env
+npm run test:e2e        passed, 9 Chromium tests
+```
 
 ## Stage 7 Implementation Receipt
 

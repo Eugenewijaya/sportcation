@@ -264,6 +264,63 @@ test("supports persistent admin booking and payment review", async ({ page }) =>
   await expect(page.getByText("Booking status Completed")).toBeVisible()
 })
 
+test("supports persistent admin user and venue moderation", async ({ page }) => {
+  await login(page, e2eContext.admin, "/admin/users")
+  await expect(page.getByRole("heading", { name: "Admin User Directory", exact: true })).toBeVisible()
+  await expect(page.getByText(e2eContext.customer.email)).toBeVisible()
+
+  const userListResponse = await page.request.get("/api/admin/users")
+  expect(userListResponse.status()).toBe(200)
+  const userListPayload = (await userListResponse.json()) as { data: Array<{ id: string; email: string | null; role: string; stats: { bookingCount: number } }> }
+  const customer = userListPayload.data.find((item) => item.email === e2eContext.customer.email)
+  expect(customer).toBeTruthy()
+  expect(customer).toMatchObject({
+    email: e2eContext.customer.email,
+    role: "customer",
+  })
+  expect(customer!.stats.bookingCount).toBeGreaterThanOrEqual(1)
+
+  const customerCard = page.getByRole("article").filter({ hasText: e2eContext.customer.email })
+  const userDetailResponse = page.waitForResponse(
+    (response) =>
+      response.request().method() === "GET" &&
+      response.url().endsWith(`/api/admin/users/${customer!.id}`),
+  )
+  await customerCard.getByRole("button", { name: "Detail", exact: true }).click()
+  expect((await userDetailResponse).status()).toBe(200)
+  await expect(page.getByText("Booking count")).toBeVisible()
+  await expect(page.getByText("User identity and merchant links are operationally healthy.")).toBeVisible()
+
+  await page.goto("/admin/venues")
+  await expect(page.getByRole("heading", { name: "Venue Moderation", exact: true })).toBeVisible()
+  await expect(page.getByText("Padel Arena")).toBeVisible()
+
+  const venueListResponse = await page.request.get("/api/admin/venues")
+  expect(venueListResponse.status()).toBe(200)
+  const venueListPayload = (await venueListResponse.json()) as { data: Array<{ id: string; name: string; status: string; stats: { courtCount: number; bookingCount: number } }> }
+  const padelVenue = venueListPayload.data.find((item) => item.name === "Padel Arena")
+  expect(padelVenue).toBeTruthy()
+  expect(padelVenue).toMatchObject({
+    name: "Padel Arena",
+    status: "published",
+    stats: {
+      courtCount: 1,
+    },
+  })
+  expect(padelVenue!.stats.bookingCount).toBeGreaterThanOrEqual(1)
+
+  const venueCard = page.getByRole("article").filter({ hasText: "Padel Arena" }).first()
+  const venueDetailResponse = page.waitForResponse(
+    (response) =>
+      response.request().method() === "GET" &&
+      response.url().endsWith(`/api/admin/venues/${padelVenue!.id}`),
+  )
+  await venueCard.getByRole("button", { name: "Detail", exact: true }).click()
+  expect((await venueDetailResponse).status()).toBe(200)
+  await expect(page.getByText("Sportcation Venue Partner").first()).toBeVisible()
+  await expect(page.getByText("Venue ownership, moderation, and court inventory are healthy.")).toBeVisible()
+})
+
 test("creates a persisted customer booking and payment simulation", async ({ page }) => {
   const unauthenticatedBookingResponse = await page.request.post("/api/bookings", {
     data: {
@@ -401,6 +458,8 @@ test("enforces role boundaries for merchant and admin pages", async ({ browser }
   await login(customerPage, e2eContext.customer, "/")
   expect((await customerPage.request.get("/api/admin/bookings")).status()).toBe(403)
   expect((await customerPage.request.get("/api/admin/payments")).status()).toBe(403)
+  expect((await customerPage.request.get("/api/admin/users")).status()).toBe(403)
+  expect((await customerPage.request.get("/api/admin/venues")).status()).toBe(403)
   await customerContext.close()
 })
 
