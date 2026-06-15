@@ -14,9 +14,10 @@ Sportcation is a responsive Next.js web app for sports venue discovery, booking 
 - Customer booking cancellation and pending-payment expiry for local/libSQL booking simulation.
 - Persistent customer profile and notification read-state management.
 - Persistent merchant booking list, detail, check-in, and completion actions.
+- Persistent admin booking and simulated payment review.
 - Server-only service/repository boundaries with atomic mutation and audit-log transactions.
 - Vitest unit/integration tests, Playwright Chromium E2E, and GitHub Actions CI.
-- Merchant finance and most admin modules remain prototype UI.
+- Merchant finance, admin users, admin venue moderation, reports, content, and settings remain prototype UI.
 
 ## Local Setup
 
@@ -62,8 +63,8 @@ Supported variables are documented in `.env.example`. Passwords must contain at 
 /admin                  Protected admin dashboard
 /admin/users            Admin user UI prototype
 /admin/venues           Admin moderation UI prototype
-/admin/bookings         Admin booking UI prototype
-/admin/payments         Admin payment UI prototype
+/admin/bookings         Persistent admin booking review
+/admin/payments         Persistent admin payment review
 ```
 
 ## Database
@@ -126,9 +127,13 @@ POST               /api/notifications/mark-all-read
 GET                /api/merchant/bookings
 GET                /api/merchant/bookings/:id
 POST               /api/merchant/bookings/:id/status
+GET                /api/admin/bookings
+GET                /api/admin/bookings/:id
+GET                /api/admin/payments
+GET                /api/admin/payments/:id
 ```
 
-Merchant APIs require an active merchant session, verified merchant membership, ownership, and the required membership permission. Customer booking, profile, and notification APIs require an active customer session and only expose the current user's records. See `docs/AUDIT_AND_IMPLEMENTATION_PLAN_SQLITE_LIBSQL.md` for verified status and the recommended next stage.
+Merchant APIs require an active merchant session, verified merchant membership, ownership, and the required membership permission. Admin review APIs require an active admin session and are read-only in the MVP. Customer booking, profile, and notification APIs require an active customer session and only expose the current user's records. See `docs/AUDIT_AND_IMPLEMENTATION_PLAN_SQLITE_LIBSQL.md` for verified status and the recommended next stage.
 
 ## Engineering Boundaries
 

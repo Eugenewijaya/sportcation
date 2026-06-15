@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useMemo, useState } from "react"
+import { AdminBookingReviewWorkspace, AdminPaymentReviewWorkspace } from "@/components/admin-review-workspace"
 import { MerchantBookingWorkspace } from "@/components/merchant-booking-workspace"
 import { MerchantPersistentWorkspace } from "@/components/merchant-persistent-workspace"
 import { OpsAccountControls } from "@/components/ops-account-controls"
@@ -399,6 +400,8 @@ function renderOpsSection(
 
   if (section === "overview") return <AdminOverview onAction={onAction} />
   if (section === "settings") return <SettingsWorkspace role="admin" onAction={onAction} />
+  if (section === "bookings") return <AdminBookingReviewWorkspace onAction={onAction} />
+  if (section === "payments") return <AdminPaymentReviewWorkspace onAction={onAction} />
   return <CrudWorkspace config={adminResources[section as Exclude<AdminSection, "overview" | "settings">]} role="admin" onAction={onAction} />
 }
 

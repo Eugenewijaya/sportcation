@@ -203,6 +203,67 @@ test("supports persistent merchant booking management", async ({ page }) => {
   })
 })
 
+test("supports persistent admin booking and payment review", async ({ page }) => {
+  await login(page, e2eContext.admin, "/admin/bookings")
+  await expect(page.getByRole("heading", { name: "Admin Booking Review", exact: true })).toBeVisible()
+  await expect(page.getByText("SP-77291")).toBeVisible()
+
+  const bookingListResponse = await page.request.get("/api/admin/bookings")
+  expect(bookingListResponse.status()).toBe(200)
+  await expect(bookingListResponse.json()).resolves.toMatchObject({
+    data: [
+      {
+        id: "booking-demo-confirmed",
+        bookingCode: "SP-77291",
+        merchant: {
+          businessName: "Sportcation Venue Partner",
+        },
+        payment: {
+          id: "payment-demo-paid",
+          status: "paid",
+        },
+      },
+    ],
+  })
+
+  const bookingDetailResponse = page.waitForResponse(
+    (response) =>
+      response.request().method() === "GET" &&
+      response.url().endsWith("/api/admin/bookings/booking-demo-confirmed"),
+  )
+  await page.getByRole("button", { name: "Detail", exact: true }).first().click()
+  expect((await bookingDetailResponse).status()).toBe(200)
+  await expect(page.getByText("Sportcation Venue Partner").first()).toBeVisible()
+  await expect(page.getByText("Healthy booking and payment state.")).toBeVisible()
+
+  await page.goto("/admin/payments")
+  await expect(page.getByRole("heading", { name: "Payment Review", exact: true })).toBeVisible()
+  await expect(page.getByText("SIM-QRIS-SP-77291")).toBeVisible()
+
+  const paymentListResponse = await page.request.get("/api/admin/payments")
+  expect(paymentListResponse.status()).toBe(200)
+  await expect(paymentListResponse.json()).resolves.toMatchObject({
+    data: [
+      {
+        id: "payment-demo-paid",
+        bookingCode: "SP-77291",
+        status: "paid",
+        method: "qris",
+      },
+    ],
+  })
+
+  const paymentDetailResponse = page.waitForResponse(
+    (response) =>
+      response.request().method() === "GET" &&
+      response.url().endsWith("/api/admin/payments/payment-demo-paid"),
+  )
+  await page.getByRole("button", { name: "Detail", exact: true }).first().click()
+  expect((await paymentDetailResponse).status()).toBe(200)
+  await expect(page.getByText("Payment ID payment-demo-paid")).toBeVisible()
+  await expect(page.getByText("Booking status Completed")).toBeVisible()
+})
+
 test("creates a persisted customer booking and payment simulation", async ({ page }) => {
   const unauthenticatedBookingResponse = await page.request.post("/api/bookings", {
     data: {
@@ -334,6 +395,13 @@ test("enforces role boundaries for merchant and admin pages", async ({ browser }
   await adminPage.goto("/merchant")
   await expect(adminPage).toHaveURL(/\/unauthorized\?required=merchant_owner%2Cmerchant_staff$/)
   await adminContext.close()
+
+  const customerContext = await browser.newContext()
+  const customerPage = await customerContext.newPage()
+  await login(customerPage, e2eContext.customer, "/")
+  expect((await customerPage.request.get("/api/admin/bookings")).status()).toBe(403)
+  expect((await customerPage.request.get("/api/admin/payments")).status()).toBe(403)
+  await customerContext.close()
 })
 
 test("keeps the merchant navigation usable without horizontal page overflow on mobile", async ({ page }) => {
