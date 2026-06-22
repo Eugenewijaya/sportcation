@@ -5,6 +5,7 @@ import type { CustomerBooking } from "@/lib/customer-bookings/types"
 import { DomainError, isConstraintError } from "@/lib/domain/errors"
 import { createAuditRecord } from "@/lib/services/audit-service"
 import type { CancelBookingInput, CreateBookingInput, PaymentSimulationInput } from "@/lib/validation/booking"
+import { createBayarGgPayment } from "@/lib/payment-gateway/bayar-gg"
 
 type CustomerActor = {
   userId: string
@@ -52,7 +53,7 @@ export async function createCustomerBooking(
   const bookingCodeFactory = options.bookingCode ?? createBookingCode
 
   try {
-    return await db.transaction(async (tx) => {
+    const createdBooking = await db.transaction(async (tx) => {
       const now = nowDate().toISOString()
       const selectedSlot = await tx
         .select({
@@ -134,7 +135,9 @@ export async function createCustomerBooking(
         method: input.paymentMethod,
         status: "pending",
         amount: totalAmount,
-        providerReference: `SIM-${input.paymentMethod.toUpperCase()}-${bookingCode}`,
+        providerReference: null,
+        paymentUrl: null,
+        qrisUrl: null,
         createdAt: now,
         updatedAt: now,
       })
@@ -169,6 +172,40 @@ export async function createCustomerBooking(
       }
       return booking
     })
+
+    // 2. Call bayar.gg API
+    try {
+      const paymentMethodMapping: Record<string, string> = {
+        qris: "qris",
+        virtual_account: "qris",
+        wallet: "qris",
+        manual: "qris",
+      }
+      const mappedMethod = paymentMethodMapping[input.paymentMethod] || "qris"
+
+      const bayarGgResponse = await createBayarGgPayment({
+        amount: createdBooking.totalAmount,
+        description: `Booking ${createdBooking.bookingCode} for ${createdBooking.item.courtName}`,
+        paymentMethod: mappedMethod,
+        callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhook/bayar-gg`,
+        redirectUrl: `${process.env.NEXT_PUBLIC_APP_URL}/?screen=payment-success`,
+      })
+
+      // 3. Update payment record with bayar.gg response
+      await db.update(payments).set({
+        providerReference: bayarGgResponse.invoice_id,
+        paymentUrl: bayarGgResponse.payment_url,
+        qrisUrl: bayarGgResponse.qris_url,
+      }).where(eq(payments.id, createdBooking.payment.id))
+
+      const refreshedBooking = await getCustomerBooking(db as SportcationDbExecutor, actor.userId, createdBooking.id)
+      return refreshedBooking || createdBooking
+
+    } catch (paymentError) {
+      console.error("bayar.gg creation error:", paymentError)
+      return createdBooking
+    }
+
   } catch (error) {
     if (error instanceof DomainError) throw error
     if (isConstraintError(error, "UNIQUE")) {
@@ -489,6 +526,8 @@ function selectCustomerBookingRows(db: SportcationDbExecutor) {
       paymentStatus: payments.status,
       paymentAmount: payments.amount,
       providerReference: payments.providerReference,
+      paymentUrl: payments.paymentUrl,
+      qrisUrl: payments.qrisUrl,
       paidAt: payments.paidAt,
     })
     .from(bookings)
@@ -532,6 +571,8 @@ function mapCustomerBooking(row: Awaited<ReturnType<ReturnType<typeof selectCust
       status: row.paymentStatus,
       amount: row.paymentAmount,
       providerReference: row.providerReference,
+      paymentUrl: row.paymentUrl,
+      qrisUrl: row.qrisUrl,
       paidAt: row.paidAt,
     },
   }
@@ -539,4 +580,122 @@ function mapCustomerBooking(row: Awaited<ReturnType<ReturnType<typeof selectCust
 
 function createBookingCode() {
   return `SP-${crypto.randomUUID().replaceAll("-", "").slice(0, 8).toUpperCase()}`
+}
+
+export async function confirmPaymentFromWebhook(
+  db: SportcationDb,
+  invoiceId: string,
+  webhookStatus: string,
+) {
+  const now = new Date().toISOString()
+  
+  return db.transaction(async (tx) => {
+    const payment = await tx
+      .select({
+        id: payments.id,
+        bookingId: payments.bookingId,
+        status: payments.status,
+        userId: payments.userId,
+      })
+      .from(payments)
+      .where(eq(payments.providerReference, invoiceId))
+      .get()
+
+    if (!payment) return
+
+    const booking = await tx
+      .select({
+        id: bookings.id,
+        bookingCode: bookings.bookingCode,
+        status: bookings.status,
+      })
+      .from(bookings)
+      .where(eq(bookings.id, payment.bookingId))
+      .get()
+
+    if (!booking) return
+
+    const bookingItem = await tx
+      .select({ slotId: bookingItems.slotId })
+      .from(bookingItems)
+      .where(eq(bookingItems.bookingId, booking.id))
+      .get()
+
+    if (!bookingItem) return
+
+    const isSuccess = webhookStatus === "SUCCESS" || webhookStatus === "PAID"
+    const isFailed = webhookStatus === "EXPIRED" || webhookStatus === "FAILED"
+
+    if (isSuccess && payment.status !== "paid") {
+      await tx
+        .update(payments)
+        .set({ status: "paid", paidAt: now, updatedAt: now })
+        .where(eq(payments.id, payment.id))
+      
+      await tx
+        .update(bookings)
+        .set({ status: "confirmed", updatedAt: now })
+        .where(eq(bookings.id, booking.id))
+      
+      await tx
+        .update(slots)
+        .set({ status: "booked", updatedAt: now })
+        .where(eq(slots.id, bookingItem.slotId))
+      
+      await tx.insert(notifications).values({
+        id: crypto.randomUUID(),
+        userId: payment.userId,
+        type: "booking",
+        title: "Booking Confirmed",
+        body: `Booking ${booking.bookingCode} sudah dikonfirmasi via Bayar.gg.`,
+        actionUrl: "/?screen=bookings",
+        createdAt: now,
+      })
+
+      await tx.insert(auditLogs).values(
+        createAuditRecord({
+          actorUserId: payment.userId,
+          action: "payment.webhook_paid",
+          entityType: "payment",
+          entityId: payment.id,
+          metadata: { bookingId: booking.id, webhookStatus },
+        }),
+      )
+    } else if (isFailed && payment.status === "pending") {
+      await tx
+        .update(payments)
+        .set({ status: "failed", updatedAt: now })
+        .where(eq(payments.id, payment.id))
+      
+      await tx
+        .update(bookings)
+        .set({ status: "cancelled", updatedAt: now })
+        .where(eq(bookings.id, booking.id))
+      
+      await tx
+        .update(slots)
+        .set({ status: "available", updatedAt: now })
+        .where(eq(slots.id, bookingItem.slotId))
+      
+      await tx.insert(notifications).values({
+        id: crypto.randomUUID(),
+        userId: payment.userId,
+        type: "payment",
+        title: "Payment Failed",
+        body: `Pembayaran untuk booking ${booking.bookingCode} gagal/expired. Slot sudah dilepas kembali.`,
+        actionUrl: "/?screen=bookings",
+        createdAt: now,
+      })
+
+      await tx.insert(auditLogs).values(
+        createAuditRecord({
+          actorUserId: payment.userId,
+          action: "payment.webhook_failed",
+          entityType: "payment",
+          entityId: payment.id,
+          metadata: { bookingId: booking.id, webhookStatus },
+        }),
+      )
+    }
+  })
 }

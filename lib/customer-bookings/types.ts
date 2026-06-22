@@ -39,6 +39,8 @@ export type CustomerBooking = {
     status: CustomerPaymentStatus
     amount: number
     providerReference: string | null
+    paymentUrl: string | null
+    qrisUrl: string | null
     paidAt: string | null
   }
 }

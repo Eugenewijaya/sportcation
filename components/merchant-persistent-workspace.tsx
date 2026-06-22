@@ -340,8 +340,8 @@ function VenueWorkspace({ onAction }: { onAction: (message: string) => void }) {
                 <input value={form.defaultCourtName} onChange={(event) => setForm({ ...form, defaultCourtName: event.target.value })} className={inputClass} placeholder="Court 01" />
               </Field>
             )}
-            <Field label="Image path / URL">
-              <input value={form.imageUrl} onChange={(event) => setForm({ ...form, imageUrl: event.target.value })} className={inputClass} placeholder="/padel-court-modern.jpg" />
+            <Field label="Venue Image">
+              <ImageUploadField value={form.imageUrl} onChange={(url) => setForm({ ...form, imageUrl: url })} />
             </Field>
             <Field label="Description">
               <textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} className={`${inputClass} min-h-24 py-3`} placeholder="Deskripsi singkat venue" />
@@ -702,3 +702,63 @@ function Status({ label }: { label: string }) {
 }
 
 const inputClass = "mt-2 h-12 w-full rounded-2xl border-0 bg-[#edf1f1] px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#49e7ba]"
+
+function ImageUploadField({ value, onChange }: { value: string; onChange: (url: string) => void }) {
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState("")
+
+  async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    setError("")
+
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      })
+
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || "Upload failed")
+      }
+
+      onChange(data.url)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to upload image")
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div className="mt-2 space-y-2">
+      <div className="flex gap-4 items-center">
+        {value ? (
+          <img src={value} alt="" className="h-16 w-16 shrink-0 rounded-xl object-cover" />
+        ) : (
+          <div className="h-16 w-16 shrink-0 rounded-xl bg-[#edf1f1] flex items-center justify-center">
+            <Store className="h-6 w-6 text-[#9ca3a7]" />
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            disabled={uploading}
+            className="block w-full text-sm text-[#687073] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:uppercase file:tracking-[0.1em] file:bg-[#dcfff6] file:text-[#007c61] hover:file:bg-[#b8f3df] file:cursor-pointer disabled:opacity-50"
+          />
+          {uploading && <p className="mt-1 text-xs font-semibold text-[#007c61]">Uploading image...</p>}
+          {error && <p className="mt-1 text-xs font-semibold text-[#c11f32]">{error}</p>}
+        </div>
+      </div>
+      <input type="hidden" value={value} />
+    </div>
+  )
+}

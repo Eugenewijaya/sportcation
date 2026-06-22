@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Clock,
   Download,
+  ExternalLink,
   Fingerprint,
   Gavel,
   Heart,
@@ -528,7 +529,7 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
     }
   }
 
-  async function simulatePaymentResult(status: "paid" | "failed") {
+  async function checkPaymentResult() {
     if (!activeBooking) {
       setPaymentMutationError("Booking belum dibuat. Kembali ke checkout dan coba lagi.")
       return
@@ -538,13 +539,11 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
     setPaymentMutationError("")
 
     try {
-      const response = await fetch(`/api/payments/${activeBooking.id}/simulate`, {
-        method: "POST",
+      const response = await fetch(`/api/payments/${activeBooking.id}/check`, {
+        method: "GET",
         headers: {
-          "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify({ status }),
       })
       if (response.status === 401) {
         setPaymentMutationStatus("idle")
@@ -557,14 +556,16 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
       setPaymentMutationStatus("idle")
       await loadCustomerBookings()
 
-      if (status === "paid") {
+      if (booking.payment.status === "paid" || booking.status === "confirmed") {
         go("success")
+      } else if (booking.payment.status === "failed" || booking.payment.status === "expired") {
+        setPaymentMutationError("Pembayaran gagal atau kadaluwarsa. Slot dilepas kembali dan booking dibatalkan.")
       } else {
-        setPaymentMutationError("Simulasi pembayaran gagal. Slot dilepas kembali dan booking dibatalkan.")
+        setPaymentMutationError("Pembayaran belum diterima. Silakan cek kembali beberapa saat lagi.")
       }
     } catch (error) {
       setPaymentMutationStatus("idle")
-      setPaymentMutationError(error instanceof Error ? error.message : "Simulasi pembayaran gagal diproses.")
+      setPaymentMutationError(error instanceof Error ? error.message : "Gagal mengecek status pembayaran.")
     }
   }
 
@@ -793,8 +794,7 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
                 mutationStatus={paymentMutationStatus}
                 mutationError={paymentMutationError}
                 onBack={() => go("checkout")}
-                onPaid={() => void simulatePaymentResult("paid")}
-                onFailed={() => void simulatePaymentResult("failed")}
+                onCheckStatus={() => void checkPaymentResult()}
               />
             )}
             {view === "payment" && !selectedVenue && <CatalogEmptyState onExplore={() => go("explore")} />}
@@ -1786,8 +1786,7 @@ function PaymentScreen({
   mutationStatus,
   mutationError,
   onBack,
-  onPaid,
-  onFailed,
+  onCheckStatus,
 }: {
   venue: Venue
   slot?: Slot
@@ -1795,8 +1794,7 @@ function PaymentScreen({
   mutationStatus: "idle" | "loading"
   mutationError: string
   onBack: () => void
-  onPaid: () => void
-  onFailed: () => void
+  onCheckStatus: () => void
 }) {
   const total = booking?.totalAmount ?? (slot?.price ?? venue.price) + 15000
   const venueName = booking?.venue.name ?? venue.name
@@ -1826,37 +1824,48 @@ function PaymentScreen({
         </section>
         <section className="mt-8 rounded-[32px] bg-[#e9eeee] p-5 lg:mt-0">
           <div className="rounded-[28px] bg-white p-7 text-center">
-            <div className="mx-auto grid h-64 max-w-[260px] place-items-center rounded-3xl border-4 border-dashed border-[#d4dddd] bg-[#14383d] text-white">
-              <div>
-                <QrCode className="mx-auto h-24 w-24" />
-                <p className="mt-3 text-sm font-black">QRIS</p>
+            {booking?.payment?.qrisUrl ? (
+              <div className="mx-auto flex justify-center">
+                <img src={booking.payment.qrisUrl} alt="QRIS" className="w-64 h-64 object-contain rounded-xl" />
               </div>
-            </div>
+            ) : booking?.payment?.paymentUrl ? (
+               <div className="mx-auto grid h-64 max-w-[260px] place-items-center rounded-3xl border-4 border-dashed border-[#d4dddd] bg-[#14383d] text-white">
+                <div>
+                  <a href={booking.payment.paymentUrl} target="_blank" rel="noreferrer" className="mt-3 text-sm font-black underline">Buka Halaman Pembayaran</a>
+                </div>
+              </div>
+            ) : (
+              <div className="mx-auto grid h-64 max-w-[260px] place-items-center rounded-3xl border-4 border-dashed border-[#d4dddd] bg-[#14383d] text-white">
+                <div>
+                  <QrCode className="mx-auto h-24 w-24" />
+                  <p className="mt-3 text-sm font-black">QRIS</p>
+                </div>
+              </div>
+            )}
             <p className="mx-auto mt-7 max-w-[260px] text-base font-semibold leading-relaxed text-[#687073]">Buka aplikasi e-wallet atau bank favoritmu, lalu scan QR di atas.</p>
             <p className="mt-5 text-sm font-black text-[#007c61]">Status: {booking ? booking.payment.status : "pending"}</p>
             <p className="mt-8 text-xs font-black uppercase tracking-[0.22em] text-[#777d82]">Total Pembayaran</p>
             <p className="mt-2 text-4xl font-black tracking-[-0.05em]">{formatRp(total)}</p>
             <div className="mx-auto mt-6 max-w-[260px] rounded-full bg-[#ffe8ea] px-5 py-4 text-sm font-black text-[#c91f31]">
               <Timer className="mr-2 inline h-4 w-4" />
-              Berlaku hingga 14:55 (0h 14m)
+              Berlaku hingga 15 menit
             </div>
           </div>
-          <button type="button" className="mt-6 flex w-full items-center justify-center gap-2 text-base font-black text-[#007c61]">
-            <Download className="h-5 w-5" />
-            Simpan QR Code
-          </button>
+          {booking?.payment?.paymentUrl && (
+            <a href={booking.payment.paymentUrl} target="_blank" rel="noreferrer" className="mt-6 flex w-full items-center justify-center gap-2 text-base font-black text-[#007c61]">
+              <ExternalLink className="h-5 w-5" />
+              Buka Halaman Bayar.gg
+            </a>
+          )}
         </section>
-        <div className="mt-12 grid gap-3 lg:col-start-2 lg:grid-cols-2">
+        <div className="mt-12 grid gap-3 lg:col-start-2 lg:col-span-1">
           {mutationError && (
-            <div role="alert" className="rounded-2xl border border-[#ffd0d6] bg-[#fff0f2] p-4 text-sm font-bold leading-relaxed text-[#c92034] lg:col-span-2">
+            <div role="alert" className="rounded-2xl border border-[#ffd0d6] bg-[#fff0f2] p-4 text-sm font-bold leading-relaxed text-[#c92034] lg:col-span-1">
               {mutationError}
             </div>
           )}
-          <AppButton onClick={onPaid} disabled={!booking || mutationStatus === "loading" || booking.payment.status !== "pending"} className="w-full">
-            {mutationStatus === "loading" ? "Memproses..." : "Selesai membayar"}
-          </AppButton>
-          <AppButton onClick={onFailed} disabled={!booking || mutationStatus === "loading" || booking.payment.status !== "pending"} variant="dark" className="w-full">
-            Simulasi gagal
+          <AppButton onClick={onCheckStatus} disabled={!booking || mutationStatus === "loading" || booking.payment.status !== "pending"} className="w-full">
+            {mutationStatus === "loading" ? "Mengecek..." : "Cek Status Pembayaran"}
           </AppButton>
         </div>
       </div>

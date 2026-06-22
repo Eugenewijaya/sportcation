@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { AdminUserDirectoryWorkspace, AdminVenueModerationWorkspace } from "@/components/admin-directory-workspace"
 import { AdminBookingReviewWorkspace, AdminPaymentReviewWorkspace } from "@/components/admin-review-workspace"
 import { MerchantBookingWorkspace } from "@/components/merchant-booking-workspace"
@@ -557,6 +557,19 @@ function MerchantOverview({ onAction }: { onAction: (message: string) => void })
 }
 
 function AdminOverview({ onAction }: { onAction: (message: string) => void }) {
+  const [stats, setStats] = useState<StatCard[]>(adminStats)
+
+  useEffect(() => {
+    fetch("/api/admin/reports")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.stats) {
+          setStats(data.stats)
+        }
+      })
+      .catch((err) => console.error(err))
+  }, [])
+
   return (
     <div className="space-y-8">
       <OpsHero
@@ -566,7 +579,7 @@ function AdminOverview({ onAction }: { onAction: (message: string) => void }) {
         action="Open review queue"
         onAction={() => onAction("Admin review queue route and UI are ready")}
       />
-      <StatsGrid stats={adminStats} />
+      <StatsGrid stats={stats} />
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_0.75fr]">
         <OperationsBoard title="Platform Review Queue" rows={[...adminRows.venues, ...adminRows.payments].slice(0, 5)} onAction={onAction} />
         <ReadinessPanel
@@ -625,8 +638,9 @@ function OpsHero({
 function StatsGrid({ stats }: { stats: StatCard[] }) {
   return (
     <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      {stats.map((stat) => {
-        const Icon = stat.icon
+      {stats.map((stat, i) => {
+        // Fallback icon mapping if API doesn't return functions
+        const Icon = stat.icon || (i === 0 ? TrendingUp : i === 1 ? Users : i === 2 ? ShieldCheck : Activity)
         return (
           <article key={stat.label} className="rounded-[26px] bg-white p-6 shadow-sm">
             <div className="flex items-start justify-between gap-4">

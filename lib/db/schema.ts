@@ -323,6 +323,8 @@ export const payments = sqliteTable(
       .default("pending"),
     amount: integer("amount").notNull(),
     providerReference: text("provider_reference"),
+    paymentUrl: text("payment_url"),
+    qrisUrl: text("qris_url"),
     paidAt: text("paid_at"),
     ...timestamps,
   },

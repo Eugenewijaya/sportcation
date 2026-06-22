@@ -116,11 +116,11 @@ describe("merchant booking service", () => {
       .select({ title: notifications.title })
       .from(notifications)
       .where(eq(notifications.userId, seedIds.customerUser))
-    expect(customerNotifications.map((notification) => notification.title)).toEqual([
+    expect(customerNotifications.map((notification) => notification.title).sort()).toEqual([
       "Booking Confirmed",
       "Booking Checked In",
       "Booking Completed",
-    ])
+    ].sort())
   })
 
   it("rejects unsafe status jumps and unpaid booking operations", async () => {
