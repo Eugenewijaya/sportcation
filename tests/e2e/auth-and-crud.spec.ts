@@ -203,6 +203,36 @@ test("supports persistent merchant booking management", async ({ page }) => {
   })
 })
 
+test("supports persistent merchant finance foundation", async ({ page }) => {
+  await login(page, e2eContext.merchant, "/merchant/finance")
+  await expect(page.getByRole("heading", { name: "Settlement Center", exact: true })).toBeVisible()
+  await expect(page.getByText("Read-only payout foundation")).toBeVisible()
+  await expect(page.getByText("Padel Arena").first()).toBeVisible()
+  await expect(page.getByText("QRIS / OVO").first()).toBeVisible()
+
+  const financeResponse = await page.request.get("/api/merchant/finance")
+  expect(financeResponse.status()).toBe(200)
+  const financePayload = (await financeResponse.json()) as {
+    data: {
+      summary: {
+        bookingCount: number
+        netReceivable: number
+        payoutReadyAmount: number
+      }
+      settlements: Array<{ venue: { id: string; name: string }; status: string; netAmount: number }>
+      transactions: Array<{ bookingCode: string; paymentStatus: string; paymentMethod: string; netAmount: number }>
+      payoutPolicy: { mutationScope: string }
+    }
+  }
+
+  expect(financePayload.data.summary.bookingCount).toBeGreaterThanOrEqual(1)
+  expect(financePayload.data.summary.netReceivable).toBeGreaterThanOrEqual(350000)
+  expect(financePayload.data.summary.payoutReadyAmount).toBeGreaterThanOrEqual(350000)
+  expect(financePayload.data.settlements.some((settlement) => settlement.venue.name === "Padel Arena" && settlement.netAmount >= 350000)).toBe(true)
+  expect(financePayload.data.transactions.some((transaction) => transaction.bookingCode === "SP-77291" && transaction.paymentStatus === "paid")).toBe(true)
+  expect(financePayload.data.payoutPolicy.mutationScope).toContain("Read-only foundation")
+})
+
 test("supports persistent admin booking and payment review", async ({ page }) => {
   await login(page, e2eContext.admin, "/admin/bookings")
   await expect(page.getByRole("heading", { name: "Admin Booking Review", exact: true })).toBeVisible()
@@ -451,6 +481,7 @@ test("enforces role boundaries for merchant and admin pages", async ({ browser }
   await login(adminPage, e2eContext.admin, "/admin")
   await adminPage.goto("/merchant")
   await expect(adminPage).toHaveURL(/\/unauthorized\?required=merchant_owner%2Cmerchant_staff$/)
+  expect((await adminPage.request.get("/api/merchant/finance")).status()).toBe(403)
   await adminContext.close()
 
   const customerContext = await browser.newContext()
@@ -460,6 +491,7 @@ test("enforces role boundaries for merchant and admin pages", async ({ browser }
   expect((await customerPage.request.get("/api/admin/payments")).status()).toBe(403)
   expect((await customerPage.request.get("/api/admin/users")).status()).toBe(403)
   expect((await customerPage.request.get("/api/admin/venues")).status()).toBe(403)
+  expect((await customerPage.request.get("/api/merchant/finance")).status()).toBe(403)
   await customerContext.close()
 })
 

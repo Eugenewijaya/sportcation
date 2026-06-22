@@ -5,6 +5,7 @@ import { useMemo, useState } from "react"
 import { AdminUserDirectoryWorkspace, AdminVenueModerationWorkspace } from "@/components/admin-directory-workspace"
 import { AdminBookingReviewWorkspace, AdminPaymentReviewWorkspace } from "@/components/admin-review-workspace"
 import { MerchantBookingWorkspace } from "@/components/merchant-booking-workspace"
+import { MerchantFinanceWorkspace } from "@/components/merchant-finance-workspace"
 import { MerchantPersistentWorkspace } from "@/components/merchant-persistent-workspace"
 import { OpsAccountControls } from "@/components/ops-account-controls"
 import {
@@ -396,6 +397,7 @@ function renderOpsSection(
       return <MerchantPersistentWorkspace resource={section} onAction={onAction} />
     }
     if (section === "bookings") return <MerchantBookingWorkspace onAction={onAction} />
+    if (section === "finance") return <MerchantFinanceWorkspace onAction={onAction} />
     return <CrudWorkspace config={merchantResources[section as Exclude<MerchantSection, "overview" | "settings">]} role="merchant" onAction={onAction} />
   }
 

@@ -19,17 +19,26 @@ describe("merchant permissions", () => {
     expect(hasMerchantPermission("staff", "slots:write")).toBe(true)
     expect(hasMerchantPermission("staff", "bookings:read")).toBe(true)
     expect(hasMerchantPermission("staff", "bookings:write")).toBe(true)
+    expect(hasMerchantPermission("staff", "finance:read")).toBe(false)
     expect(hasMerchantPermission("staff", "catalog:write")).toBe(false)
   })
 
-  it("keeps finance and viewer roles read-only", () => {
-    for (const role of ["finance", "viewer"] as const) {
-      expect(hasMerchantPermission(role, "catalog:read")).toBe(true)
-      expect(hasMerchantPermission(role, "bookings:read")).toBe(true)
-      expect(hasMerchantPermission(role, "catalog:write")).toBe(false)
-      expect(hasMerchantPermission(role, "slots:write")).toBe(false)
-      expect(hasMerchantPermission(role, "bookings:write")).toBe(false)
-    }
+  it("keeps finance read-only with finance visibility", () => {
+    expect(hasMerchantPermission("finance", "catalog:read")).toBe(true)
+    expect(hasMerchantPermission("finance", "bookings:read")).toBe(true)
+    expect(hasMerchantPermission("finance", "finance:read")).toBe(true)
+    expect(hasMerchantPermission("finance", "catalog:write")).toBe(false)
+    expect(hasMerchantPermission("finance", "slots:write")).toBe(false)
+    expect(hasMerchantPermission("finance", "bookings:write")).toBe(false)
+  })
+
+  it("keeps viewer read-only without finance visibility", () => {
+    expect(hasMerchantPermission("viewer", "catalog:read")).toBe(true)
+    expect(hasMerchantPermission("viewer", "bookings:read")).toBe(true)
+    expect(hasMerchantPermission("viewer", "finance:read")).toBe(false)
+    expect(hasMerchantPermission("viewer", "catalog:write")).toBe(false)
+    expect(hasMerchantPermission("viewer", "slots:write")).toBe(false)
+    expect(hasMerchantPermission("viewer", "bookings:write")).toBe(false)
   })
 
   it("defines an explicit policy for every membership role", () => {

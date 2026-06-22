@@ -4,7 +4,7 @@ Audit date: 11 June 2026
 
 ## Executive Decision
 
-Sportcation is runnable as a responsive Next.js web application. Stage 2 is complete: authentication, role authorization, merchant ownership checks, persistent SQLite/libSQL CRUD, service and repository boundaries, atomic audit transactions, migration, seed, lint, typecheck, coverage, production build, HTTP flow, and Chromium end-to-end checks pass. Stage 3 is complete for the public catalog. Stage 4 is complete for customer booking and payment simulation persistence. Stage 5A is complete for customer cancellation and pending-payment expiry. Stage 5B is complete for customer profile and notification persistence. Stage 6 is complete for merchant booking management persistence. Stage 7 is complete for admin booking and payment review persistence. Stage 8 is complete for admin user directory and venue moderation persistence.
+Sportcation is runnable as a responsive Next.js web application. Stage 2 is complete: authentication, role authorization, merchant ownership checks, persistent SQLite/libSQL CRUD, service and repository boundaries, atomic audit transactions, migration, seed, lint, typecheck, coverage, production build, HTTP flow, and Chromium end-to-end checks pass. Stage 3 is complete for the public catalog. Stage 4 is complete for customer booking and payment simulation persistence. Stage 5A is complete for customer cancellation and pending-payment expiry. Stage 5B is complete for customer profile and notification persistence. Stage 6 is complete for merchant booking management persistence. Stage 7 is complete for admin booking and payment review persistence. Stage 8 is complete for admin user directory and venue moderation persistence. Stage 9 is complete for merchant finance and payout-readiness foundation.
 
 The project is ready for internal preview of customer booking simulation. It is not ready for public paid traffic because real payment gateway, webhooks, real refunds, production monitoring, and operational backup/restore are still not implemented.
 
@@ -23,7 +23,7 @@ The project is ready for internal preview of customer booking simulation. It is 
 | File storage | Not implemented |
 | Payment | Persisted customer payment simulation with cancellation and expiry |
 | Notification delivery | Persisted in-app notification list and read state; no push delivery yet |
-| Merchant operations | Persisted venue, court, slot, and booking management |
+| Merchant operations | Persisted venue, court, slot, booking management, and finance settlement preview |
 | Admin operations | Persisted booking/payment review plus user directory and venue moderation review |
 | Automated tests | Vitest unit/integration tests plus Playwright Chromium E2E |
 | CI | GitHub Actions migration, audit, lint, typecheck, test, build, and E2E gates |
@@ -78,6 +78,7 @@ Implemented:
 - Customer booking creation and payment simulation persist booking, booking item, payment, notification, slot state, and audit state inside server-controlled transactions.
 - Customer profile updates and notification read-state mutations are protected, ownership-scoped, validated, and audited.
 - Merchant booking list/detail and safe status actions are protected by merchant ownership and membership permissions.
+- Merchant finance summary is protected by merchant ownership and the `finance:read` membership permission.
 - Admin booking/payment/user/venue review APIs are admin-only, read-only, and backed by persisted SQLite/libSQL records.
 - API handlers are thin authentication, validation, service invocation, and response adapters.
 - Unit and integration tests use isolated temporary SQLite databases and do not write to the developer database.
@@ -102,13 +103,14 @@ Remaining security work:
 1. Real payment gateway, webhooks, settlement, refund, payout, and QR issuer are not implemented.
 2. Pending payment expiration is request-driven; no Vercel Cron or background worker is configured yet.
 3. Booking cancellation has MVP rules only; no cutoff, penalty, or merchant approval workflow exists.
-4. Admin report, content, and settings screens are still prototype UI.
+4. Real payout release, payout bank transfer, settlement reconciliation, and refund approval workflows are not implemented.
+5. Admin report, content, and settings screens are still prototype UI.
 
 ### High Priority
 
 1. No image object storage or upload validation.
 2. No database pagination; venue search currently filters in application memory.
-3. Merchant UI does not yet hide actions based on membership permission, although the API enforces them.
+3. Merchant UI does not yet hide all actions based on membership permission, although the API enforces them.
 4. Admin reports/content/settings remain UI prototypes without persistent service/API contracts.
 
 ### Production Operations
@@ -120,22 +122,51 @@ Remaining security work:
 
 ## Recommended Next Stage
 
-Stage 2, Stage 3, Stage 4, Stage 5A, Stage 5B, Stage 6, Stage 7, and Stage 8 are complete for the current SQLite/libSQL direction. Proceed with **Stage 9: merchant finance and payout foundation**.
+Stage 2, Stage 3, Stage 4, Stage 5A, Stage 5B, Stage 6, Stage 7, Stage 8, and Stage 9 are complete for the current SQLite/libSQL direction. Proceed with **Stage 10: admin reports/content/settings persistence or production observability**.
 
 Scope:
 
-1. Add read-only merchant finance API for payouts, settlement summary, and refund holds from persisted bookings/payments.
-2. Connect `/merchant/finance` to persisted finance data.
-3. Keep payout mutations out of scope unless a safe MVP action is explicitly scoped.
-4. Add integration and E2E coverage for merchant ownership and role boundaries.
+1. Choose the next highest-risk gap: admin reports/content/settings persistence, production observability, or payment gateway planning.
+2. Keep data contracts server-owned and backed by SQLite/libSQL until the production database is provisioned.
+3. Avoid adding real payment or payout mutation before gateway, webhook, reconciliation, and audit requirements are specified.
+4. Add integration and E2E coverage for each newly persisted surface.
 
 Exit criteria:
 
-- Merchant users can inspect persisted finance records for owned venues only.
-- Non-merchant users cannot access merchant finance data.
-- Customer, merchant, public catalog, profile, notification, and booking regression tests remain green.
+- The selected surface reads/writes persisted data only through authenticated API routes.
+- Unauthorized roles cannot access the new API.
+- Customer, merchant, public catalog, profile, notification, booking, finance, and admin regression tests remain green.
 
-After Stage 9, expand admin reports/content/settings, production observability, and payment gateway planning.
+After the next stage, reassess deployment readiness before adding real payments.
+
+## Stage 9 Implementation Receipt
+
+Implemented:
+
+- `lib/merchant-finance/types.ts` for merchant finance dashboard DTO contracts.
+- Merchant permission expansion for `finance:read`.
+- `lib/services/merchant-finance-service.ts` for merchant-scoped settlement summary, payout-ready totals, refund holds, per-venue settlements, payment breakdown, and transaction rows.
+- `app/api/merchant/finance/route.ts`.
+- `components/merchant-finance-workspace.tsx` connected to persisted merchant finance data.
+- Merchant dashboard routing from `/merchant/finance` to the persisted finance workspace.
+- `tests/integration/merchant-finance.test.ts`.
+- Playwright merchant finance E2E and role-boundary coverage in `tests/e2e/auth-and-crud.spec.ts`.
+- `docs/STAGE_9_MERCHANT_FINANCE_AUDIT.md`.
+
+Validation receipt:
+
+```text
+npm run typecheck       passed
+npx vitest run tests/unit/merchant-permissions.test.ts tests/integration/merchant-finance.test.ts passed, 8 tests
+npm run lint            passed
+npm run test:coverage   passed, 67 tests
+npm run db:generate     passed, no schema drift
+npm audit --audit-level=high passed, 0 vulnerabilities
+npm run build           passed with required auth env
+npm run test:e2e        passed, 10 Chromium tests
+git diff --check        passed
+secret pattern scan     passed, no known Neon URL fragments or local build secret found
+```
 
 ## Stage 8 Implementation Receipt
 
