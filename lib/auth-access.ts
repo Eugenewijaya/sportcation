@@ -31,7 +31,13 @@ export async function requirePageRole(allowedRoles: readonly AppRole[], destinat
   const session = await getServerSession()
 
   if (!session) {
-    redirect(`/login?next=${encodeURIComponent(destination)}`)
+    if (destination.startsWith("/merchant")) {
+      redirect(`/merchant/login?next=${encodeURIComponent(destination)}`)
+    } else if (destination.startsWith("/admin")) {
+      redirect(`/admin/login?next=${encodeURIComponent(destination)}`)
+    } else {
+      redirect(`/login?next=${encodeURIComponent(destination)}`)
+    }
   }
 
   const role = session.user.role as AppRole

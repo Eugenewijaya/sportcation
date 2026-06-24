@@ -56,13 +56,11 @@ type View =
   | "checkout"
   | "payment"
   | "success"
-  | "auction"
   | "bookings"
   | "notifications"
   | "profile"
   | "edit-profile"
   | "settings"
-  | "resell"
   | "help"
   | "privacy"
 
@@ -72,7 +70,6 @@ type Slot = PublicSlot
 const navItems: Array<{ view: View; label: string; icon: LucideIcon }> = [
   { view: "home", label: "Home", icon: Home },
   { view: "explore", label: "Explore", icon: Search },
-  { view: "auction", label: "Auction", icon: Gavel },
   { view: "bookings", label: "Bookings", icon: Ticket },
   { view: "profile", label: "Profile", icon: User },
 ]
@@ -86,20 +83,17 @@ const views: View[] = [
   "checkout",
   "payment",
   "success",
-  "auction",
   "bookings",
   "notifications",
   "profile",
   "edit-profile",
   "settings",
-  "resell",
   "help",
   "privacy",
 ]
 
 const quickActions: Array<{ view: View; label: string; icon: LucideIcon; hot?: boolean }> = [
   { view: "explore", label: "Cari Venue", icon: CalendarDays, hot: true },
-  { view: "resell", label: "Resell", icon: Repeat2 },
   { view: "bookings", label: "My Booking", icon: CalendarDays },
   { view: "checkout", label: "Order", icon: Wallet },
 ]
@@ -709,7 +703,7 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
     }
   }
 
-  const shouldShowBottomNav = ["home", "explore", "auction", "bookings", "notifications", "profile", "settings", "help"].includes(view)
+  const shouldShowBottomNav = ["home", "explore", "bookings", "notifications", "profile", "settings", "help"].includes(view)
 
   return (
     <div className={cx("min-h-screen bg-gray-50 text-gray-900", darkMode && "dark bg-background text-foreground")}>
@@ -779,7 +773,6 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
               <SuccessScreen booking={activeBooking} venue={selectedVenue} slot={selectedSlot} onTicket={() => go("bookings")} onHome={() => go("home")} />
             )}
             {view === "success" && !selectedVenue && <CatalogEmptyState onExplore={() => go("explore")} />}
-            {view === "auction" && <AuctionScreen onNavigate={go} />}
             {view === "bookings" && (
               <BookingsScreen
                 bookings={customerBookings}
@@ -842,7 +835,6 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
                 onBiometricEnabled={setBiometricEnabled}
               />
             )}
-            {view === "resell" && <ResellScreen onBack={() => go("bookings")} onPublish={() => go("auction")} />}
             {view === "help" && <HelpScreen onBack={() => go("profile")} />}
             {view === "privacy" && <PrivacyScreen onBack={() => go("settings")} />}
           </div>
@@ -1009,13 +1001,7 @@ function DesktopSidebar({ active, onNavigate }: { active: View; onNavigate: (vie
           )
         })}
       </nav>
-      <div className="mt-6 rounded-xl bg-gray-900 p-4 text-white">
-        <h3 className="text-sm font-semibold">Lelang & Resell</h3>
-        <p className="mt-1.5 text-xs leading-relaxed text-gray-400">Bid slot premium atau jual kembali booking Anda.</p>
-        <AppButton onClick={() => onNavigate("auction")} className="mt-4 h-9 w-full text-xs">
-          Buka Lelang
-        </AppButton>
-      </div>
+
       <div className="mt-4 grid gap-2">
         <a href="/merchant" className="rounded-lg bg-emerald-50 px-3 py-2.5 text-sm font-medium text-emerald-700 hover:bg-emerald-100">
           Panel Merchant
@@ -1210,13 +1196,7 @@ function HomeScreen({
             ) : (
               <CatalogInlineState title="Belum ada rekomendasi" message="Venue published akan muncul di area ini." />
             )}
-            <button
-              type="button"
-              onClick={() => onNavigate("resell")}
-              className="mt-6 ml-auto grid h-14 w-14 place-items-center rounded-xl bg-emerald-600 text-white shadow-md lg:hidden"
-            >
-              <Plus className="h-7 w-7" />
-            </button>
+
           </aside>
         </div>
       </div>
@@ -1849,90 +1829,6 @@ function SuccessScreen({
   )
 }
 
-function AuctionScreen({ onNavigate }: { onNavigate: (view: View) => void }) {
-  const auctions = [
-    { title: "Clay Court - Court #4", club: "Tennis - Real Madrid Club", price: 2000000, ends: "Ends in 14m", image: "/squash-court.jpg" },
-    { title: "18-Hole Green Fee (x2)", club: "Golf - La Quinta Resort", price: 2000000, ends: "Ends in 2h 05m", image: "/golf-course-green.png" },
-  ]
-
-  return (
-    <>
-      <MobileTopBar title="Jakarta, ID" brand={false} />
-      <div className="px-6 py-7 lg:px-0">
-        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8">
-          <section>
-            <span className="rounded-lg bg-[#49e7ba] px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-[#007c61]">Prime Access</span>
-            <h1 className="mt-5 text-5xl font-black tracking-[-0.08em] lg:text-7xl">The Exchange.</h1>
-            <p className="mt-4 max-w-md text-lg font-semibold text-[#687073]">Bid for premium court times or explore the secondary market.</p>
-            <div className="mt-9 flex items-end gap-10">
-              <div>
-                <h2 className="text-center text-2xl font-black leading-tight">Live<br />Auction</h2>
-                <span className="mt-2 block h-1 rounded-full bg-[#007c61]" />
-              </div>
-              <span className="mb-7 h-2 w-2 rounded-full bg-[#c92034]" />
-            </div>
-            <button type="button" onClick={() => onNavigate("resell")} className="mt-8 rounded-full bg-[#e8eeee] px-7 py-3 text-sm font-black text-[#697075]">My Auction</button>
-            <article className="relative mt-9 min-h-[340px] overflow-hidden rounded-[26px] bg-black p-6 text-white">
-              <img src="/auction-bidding-mobile-interface.jpg" alt="Center Court prime time slot" className="absolute inset-0 h-full w-full object-cover opacity-75" />
-              <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/30 to-black/50" />
-              <div className="relative flex h-full min-h-[292px] flex-col justify-between">
-                <div className="flex gap-2">
-                  <span className="rounded-full bg-[#d71f38] px-3 py-1 text-[10px] font-black uppercase">Live Now</span>
-                  <span className="rounded-full bg-white/20 px-3 py-1 text-[10px] font-black uppercase">Padel Pro Center</span>
-                </div>
-                <div>
-                  <h2 className="text-3xl font-black leading-tight tracking-[-0.06em]">Center Court - Prime Time Slot</h2>
-                  <p className="mt-3 text-xs font-black uppercase tracking-[0.18em] text-white/60">Current Bid</p>
-                  <div className="mt-1 flex items-end justify-between gap-4">
-                    <p className="text-4xl font-black leading-none tracking-[-0.06em] text-[#49e7ba]">Rp<br />1.450.000</p>
-                    <button type="button" className="grid h-28 w-28 place-items-center rounded-full bg-[#49e7ba] text-center text-base font-black text-[#064236]">
-                      Place<br />Bid
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </article>
-          </section>
-          <aside className="mt-6 lg:mt-0">
-            <div className="rounded-[24px] bg-[#edf1f1] p-5">
-              <h3 className="text-lg font-black">Your Bids</h3>
-              <div className="mt-5 flex items-center justify-between gap-3">
-                <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#dcfff6] text-[#007c61]"><Gavel className="h-6 w-6" /></span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-black">Clay Court #4</p>
-                  <p className="text-[10px] font-black uppercase text-[#c92034]">Outbid</p>
-                </div>
-                <strong className="text-sm">Rp 120.000</strong>
-              </div>
-              <AppButton variant="dark" className="mt-5 h-11 w-full text-xs">View Wallet</AppButton>
-            </div>
-            <div className="mt-6 grid gap-6">
-              {auctions.map((auction) => (
-                <article key={auction.title} className="overflow-hidden rounded-[22px] bg-white shadow-sm">
-                  <div className="relative h-44 overflow-hidden">
-                    <img src={auction.image} alt={auction.title} className="h-full w-full object-cover" />
-                    <span className="absolute right-3 top-3 rounded-lg bg-white px-3 py-1 text-[10px] font-black">{auction.ends}</span>
-                  </div>
-                  <div className="p-5">
-                    <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#007c61]">{auction.club}</p>
-                    <h3 className="mt-2 text-xl font-black tracking-[-0.04em]">{auction.title}</h3>
-                    <div className="mt-5 flex items-end justify-between border-t border-[#edf1f1] pt-5">
-                      <div>
-                        <p className="text-xs font-semibold text-[#777d82]">Starting Price</p>
-                        <p className="text-xl font-black">{formatRp(auction.price)}</p>
-                      </div>
-                      <span className="grid h-11 w-11 place-items-center rounded-full bg-[#eef2f2] text-[#007c61]"><Gavel className="h-5 w-5" /></span>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </aside>
-        </div>
-      </div>
-    </>
-  )
-}
 
 function BookingsScreen({
   bookings,
@@ -2062,9 +1958,6 @@ function BookingsScreen({
                         {actionBookingId === booking.id ? "Cancelling" : "Cancel"}
                       </button>
                     )}
-                    <button type="button" onClick={() => onNavigate("resell")} className="grid h-12 w-12 place-items-center rounded-full bg-[#edf1f1]">
-                      <Share2 className="h-5 w-5" />
-                    </button>
                   </div>
                 </div>
               </article>
@@ -2256,7 +2149,6 @@ function ProfileScreen({
     { label: "Edit Profile", view: "edit-profile" as View, icon: User },
     { label: "My Bookings", view: "bookings" as View, icon: CalendarDays },
     { label: "Payment Methods", view: "checkout" as View, icon: Wallet },
-    { label: "My Auctions", view: "auction" as View, icon: Gavel, badge: "2 Active" },
     { label: "Notifications", view: "notifications" as View, icon: Bell, badge: profile?.stats.unreadNotifications ? `${profile.stats.unreadNotifications} New` : undefined },
     { label: "Help Center", view: "help" as View, icon: HelpCircle },
     { label: "Settings", view: "settings" as View, icon: Settings },
@@ -2585,70 +2477,6 @@ function SettingsRow({
   )
 }
 
-function ResellScreen({ onBack, onPublish }: { onBack: () => void; onPublish: () => void }) {
-  const salePrice = 450000
-  const fee = 22500
-  return (
-    <div>
-      <MobileTopBar title="Jual Slot Booking" back onBack={onBack} brand={false} />
-      <div className="px-6 py-8 lg:mx-auto lg:max-w-3xl lg:px-0">
-        <h1 className="mb-6 flex items-center gap-3 text-xl font-black"><span className="h-1 w-8 rounded-full bg-[#007c61]" /> Rincian Slot</h1>
-        <section className="rounded-[22px] bg-white p-6 shadow-sm">
-          <div className="grid grid-cols-[1fr_84px] gap-5">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#687073]">Tempat & Jadwal</p>
-              <h2 className="mt-2 text-2xl font-black">Padel Arena</h2>
-              <p className="mt-2 flex flex-wrap gap-4 font-semibold">
-                <span><CalendarDays className="mr-1 inline h-4 w-4 text-[#007c61]" /> Kamis, 24 Okt</span>
-                <span><Clock className="mr-1 inline h-4 w-4 text-[#007c61]" /> 10:00 - 11:00</span>
-              </p>
-            </div>
-            <img src="/padel-court-modern.jpg" alt="Padel Arena slot" className="h-20 w-20 rounded-2xl object-cover" />
-          </div>
-          <div className="mt-6 grid grid-cols-2 border-t border-dashed border-[#dce2e2] pt-5">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#687073]">Harga Asli</p>
-              <p className="text-xl font-black">Rp 350.000</p>
-            </div>
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#687073]">Status</p>
-              <p className="font-black"><span className="mr-1 inline-block h-2 w-2 rounded-full bg-[#1dbb84]" /> Terkonfirmasi</p>
-            </div>
-          </div>
-        </section>
-        <h2 className="mt-10 mb-6 flex items-center gap-3 text-xl font-black"><span className="h-1 w-8 rounded-full bg-[#007c61]" /> Pengaturan Harga</h2>
-        <label className="text-xs font-black uppercase tracking-[0.22em] text-[#687073]">Harga Jual (Rp)</label>
-        <div className="mt-3 flex h-16 items-center gap-4 rounded-2xl bg-[#e9eeee] px-5 text-2xl font-black">
-          <span>Rp</span>
-          <span>{salePrice.toLocaleString("id-ID")}</span>
-        </div>
-        <p className="mt-3 text-xs font-semibold text-[#5f666a]"><BadgeCheck className="mr-1 inline h-4 w-4 text-[#007c61]" /> Maksimal markup: <span className="text-[#007c61]">Rp 500.000</span> (Batas komunitas)</p>
-        <div className="mt-6 flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm">
-          <span className="grid h-12 w-12 place-items-center rounded-xl bg-[#dcfff6] text-[#007c61]"><Banknote className="h-6 w-6" /></span>
-          <span className="min-w-0 flex-1">
-            <span className="block font-black">Nego Aktif</span>
-            <span className="text-sm font-semibold text-[#687073]">Pembeli bisa menawar harga</span>
-          </span>
-          <span className="relative h-7 w-12 rounded-full bg-[#007c61]"><span className="absolute left-6 top-1 h-5 w-5 rounded-full bg-white" /></span>
-        </div>
-        <section className="mt-8 rounded-[24px] bg-[#e9eeee] p-6">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-[#687073]">Ringkasan Pendapatan</p>
-          <div className="mt-6 space-y-4">
-            <div className="flex justify-between"><span className="text-[#687073]">Harga Jual</span><strong>{formatRp(salePrice)}</strong></div>
-            <div className="flex justify-between"><span className="text-[#687073]">Fee Platform <span className="rounded bg-[#49e7ba] px-2 py-0.5 text-xs font-black text-[#007c61]">5%</span></span><strong className="text-[#c41226]">- {formatRp(fee)}</strong></div>
-            <div className="flex justify-between border-t border-[#d5dddd] pt-4 text-xl font-black"><span>Total Diterima</span><span className="text-2xl text-[#007c61]">{formatRp(salePrice - fee)}</span></div>
-          </div>
-        </section>
-        <p className="mx-auto mt-8 max-w-md text-center text-xs leading-relaxed text-[#687073]">
-          Dengan mempublikasikan, Anda menyetujui Syarat & Ketentuan Resell KINETIC. Saldo akan diteruskan setelah pembeli menyelesaikan sesi.
-        </p>
-        <AppButton onClick={onPublish} className="mt-8 h-18 w-full normal-case tracking-normal">
-          Publish ke My Auction
-        </AppButton>
-      </div>
-    </div>
-  )
-}
 
 function HelpScreen({ onBack }: { onBack: () => void }) {
   return (
@@ -2662,7 +2490,6 @@ function HelpScreen({ onBack }: { onBack: () => void }) {
           {[
             { title: "Booking", body: "Modify, cancel or track your sportcations.", icon: CalendarDays },
             { title: "Payments", body: "Refunds, billing cycles, and invoices.", icon: Wallet },
-            { title: "Resell & Auction", body: "How to list tickets or bid on premium slots.", icon: Gavel },
           ].map((topic) => {
             const Icon = topic.icon
             return (

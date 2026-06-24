@@ -8,7 +8,7 @@ import { authClient } from "@/lib/auth-client"
 
 type Mode = "login" | "register"
 
-export function AuthPanel({ mode, nextPath }: { mode: Mode; nextPath?: string }) {
+export function AuthPanel({ mode, nextPath, role = "customer" }: { mode: Mode; nextPath?: string; role?: "customer" | "merchant" | "admin" }) {
   const router = useRouter()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
@@ -17,8 +17,6 @@ export function AuthPanel({ mode, nextPath }: { mode: Mode; nextPath?: string })
   const [rememberMe, setRememberMe] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
-  const [selectedRole, setSelectedRole] = useState<"customer" | "merchant" | "admin">("customer")
-
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setSubmitting(true)
@@ -93,26 +91,15 @@ export function AuthPanel({ mode, nextPath }: { mode: Mode; nextPath?: string })
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-gray-500">
             {mode === "login"
-              ? "Pilih role Anda untuk masuk ke sistem Sportcation."
+              ? role === "merchant"
+                ? "Masuk ke dashboard merchant Anda."
+                : role === "admin"
+                  ? "Masuk ke sistem administrasi."
+                  : "Masuk ke sistem Sportcation."
               : "Daftar sebagai customer. Akun merchant dan admin dibuat oleh administrator."}
           </p>
 
-          {mode === "login" && (
-            <div className="mt-6 flex overflow-hidden rounded-lg bg-gray-100 p-1">
-              {(["customer", "merchant", "admin"] as const).map((r) => (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => setSelectedRole(r)}
-                  className={`flex-1 rounded-md py-2 text-sm font-medium transition-colors ${
-                    selectedRole === r ? "bg-white text-gray-900 shadow" : "text-gray-500 hover:text-gray-900"
-                  }`}
-                >
-                  {r.charAt(0).toUpperCase() + r.slice(1)}
-                </button>
-              ))}
-            </div>
-          )}
+
 
           <form onSubmit={submit} className="mt-6 space-y-4">
             {mode === "register" && (
@@ -138,7 +125,7 @@ export function AuthPanel({ mode, nextPath }: { mode: Mode; nextPath?: string })
                 autoComplete="email"
                 placeholder={
                   mode === "login" 
-                    ? `nama@${selectedRole === "merchant" ? "mitra." : selectedRole === "admin" ? "admin." : ""}email.com` 
+                    ? `nama@${role === "merchant" ? "mitra." : role === "admin" ? "admin." : ""}email.com` 
                     : "nama@email.com"
                 }
                 className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-gray-400"
