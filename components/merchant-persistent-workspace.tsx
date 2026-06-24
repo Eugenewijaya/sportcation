@@ -127,12 +127,34 @@ async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
   return payload.data as T
 }
 
-function fetchVenueWorkspaceData() {
-  return Promise.all([apiRequest<Venue[]>("/api/venues"), apiRequest<Category[]>("/api/categories")])
+async function fetchVenueWorkspaceData() {
+  const [venues, categories] = await Promise.all([
+    apiRequest<any[]>("/api/merchant/venues"), 
+    apiRequest<Category[]>("/api/categories")
+  ])
+  
+  const mappedVenues: Venue[] = venues.map(v => ({
+    ...v,
+    categoryName: v.category?.name || "Unknown",
+    courts: v.courts || []
+  }))
+  
+  return [mappedVenues, categories] as const
 }
 
-function fetchSlotWorkspaceData() {
-  return Promise.all([apiRequest<Slot[]>("/api/slots"), apiRequest<Court[]>("/api/courts")])
+async function fetchSlotWorkspaceData() {
+  const [slots, courts] = await Promise.all([
+    apiRequest<any[]>("/api/merchant/slots"), 
+    apiRequest<Court[]>("/api/courts")
+  ])
+  
+  const mappedSlots: Slot[] = slots.map(s => ({
+    ...s,
+    venueName: s.venue?.name || "Unknown",
+    courtName: s.court?.name || "Unknown"
+  }))
+  
+  return [mappedSlots, courts] as const
 }
 
 function rupiah(value: number) {
@@ -230,9 +252,10 @@ function VenueWorkspace({ onAction }: { onAction: (message: string) => void }) {
     setSaving(true)
     setNotice(null)
     try {
-      await apiRequest(editingId ? `/api/venues/${editingId}` : "/api/venues", {
-        method: editingId ? "PATCH" : "POST",
+      await apiRequest("/api/merchant/venues", {
+        method: editingId ? "PUT" : "POST",
         body: JSON.stringify({
+          id: editingId,
           ...form,
           priceFrom: Number(form.priceFrom),
           ...(editingId ? { defaultCourtName: undefined } : {}),
@@ -253,7 +276,7 @@ function VenueWorkspace({ onAction }: { onAction: (message: string) => void }) {
   async function remove(venue: Venue) {
     if (!window.confirm(`Hapus ${venue.name}? Venue yang sudah memiliki booking akan ditolak oleh server.`)) return
     try {
-      await apiRequest(`/api/venues/${venue.id}`, { method: "DELETE" })
+      await apiRequest(`/api/merchant/venues?id=${venue.id}`, { method: "DELETE" })
       const message = `${venue.name} berhasil dihapus.`
       if (editingId === venue.id) resetForm()
       await load()
@@ -439,9 +462,9 @@ function SlotWorkspace({ onAction }: { onAction: (message: string) => void }) {
     setSaving(true)
     setNotice(null)
     try {
-      await apiRequest(editingId ? `/api/slots/${editingId}` : "/api/slots", {
-        method: editingId ? "PATCH" : "POST",
-        body: JSON.stringify({ ...form, price: Number(form.price) }),
+      await apiRequest("/api/merchant/slots", {
+        method: editingId ? "PUT" : "POST",
+        body: JSON.stringify({ id: editingId, ...form, price: Number(form.price) }),
       })
       const message = editingId ? "Slot berhasil diperbarui." : "Slot berhasil dibuat."
       await load()
@@ -458,7 +481,7 @@ function SlotWorkspace({ onAction }: { onAction: (message: string) => void }) {
   async function remove(slot: Slot) {
     if (!window.confirm(`Hapus slot ${slot.courtName}, ${slot.slotDate} ${slot.startTime}?`)) return
     try {
-      await apiRequest(`/api/slots/${slot.id}`, { method: "DELETE" })
+      await apiRequest(`/api/merchant/slots?id=${slot.id}`, { method: "DELETE" })
       const message = "Slot berhasil dihapus."
       if (editingId === slot.id) resetForm()
       await load()

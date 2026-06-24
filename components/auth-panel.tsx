@@ -17,6 +17,7 @@ export function AuthPanel({ mode, nextPath }: { mode: Mode; nextPath?: string })
   const [rememberMe, setRememberMe] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
+  const [selectedRole, setSelectedRole] = useState<"customer" | "merchant" | "admin">("customer")
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -92,11 +93,28 @@ export function AuthPanel({ mode, nextPath }: { mode: Mode; nextPath?: string })
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-gray-500">
             {mode === "login"
-              ? "Masukkan email dan password untuk melanjutkan. Berlaku untuk semua role (customer, merchant, admin)."
+              ? "Pilih role Anda untuk masuk ke sistem Sportcation."
               : "Daftar sebagai customer. Akun merchant dan admin dibuat oleh administrator."}
           </p>
 
-          <form onSubmit={submit} className="mt-8 space-y-4">
+          {mode === "login" && (
+            <div className="mt-6 flex overflow-hidden rounded-lg bg-gray-100 p-1">
+              {(["customer", "merchant", "admin"] as const).map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setSelectedRole(r)}
+                  className={`flex-1 rounded-md py-2 text-sm font-medium transition-colors ${
+                    selectedRole === r ? "bg-white text-gray-900 shadow" : "text-gray-500 hover:text-gray-900"
+                  }`}
+                >
+                  {r.charAt(0).toUpperCase() + r.slice(1)}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <form onSubmit={submit} className="mt-6 space-y-4">
             {mode === "register" && (
               <AuthField label="Nama lengkap" icon={UserRound}>
                 <input
@@ -118,7 +136,11 @@ export function AuthPanel({ mode, nextPath }: { mode: Mode; nextPath?: string })
                 onChange={(event) => setEmail(event.target.value)}
                 required
                 autoComplete="email"
-                placeholder="nama@email.com"
+                placeholder={
+                  mode === "login" 
+                    ? `nama@${selectedRole === "merchant" ? "mitra." : selectedRole === "admin" ? "admin." : ""}email.com` 
+                    : "nama@email.com"
+                }
                 className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-gray-400"
               />
             </AuthField>

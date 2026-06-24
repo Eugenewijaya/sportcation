@@ -62,7 +62,6 @@ type View =
   | "profile"
   | "edit-profile"
   | "settings"
-  | "flash"
   | "resell"
   | "help"
   | "privacy"
@@ -93,7 +92,6 @@ const views: View[] = [
   "profile",
   "edit-profile",
   "settings",
-  "flash",
   "resell",
   "help",
   "privacy",
@@ -101,9 +99,7 @@ const views: View[] = [
 
 const quickActions: Array<{ view: View; label: string; icon: LucideIcon; hot?: boolean }> = [
   { view: "explore", label: "Cari Venue", icon: CalendarDays, hot: true },
-  { view: "flash", label: "Flash Sale", icon: Zap },
   { view: "resell", label: "Resell", icon: Repeat2 },
-  { view: "flash", label: "Voucher", icon: Ticket },
   { view: "bookings", label: "My Booking", icon: CalendarDays },
   { view: "checkout", label: "Order", icon: Wallet },
 ]
@@ -137,15 +133,6 @@ async function readApiData<T>(response: Response): Promise<T> {
   return payload.data as T
 }
 
-type FlashDeal = Venue & { discount: string; ends: string }
-
-function buildFlashDeals(venueList: Venue[]): FlashDeal[] {
-  return venueList.slice(0, 4).map((venue, index) => ({
-    ...venue,
-    discount: ["-60%", "-45%", "-50%", "-40%"][index] ?? "-35%",
-    ends: ["02:45:12", "00:15:45", "01:02:18", "04:40:00"][index] ?? "03:10:00",
-  }))
-}
 
 function formatSlotWindow(slot?: Slot) {
   if (!slot) return "Pilih slot"
@@ -265,7 +252,6 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
     if (category === "All Venues") return ""
     return catalog.categories.find((item) => item.name === category)?.slug ?? ""
   }, [catalog.categories, category])
-  const flashDeals = useMemo(() => buildFlashDeals(catalog.venues), [catalog.venues])
   const selectedVenue = catalog.venues.find((venue) => venue.id === selectedVenueId) ?? catalog.venues[0]
   const selectedSlot = selectedVenue?.slots.find((slot) => slot.id === selectedSlotId) ?? selectedVenue?.slots[0]
 
@@ -723,7 +709,7 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
     }
   }
 
-  const shouldShowBottomNav = ["home", "explore", "auction", "bookings", "notifications", "profile", "settings", "flash", "help"].includes(view)
+  const shouldShowBottomNav = ["home", "explore", "auction", "bookings", "notifications", "profile", "settings", "help"].includes(view)
 
   return (
     <div className={cx("min-h-screen bg-gray-50 text-gray-900", darkMode && "dark bg-background text-foreground")}>
@@ -735,7 +721,6 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
             {view === "home" && (
               <HomeScreen
                 venues={catalog.venues}
-                flashDeals={flashDeals}
                 catalogStatus={catalogStatus}
                 catalogError={catalogError}
                 onNavigate={go}
@@ -857,7 +842,6 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
                 onBiometricEnabled={setBiometricEnabled}
               />
             )}
-            {view === "flash" && <FlashSaleScreen deals={flashDeals} onVenue={openVenue} />}
             {view === "resell" && <ResellScreen onBack={() => go("bookings")} onPublish={() => go("auction")} />}
             {view === "help" && <HelpScreen onBack={() => go("profile")} />}
             {view === "privacy" && <PrivacyScreen onBack={() => go("settings")} />}
@@ -1171,14 +1155,12 @@ function LoginScreen({ onBack, onSubmit }: { onBack: () => void; onSubmit: () =>
 
 function HomeScreen({
   venues,
-  flashDeals,
   catalogStatus,
   catalogError,
   onNavigate,
   onVenue,
 }: {
   venues: Venue[]
-  flashDeals: FlashDeal[]
   catalogStatus: "idle" | "loading" | "error"
   catalogError: string
   onNavigate: (view: View) => void
@@ -1201,21 +1183,6 @@ function HomeScreen({
               Cari venue olahraga...
             </button>
 
-            <button
-              type="button"
-              onClick={() => onNavigate("flash")}
-              className="mt-6 w-full overflow-hidden rounded-2xl bg-emerald-700 p-6 text-left text-white lg:min-h-[240px] lg:p-8"
-            >
-              <div className="max-w-[340px]">
-                <div className="mb-4 inline-flex items-center rounded-md bg-amber-400 px-3 py-1 text-xs font-bold text-amber-900">
-                  <Zap className="mr-1 h-3 w-3" />
-                  Waktu Terbatas
-                </div>
-                <h2 className="text-2xl font-bold leading-tight lg:text-4xl">Promo Kilat Diskon Hingga 70%</h2>
-                <p className="mt-3 text-sm text-white/70">Pesan lapangan favorit Anda sekarang.</p>
-              </div>
-            </button>
-
             <div className="mt-6 grid grid-cols-3 gap-3 lg:grid-cols-6">
               {quickActions.map((action) => {
                 const Icon = action.icon
@@ -1233,18 +1200,6 @@ function HomeScreen({
                   </button>
                 )
               })}
-            </div>
-
-            <SectionTitle title="Promo Kilat" subtitle="Pesan sebelum kehabisan" action="Lihat semua" onAction={() => onNavigate("flash")} />
-            <div className="sportcation-scrollbar -mx-5 flex snap-x gap-4 overflow-x-auto px-5 lg:mx-0 lg:grid lg:grid-cols-2 lg:overflow-visible lg:px-0">
-              {catalogStatus === "loading" && <CatalogInlineState title="Memuat venue" message="Mengambil katalog terbaru dari database." />}
-              {catalogStatus === "error" && <CatalogInlineState title="Katalog tidak tersedia" message={catalogError || "Gagal memuat katalog."} />}
-              {catalogStatus !== "error" && flashDeals.slice(0, 2).map((deal) => (
-                <DealCard key={deal.id + deal.name} deal={deal} onClick={() => onVenue(deal.id)} />
-              ))}
-              {catalogStatus !== "loading" && catalogStatus !== "error" && flashDeals.length === 0 && (
-                <CatalogInlineState title="Belum ada venue" message="Belum ada venue published untuk ditampilkan." />
-              )}
             </div>
           </div>
 
@@ -1312,41 +1267,6 @@ function CatalogEmptyState({ onExplore }: { onExplore: () => void }) {
   )
 }
 
-function DealCard({ deal, onClick }: { deal: FlashDeal; onClick: () => void }) {
-  return (
-    <article className="min-w-[264px] snap-start overflow-hidden rounded-xl bg-white shadow-sm lg:min-w-0">
-      <div className="relative h-40 overflow-hidden">
-        <img src={deal.image} alt={deal.name} className="h-full w-full object-cover" />
-        <span className="absolute left-3 top-3 rounded-md bg-red-600 px-2.5 py-1 text-[10px] font-bold text-white">{deal.discount ?? "HOT DEAL"}</span>
-        {deal.ends && <span className="absolute bottom-3 right-3 rounded-md bg-black/30 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur">{deal.ends}</span>}
-      </div>
-      <div className="p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="text-base font-bold text-gray-900">{deal.name}</h3>
-            <p className="mt-1 flex items-center gap-1 text-sm text-gray-500">
-              <MapPin className="h-3.5 w-3.5" />
-              {deal.location}
-            </p>
-          </div>
-          <span className="flex items-center gap-0.5 text-xs font-semibold text-amber-700">
-            <Star className="h-3.5 w-3.5 fill-current" />
-            {deal.rating}
-          </span>
-        </div>
-        <div className="mt-4 flex items-end justify-between">
-          <div>
-            {deal.oldPrice && <p className="text-xs text-gray-400 line-through">{formatRp(deal.oldPrice)}</p>}
-            <p className="text-lg font-bold text-emerald-600">{formatRp(deal.price)}<span className="text-xs text-gray-500">/jam</span></p>
-          </div>
-          <button type="button" onClick={onClick} className="grid h-9 w-9 place-items-center rounded-lg bg-emerald-600 text-white">
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-    </article>
-  )
-}
 
 function RecommendedCard({ venue, onBook }: { venue: Venue; onBook: () => void }) {
   return (
@@ -1534,38 +1454,38 @@ function VenueDetailScreen({
       <MobileTopBar title="SPORTCATION" back onBack={onBack} />
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_390px] lg:gap-8 lg:pt-8">
         <section>
-          <div className="relative h-[460px] overflow-hidden lg:rounded-[34px]">
+          <div className="relative h-[400px] overflow-hidden lg:rounded-2xl">
             <img src={venue.image} alt={venue.name} className="h-full w-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
-            <div className="absolute bottom-8 left-6 right-6">
-              <span className="rounded-full bg-[#49e7ba] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[#007c61]">{venue.tag}</span>
-              <h1 className="mt-5 max-w-[560px] text-4xl font-black leading-tight tracking-[-0.07em] text-white lg:text-6xl">{venue.name}</h1>
-              <div className="mt-4 flex flex-wrap gap-4 text-sm font-bold text-white">
-                <span className="text-[#49e7ba]"><Star className="mr-1 inline h-4 w-4 fill-current" /> {venue.rating} (124 reviews)</span>
-                <span><MapPin className="mr-1 inline h-4 w-4" /> {venue.location}</span>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+            <div className="absolute bottom-6 left-5 right-5">
+              <span className="rounded-md bg-emerald-500 px-3 py-1 text-xs font-bold text-white">{venue.tag}</span>
+              <h1 className="mt-4 max-w-[560px] text-3xl font-bold leading-tight text-white lg:text-5xl">{venue.name}</h1>
+              <div className="mt-3 flex flex-wrap gap-4 text-sm font-medium text-white/90">
+                <span className="flex items-center gap-1"><Star className="h-4 w-4 fill-amber-400 text-amber-400" /> {venue.rating} (124 ulasan)</span>
+                <span className="flex items-center gap-1"><MapPin className="h-4 w-4" /> {venue.location}</span>
               </div>
             </div>
           </div>
-          <div className="-mt-8 grid grid-cols-3 gap-4 px-6 lg:relative lg:mt-6 lg:px-0">
+          <div className="-mt-6 grid grid-cols-3 gap-3 px-5 lg:relative lg:mt-6 lg:px-0">
             {venue.facilities.slice(0, 3).map((label) => {
               const Icon = facilityIcons[label] ?? BadgeCheck
               return (
-                <div key={label} className="relative grid min-h-[92px] place-items-center rounded-2xl bg-white p-4 text-center shadow-sm">
-                  <Icon className="h-8 w-8 text-[#007c61]" />
-                  <span className="mt-2 text-[11px] font-black uppercase tracking-wide text-[#666b70]">{label}</span>
+                <div key={label} className="relative grid min-h-[88px] place-items-center rounded-xl bg-white p-3 text-center shadow-sm">
+                  <Icon className="h-6 w-6 text-emerald-600" />
+                  <span className="mt-2 text-[11px] font-semibold text-gray-600">{label}</span>
                 </div>
               )
             })}
           </div>
-          <div className="px-6 py-10 lg:px-0">
-            <div className="mb-6 flex items-end justify-between">
+          <div className="px-5 py-8 lg:px-0">
+            <div className="mb-5 flex items-end justify-between">
               <div>
-                <h2 className="text-3xl font-black tracking-[-0.06em]">Book Schedule</h2>
-                <p className="mt-1 text-sm font-semibold text-[#687073]">Select your preferred date and time</p>
+                <h2 className="text-2xl font-bold text-gray-900">Jadwal Booking</h2>
+                <p className="mt-1 text-sm text-gray-500">Pilih tanggal dan waktu bermain</p>
               </div>
-              <button type="button" className="text-sm font-black text-[#007c61]">See Calendar</button>
+              <button type="button" className="text-sm font-semibold text-emerald-600">Lihat Kalender</button>
             </div>
-            <div className="sportcation-scrollbar flex gap-3 overflow-x-auto pb-1">
+            <div className="sportcation-scrollbar flex gap-2 overflow-x-auto pb-1">
               {dates.map((date, index) => {
                 const parsedDate = new Date(`${date}T00:00:00`)
                 const day = new Intl.DateTimeFormat("id-ID", { day: "2-digit" }).format(parsedDate)
@@ -1577,21 +1497,21 @@ function VenueDetailScreen({
                     key={date}
                     type="button"
                     onClick={() => onSelectSlot(venue.slots.find((slot) => slot.slotDate === date)?.id ?? "")}
-                    className={cx("h-20 min-w-[66px] rounded-2xl text-center shadow-sm", selected || (!selectedDate && index === 0) ? "bg-[#56e8bf] text-[#007c61] ring-2 ring-[#007c61]" : "bg-[#edf1f1] text-[#2d3234]")}
+                    className={cx("h-20 min-w-[66px] rounded-xl text-center shadow-sm transition", selected || (!selectedDate && index === 0) ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600" : "bg-white text-gray-600")}
                   >
-                    <span className="block text-[10px] font-black uppercase">{month}</span>
-                    <span className="block text-2xl font-black">{day}</span>
+                    <span className="block text-[10px] font-bold uppercase">{month}</span>
+                    <span className="block text-xl font-bold">{day}</span>
                     <span className="block text-xs">{label}</span>
                   </button>
                 )
               })}
               {dates.length === 0 && (
-                <div className="rounded-2xl bg-white px-5 py-4 text-sm font-bold text-[#687073] shadow-sm">
+                <div className="rounded-xl bg-white px-5 py-4 text-sm font-medium text-gray-500 shadow-sm">
                   Tidak ada slot tersedia.
                 </div>
               )}
             </div>
-            <div className="mt-8 grid grid-cols-3 gap-4">
+            <div className="mt-6 grid grid-cols-3 gap-3">
               {slots.map((slot) => {
                 const isSelected = selectedSlot?.id === slot.id
                 return (
@@ -1600,40 +1520,40 @@ function VenueDetailScreen({
                     type="button"
                     onClick={() => onSelectSlot(slot.id)}
                     className={cx(
-                      "h-18 rounded-2xl text-center text-sm font-black transition disabled:cursor-not-allowed",
-                      isSelected && "bg-[#007c61] text-white ring-4 ring-white outline outline-2 outline-[#007c61]",
-                      !isSelected && "bg-[#edf1f1] text-[#2d3234]",
+                      "h-16 rounded-xl text-center text-sm font-bold transition disabled:cursor-not-allowed",
+                      isSelected && "bg-emerald-600 text-white shadow-md",
+                      !isSelected && "bg-white text-gray-700 shadow-sm hover:bg-gray-50",
                     )}
                   >
                     <span className="block">{slot.startTime}</span>
-                    <span className={cx("mt-1 block text-[10px] font-bold", isSelected ? "text-[#56e8bf]" : "text-[#697075]")}>
-                      {isSelected ? "Selected" : "Available"}
+                    <span className={cx("mt-0.5 block text-[10px] font-medium", isSelected ? "text-emerald-100" : "text-gray-400")}>
+                      {isSelected ? "Terpilih" : "Tersedia"}
                     </span>
                   </button>
                 )
               })}
             </div>
-            <div className="mt-10">
-              <h2 className="mb-4 flex items-center gap-2 text-xl font-black">
-                <MapPin className="h-5 w-5 text-[#007c61]" />
-                Location Details
+            <div className="mt-8">
+              <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-gray-900">
+                <MapPin className="h-5 w-5 text-emerald-600" />
+                Detail Lokasi
               </h2>
-              <div className="relative h-48 overflow-hidden rounded-3xl border-4 border-white bg-[#e8ecec] shadow-sm">
-                <div className="absolute inset-0 opacity-60 [background-image:linear-gradient(90deg,#d6dddd_1px,transparent_1px),linear-gradient(#d6dddd_1px,transparent_1px)] [background-size:24px_24px]" />
-                <div className="absolute left-1/2 top-1/2 grid h-16 w-16 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-[#007c61] text-white ring-4 ring-white">
-                  <MapPin className="h-8 w-8" />
+              <div className="relative h-40 overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 shadow-sm">
+                <div className="absolute inset-0 opacity-50 [background-image:linear-gradient(90deg,#e5e7eb_1px,transparent_1px),linear-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px]" />
+                <div className="absolute left-1/2 top-1/2 grid h-12 w-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-emerald-600 text-white shadow-md">
+                  <MapPin className="h-6 w-6" />
                 </div>
-                <div className="absolute bottom-4 left-4 right-4 rounded-2xl bg-white p-4 text-sm font-black">{venue.location}</div>
+                <div className="absolute bottom-3 left-3 right-3 rounded-xl bg-white p-3 text-sm font-semibold text-gray-800 shadow-sm">{venue.location}</div>
               </div>
             </div>
           </div>
         </section>
-        <aside className="mx-6 mb-8 rounded-[30px] bg-white px-6 py-5 shadow-[0_18px_40px_rgb(0_0_0/0.08)] lg:sticky lg:top-28 lg:mx-0 lg:mb-0 lg:h-fit lg:rounded-[32px] lg:p-7 lg:shadow-sm">
-          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#687073]">Total Price</p>
-          <div className="mt-1 flex items-center justify-between gap-5">
-            <p className="text-2xl font-black tracking-[-0.05em]"><span className="text-base text-[#007c61]">Rp</span> {(selectedSlot?.price ?? venue.price).toLocaleString("id-ID")}<span className="text-xs font-bold text-[#687073]">/hr</span></p>
-            <AppButton onClick={onCheckout} disabled={!selectedSlot} className="min-w-[170px] normal-case tracking-normal">
-              Book Now
+        <aside className="mx-5 mb-6 rounded-2xl bg-white px-5 py-5 shadow-lg shadow-black/5 border border-gray-100 lg:sticky lg:top-24 lg:mx-0 lg:mb-0 lg:h-fit lg:shadow-sm">
+          <p className="text-xs font-semibold text-gray-500">Total Harga</p>
+          <div className="mt-1 flex items-center justify-between gap-4">
+            <p className="text-2xl font-bold text-gray-900"><span className="text-sm font-medium text-gray-500">Rp</span> {(selectedSlot?.price ?? venue.price).toLocaleString("id-ID")}<span className="text-xs font-medium text-gray-500">/jam</span></p>
+            <AppButton onClick={onCheckout} disabled={!selectedSlot} className="min-w-[140px]">
+              Pesan
             </AppButton>
           </div>
         </aside>
@@ -1667,97 +1587,97 @@ function CheckoutScreen({
 
   return (
     <div>
-      <MobileTopBar title="SPORTCATION" back onBack={onBack} />
-      <div className="px-6 py-9 lg:px-0">
-        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_390px] lg:gap-8">
+      <MobileTopBar title="Checkout" back onBack={onBack} />
+      <div className="px-5 py-6 lg:px-0">
+        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8">
           <section>
-            <h1 className="text-6xl font-black leading-[0.98] tracking-[-0.08em] lg:text-7xl">Review & Checkout</h1>
-            <p className="mt-5 max-w-md text-lg leading-relaxed text-[#687073]">Complete your booking for the ultimate padel session.</p>
-            <div className="mt-10 overflow-hidden rounded-[26px] bg-white p-8 shadow-sm">
-              <span className="rounded-full bg-[#49e7ba] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[#007c61]">Confirmed Venue</span>
-              <div className="mt-8 grid gap-8 border-b border-[#e2e7e7] pb-8 lg:grid-cols-[1fr_auto]">
+            <h1 className="text-3xl font-bold leading-tight text-gray-900 lg:text-4xl">Review & Checkout</h1>
+            <p className="mt-2 text-sm text-gray-500">Selesaikan pemesanan venue Anda.</p>
+            <div className="mt-6 overflow-hidden rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+              <span className="rounded-md bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">Venue Terkonfirmasi</span>
+              <div className="mt-5 grid gap-4 border-b border-gray-100 pb-5 lg:grid-cols-[1fr_auto]">
                 <div>
-                  <h2 className="text-2xl font-black tracking-[-0.04em]">{venue.name}</h2>
-                  <p className="mt-1 flex max-w-[190px] items-start gap-1 text-sm font-semibold text-[#687073]">
-                    <MapPin className="mt-1 h-4 w-4 shrink-0" />
+                  <h2 className="text-xl font-bold text-gray-900">{venue.name}</h2>
+                  <p className="mt-1 flex items-start gap-1 text-sm text-gray-500">
+                    <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
                     {venue.location}
                   </p>
                 </div>
-                <CalendarDays className="h-7 w-7 text-[#007c61]" />
+                <CalendarDays className="h-6 w-6 text-emerald-600 hidden lg:block" />
               </div>
-              <div className="mt-6">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#687073]">Date & Time</p>
-                <p className="mt-1 text-lg font-black text-[#007c61]">{formatSlotDate(slot)} - {formatSlotWindow(slot)}</p>
+              <div className="mt-5">
+                <p className="text-xs font-semibold text-gray-500">Tanggal & Waktu</p>
+                <p className="mt-1 text-base font-bold text-gray-900">{formatSlotDate(slot)} • {formatSlotWindow(slot)}</p>
               </div>
             </div>
-            <div className="mt-2 h-52 overflow-hidden rounded-[24px]">
-              <img src={venue.image} alt="Court 04 Premium Indoor" className="h-full w-full object-cover" />
+            <div className="mt-3 h-40 overflow-hidden rounded-2xl lg:h-48">
+              <img src={venue.image} alt="Venue" className="h-full w-full object-cover" />
             </div>
-            <div className="mt-10">
-              <p className="mb-4 text-xs font-black uppercase tracking-[0.22em] text-[#777d82]">Have a voucher?</p>
-              <div className="flex gap-3">
-                <div className="flex h-16 flex-1 items-center gap-3 rounded-full bg-[#edf1f1] px-5 text-sm font-semibold text-[#777d82]">
-                  <Ticket className="h-5 w-5" />
-                  Enter promo code
+            <div className="mt-8">
+              <p className="mb-3 text-sm font-semibold text-gray-700">Punya kode promo?</p>
+              <div className="flex gap-2">
+                <div className="flex h-12 flex-1 items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 text-sm text-gray-500">
+                  <Ticket className="h-4 w-4" />
+                  Masukkan kode
                 </div>
-                <AppButton variant="dark" className="h-16 min-w-[112px]">
-                  Apply
+                <AppButton variant="light" className="h-12 px-6">
+                  Terapkan
                 </AppButton>
               </div>
             </div>
-            <div className="mt-10">
-              <p className="mb-4 text-xs font-black uppercase tracking-[0.22em] text-[#777d82]">Payment Method</p>
+            <div className="mt-8">
+              <p className="mb-3 text-sm font-semibold text-gray-700">Metode Pembayaran</p>
               <div className="grid gap-3">
                 {[
-                  { method: "QRIS / OVO", helper: "Scan QR or use OVO balance", icon: QrCode },
+                  { method: "QRIS / OVO", helper: "Scan QR atau potong saldo", icon: QrCode },
                   { method: "Virtual Account", helper: "BCA, Mandiri, BNI, BRI", icon: Building2 },
                 ].map((item) => {
                   const Icon = item.icon
                   const selected = paymentMethod === item.method
                   return (
-                    <button key={item.method} type="button" onClick={() => onPaymentMethod(item.method)} className="flex items-center gap-4 rounded-2xl bg-white p-5 text-left shadow-sm">
-                      <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#edf1f1] text-[#5f666a]">
-                        <Icon className="h-6 w-6" />
+                    <button key={item.method} type="button" onClick={() => onPaymentMethod(item.method)} className="flex items-center gap-4 rounded-xl border border-gray-100 bg-white p-4 text-left shadow-sm transition hover:border-emerald-200">
+                      <span className={cx("grid h-10 w-10 place-items-center rounded-lg", selected ? "bg-emerald-50 text-emerald-600" : "bg-gray-50 text-gray-500")}>
+                        <Icon className="h-5 w-5" />
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block text-base font-black">{item.method}</span>
-                        <span className="block text-sm font-semibold text-[#687073]">{item.helper}</span>
+                        <span className="block text-sm font-bold text-gray-900">{item.method}</span>
+                        <span className="block text-xs text-gray-500">{item.helper}</span>
                       </span>
-                      <span className={cx("h-5 w-5 rounded-full border", selected ? "border-[#007c61] bg-[#007c61] ring-4 ring-[#e1fff5]" : "border-[#a5abaf]")} />
+                      <span className={cx("h-4 w-4 rounded-full border-2", selected ? "border-emerald-600 bg-emerald-600 ring-2 ring-emerald-100" : "border-gray-300")} />
                     </button>
                   )
                 })}
               </div>
             </div>
           </section>
-          <aside className="mt-10 rounded-[26px] bg-[#edf1f1] p-8 lg:sticky lg:top-28 lg:mt-0 lg:h-fit">
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-[#687073]">Payment Summary</p>
-            <div className="mt-7 space-y-5 text-base">
+          <aside className="mt-8 rounded-2xl border border-gray-200 bg-gray-50 p-6 lg:sticky lg:top-24 lg:mt-0 lg:h-fit">
+            <p className="text-sm font-bold text-gray-900">Rincian Pembayaran</p>
+            <div className="mt-5 space-y-4 text-sm">
               <div className="flex justify-between gap-4">
-                <span className="text-[#687073]">Court Fee</span>
-                <strong>{formatRp(slotPrice)}</strong>
+                <span className="text-gray-600">Biaya Lapangan</span>
+                <strong className="text-gray-900">{formatRp(slotPrice)}</strong>
               </div>
               <div className="flex justify-between gap-4">
-                <span className="text-[#687073]">Service Fee</span>
-                <strong>{formatRp(serviceFee)}</strong>
+                <span className="text-gray-600">Biaya Layanan</span>
+                <strong className="text-gray-900">{formatRp(serviceFee)}</strong>
               </div>
-              <div className="flex justify-between gap-4 border-t border-[#dce2e2] pt-5 text-xl font-black">
-                <span>Total Payment</span>
-                <span className="text-[#007c61]">{formatRp(total)}</span>
+              <div className="flex justify-between gap-4 border-t border-gray-200 pt-4 text-lg font-bold">
+                <span className="text-gray-900">Total Pembayaran</span>
+                <span className="text-emerald-600">{formatRp(total)}</span>
               </div>
             </div>
-            <p className="mt-10 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#7b8286]">
-              <ShieldCheck className="h-4 w-4" />
-              Secure 256-bit encrypted payment
+            <p className="mt-6 flex items-center justify-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Pembayaran Terenkripsi Aman
             </p>
             {mutationError && (
-              <div role="alert" className="mt-6 rounded-2xl border border-[#ffd0d6] bg-[#fff0f2] p-4 text-sm font-bold leading-relaxed text-[#c92034]">
+              <div role="alert" className="mt-5 rounded-lg border border-red-200 bg-red-50 p-3 text-xs font-medium text-red-600">
                 {mutationError}
               </div>
             )}
-            <AppButton onClick={onPay} disabled={!slot || mutationStatus === "loading"} className="mt-8 h-16 w-full">
-              <QrCode className="h-5 w-5" />
-              {mutationStatus === "loading" ? "Creating Booking..." : "Pay Now"}
+            <AppButton onClick={onPay} disabled={!slot || mutationStatus === "loading"} className="mt-6 w-full">
+              <QrCode className="h-4 w-4" />
+              {mutationStatus === "loading" ? "Memproses..." : "Bayar Sekarang"}
             </AppButton>
           </aside>
         </div>
@@ -1792,34 +1712,28 @@ function PaymentScreen({
   return (
     <div>
       <MobileTopBar title={`Pembayaran ${methodLabel}`} back onBack={onBack} brand={false} />
-      <div className="px-6 py-8 lg:grid lg:grid-cols-[390px_minmax(0,1fr)] lg:gap-10 lg:px-0">
-        <section className="rounded-[28px] bg-white p-7 shadow-sm">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-[#687073]">Venue & Jadwal</p>
+      <div className="px-5 py-6 lg:grid lg:grid-cols-[380px_minmax(0,1fr)] lg:gap-8 lg:px-0">
+        <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <p className="text-xs font-semibold text-gray-500">Venue & Jadwal</p>
           <div className="mt-3 flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-black">{venueName}</h1>
-              {booking && <p className="mt-2 text-xs font-black uppercase tracking-[0.16em] text-[#007c61]">{booking.bookingCode}</p>}
-              <p className="mt-4 flex flex-wrap gap-4 text-sm font-semibold text-[#5f666a]">
-                <span><CalendarDays className="mr-1 inline h-4 w-4" /> {dateLabel}</span>
-                <span><Clock className="mr-1 inline h-4 w-4" /> {timeLabel}</span>
+              <h1 className="text-xl font-bold text-gray-900">{venueName}</h1>
+              {booking && <p className="mt-1 text-xs font-semibold text-emerald-600">KODE: {booking.bookingCode}</p>}
+              <p className="mt-3 flex flex-col gap-1.5 text-sm text-gray-600">
+                <span className="flex items-center gap-2"><CalendarDays className="h-4 w-4" /> {dateLabel}</span>
+                <span className="flex items-center gap-2"><Clock className="h-4 w-4" /> {timeLabel}</span>
               </p>
             </div>
-            <span className="grid h-12 w-12 place-items-center rounded-xl bg-[#dcfff6] text-[#007c61]">
-              <QrCode className="h-7 w-7" />
+            <span className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-50 text-emerald-600">
+              <QrCode className="h-5 w-5" />
             </span>
           </div>
         </section>
-        <section className="mt-8 rounded-[32px] bg-[#e9eeee] p-5 lg:mt-0">
-          <div className="rounded-[28px] bg-white p-7 text-center">
+        <section className="mt-6 rounded-2xl bg-gray-50 p-4 lg:mt-0 lg:p-6 border border-gray-200">
+          <div className="rounded-xl bg-white p-6 text-center shadow-sm">
             {booking?.payment?.qrisUrl ? (
-              <div className="mx-auto flex justify-center">
-                <img src={booking.payment.qrisUrl} alt="QRIS" className="w-64 h-64 object-contain rounded-xl" />
-              </div>
-            ) : booking?.payment?.paymentUrl ? (
-               <div className="mx-auto grid h-64 max-w-[260px] place-items-center rounded-3xl border-4 border-dashed border-[#d4dddd] bg-[#14383d] text-white">
-                <div>
-                  <a href={booking.payment.paymentUrl} target="_blank" rel="noreferrer" className="mt-3 text-sm font-black underline">Buka Halaman Pembayaran</a>
-                </div>
+              <div className="mx-auto flex justify-center overflow-hidden rounded-3xl border border-gray-200">
+                <img src={booking.payment.qrisUrl} alt="QRIS" className="w-full max-w-[260px] h-auto object-contain" />
               </div>
             ) : (
               <div className="mx-auto grid h-64 max-w-[260px] place-items-center rounded-3xl border-4 border-dashed border-[#d4dddd] bg-[#14383d] text-white">
@@ -2668,34 +2582,6 @@ function SettingsRow({
         <ChevronRight className="h-5 w-5 text-[#a1a7aa]" />
       )}
     </button>
-  )
-}
-
-function FlashSaleScreen({ deals, onVenue }: { deals: FlashDeal[]; onVenue: (id: string) => void }) {
-  return (
-    <>
-      <MobileTopBar title="Jakarta, ID" brand={false} />
-      <div className="px-6 py-7 lg:px-0">
-        <div className="overflow-hidden rounded-[28px] bg-[#061313] p-7 text-white lg:min-h-[240px]">
-          <span className="rounded-full bg-[#49e7ba] px-4 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-[#007c61]">Limited time only</span>
-          <h1 className="mt-6 text-4xl font-black leading-tight tracking-[-0.07em]">FLASHSALE <span className="text-[#49e7ba]">GILA-GILAAN!</span></h1>
-          <p className="mt-4 max-w-lg text-base font-semibold leading-relaxed text-white/72">Nikmati potongan harga hingga 60% untuk venue olahraga premium di Jakarta.</p>
-        </div>
-        <div className="mt-7 flex gap-3">
-          {["All Sports", "Badminton", "Futsal"].map((item, index) => (
-            <button key={item} type="button" className={cx("h-11 rounded-full px-6 text-sm font-black", index === 0 ? "bg-[#071413] text-white" : "bg-[#e8eeee] text-[#71777b]")}>
-              {item}
-            </button>
-          ))}
-        </div>
-        <div className="mt-8 grid gap-7 lg:grid-cols-3">
-          {deals.map((deal) => (
-            <DealCard key={deal.name} deal={deal} onClick={() => onVenue(deal.id)} />
-          ))}
-          {deals.length === 0 && <CatalogInlineState title="No deals yet" message="Flash sale akan muncul dari venue published." />}
-        </div>
-      </div>
-    </>
   )
 }
 
