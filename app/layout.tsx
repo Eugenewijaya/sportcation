@@ -4,10 +4,9 @@ import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "Sportcation - Sport Venue Booking Web App",
+  title: "Sportcation — Booking Venue Olahraga",
   description:
-    "Responsive Sportcation web app for venue discovery, flash sale booking, checkout, auction, resell, and profile flows.",
-  generator: "Codex",
+    "Platform booking venue olahraga terlengkap di Indonesia. Pesan lapangan futsal, badminton, tenis, dan lainnya dengan mudah.",
   icons: {
     icon: [
       {
@@ -34,6 +33,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" data-scroll-behavior="smooth">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body className="font-sans antialiased">
         {children}
         <Analytics />

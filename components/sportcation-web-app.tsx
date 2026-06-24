@@ -228,7 +228,7 @@ type ProfileUpdatePayload = {
 }
 
 export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCatalogPayload }) {
-  const [view, setView] = useState<View>("onboarding")
+  const [view, setView] = useState<View>("home")
   const [catalog, setCatalog] = useState(initialCatalog)
   const [catalogStatus, setCatalogStatus] = useState<"idle" | "loading" | "error">("idle")
   const [catalogError, setCatalogError] = useState("")
@@ -725,21 +725,13 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
 
   const shouldShowBottomNav = ["home", "explore", "auction", "bookings", "notifications", "profile", "settings", "flash", "help"].includes(view)
 
-  if (view === "onboarding") {
-    return <OnboardingScreen onLogin={() => window.location.assign("/login")} onDemo={() => go("home")} />
-  }
-
-  if (view === "login") {
-    return <LoginScreen onBack={() => go("onboarding")} onSubmit={() => go("home")} />
-  }
-
   return (
-    <div className={cx("min-h-screen bg-[#f3f6f6] text-[#2c3133]", darkMode && "dark bg-background text-foreground")}>
+    <div className={cx("min-h-screen bg-gray-50 text-gray-900", darkMode && "dark bg-background text-foreground")}>
       <div className="lg:flex">
         <DesktopSidebar active={view} onNavigate={go} />
-        <main className="min-h-screen flex-1 lg:pl-[280px]">
+        <main className="min-h-screen flex-1 lg:pl-[260px]">
           <DesktopTopBar onNavigate={go} />
-          <div className="mx-auto min-h-screen w-full max-w-[430px] bg-[#f3f6f6] pb-10 lg:max-w-none lg:bg-transparent lg:px-8 lg:pb-12">
+          <div className="mx-auto min-h-screen w-full max-w-[430px] bg-gray-50 pb-10 lg:max-w-none lg:bg-transparent lg:px-8 lg:pb-12">
             {view === "home" && (
               <HomeScreen
                 venues={catalog.venues}
@@ -881,12 +873,12 @@ function Brand({ compact = false, inverse = false }: { compact?: boolean; invers
   return (
     <div
       className={cx(
-        "flex items-center gap-2 font-black italic tracking-[-0.04em]",
-        inverse ? "text-[#20d9ad]" : "text-[#1f2326]",
+        "flex items-center gap-2 font-bold",
+        inverse ? "text-white" : "text-gray-900",
       )}
     >
-      <span className={cx("rounded-xl bg-[#12d5aa]", compact ? "h-7 w-7" : "h-10 w-10")} />
-      <span className={cx(compact ? "text-lg" : "text-2xl")}>SPORTCATION</span>
+      <span className={cx("flex items-center justify-center rounded-lg bg-emerald-600 font-extrabold text-white", compact ? "h-7 w-7 text-xs" : "h-8 w-8 text-sm")}>S</span>
+      <span className={cx(compact ? "text-base" : "text-lg")}>Sportcation</span>
     </div>
   )
 }
@@ -933,11 +925,11 @@ function AppButton({
       disabled={disabled}
       onClick={onClick}
       className={cx(
-        "inline-flex h-14 items-center justify-center gap-2 rounded-full px-7 text-sm font-black uppercase tracking-wide transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50",
-        variant === "primary" && "bg-gradient-to-r from-[#007c61] to-[#48e3b6] text-white shadow-[0_18px_35px_rgb(0_124_97/0.22)]",
-        variant === "dark" && "bg-[#2f3335] text-white",
-        variant === "ghost" && "bg-transparent text-[#007c61]",
-        variant === "light" && "bg-white text-[#2f3335] shadow-sm",
+        "inline-flex h-11 items-center justify-center gap-2 rounded-lg px-5 text-sm font-semibold transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50",
+        variant === "primary" && "bg-emerald-600 text-white hover:bg-emerald-700",
+        variant === "dark" && "bg-gray-800 text-white hover:bg-gray-900",
+        variant === "ghost" && "bg-transparent text-emerald-600 hover:bg-emerald-50",
+        variant === "light" && "bg-white text-gray-800 shadow-sm hover:bg-gray-50",
         className,
       )}
     >
@@ -960,24 +952,24 @@ function MobileTopBar({
   brand?: boolean
 }) {
   return (
-    <header className="sticky top-0 z-30 flex h-[72px] items-center justify-between border-b border-[#e7ebeb] bg-[#f7f9f9]/95 px-6 backdrop-blur lg:hidden">
-      <div className="flex min-w-0 items-center gap-3">
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-gray-200 bg-white/95 px-4 backdrop-blur lg:hidden">
+      <div className="flex min-w-0 items-center gap-2.5">
         {back ? (
-          <button type="button" onClick={onBack} className="grid h-9 w-9 place-items-center rounded-full text-[#25292b]">
-            <ArrowLeft className="h-5 w-5" />
+          <button type="button" onClick={onBack} className="grid h-8 w-8 place-items-center rounded-lg text-gray-700 hover:bg-gray-100">
+            <ArrowLeft className="h-4 w-4" />
           </button>
         ) : (
-          <MapPin className="h-5 w-5 text-[#10c99d]" />
+          <MapPin className="h-4 w-4 text-emerald-600" />
         )}
-        <span className={cx("truncate font-extrabold", brand && "italic tracking-[-0.04em]")}>{title ?? (brand ? "SPORTCATION" : "Jakarta")}</span>
+        <span className="truncate text-sm font-semibold text-gray-900">{title ?? (brand ? "Sportcation" : "Jakarta")}</span>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         {onBell && (
-          <button type="button" onClick={onBell} className="grid h-9 w-9 place-items-center rounded-full text-[#777c80]">
-            <Bell className="h-5 w-5" />
+          <button type="button" onClick={onBell} className="grid h-8 w-8 place-items-center rounded-lg text-gray-500 hover:bg-gray-100">
+            <Bell className="h-4 w-4" />
           </button>
         )}
-        <Avatar size="sm" />
+        <a href="/login" className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700">Masuk</a>
       </div>
     </header>
   )
@@ -985,26 +977,23 @@ function MobileTopBar({
 
 function DesktopTopBar({ onNavigate }: { onNavigate: (view: View) => void }) {
   return (
-    <header className="sticky top-0 z-20 hidden h-20 items-center justify-between border-b border-white/70 bg-[#f3f6f6]/90 px-8 backdrop-blur lg:flex">
+    <header className="sticky top-0 z-20 hidden h-16 items-center justify-between border-b border-gray-200 bg-white/95 px-8 backdrop-blur lg:flex">
       <div>
-        <p className="text-xs font-black uppercase tracking-[0.28em] text-[#007c61]">Jakarta, ID</p>
-        <h1 className="text-xl font-black tracking-[-0.04em]">Responsive Venue Booking Web App</h1>
+        <h1 className="text-base font-semibold text-gray-900">Booking Venue Olahraga</h1>
       </div>
       <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={() => onNavigate("explore")}
-          className="flex h-12 w-[320px] items-center gap-3 rounded-full bg-white px-5 text-sm font-semibold text-[#8b9093] shadow-sm"
+          className="flex h-10 w-[280px] items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-400"
         >
-          <Search className="h-5 w-5" />
-          Search venues, sports, or areas...
+          <Search className="h-4 w-4" />
+          Cari venue, olahraga, area...
         </button>
-        <button type="button" onClick={() => onNavigate("notifications")} className="grid h-12 w-12 place-items-center rounded-full bg-white shadow-sm">
-          <Bell className="h-5 w-5 text-[#5c6266]" />
+        <button type="button" onClick={() => onNavigate("notifications")} className="grid h-10 w-10 place-items-center rounded-lg border border-gray-200 bg-white">
+          <Bell className="h-4 w-4 text-gray-500" />
         </button>
-        <button type="button" onClick={() => onNavigate("profile")}>
-          <Avatar size="md" />
-        </button>
+        <a href="/login" className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">Masuk</a>
       </div>
     </header>
   )
@@ -1012,11 +1001,11 @@ function DesktopTopBar({ onNavigate }: { onNavigate: (view: View) => void }) {
 
 function DesktopSidebar({ active, onNavigate }: { active: View; onNavigate: (view: View) => void }) {
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-[280px] border-r border-white/80 bg-white/95 p-6 lg:block">
-      <button type="button" onClick={() => onNavigate("home")} className="mb-10">
+    <aside className="fixed inset-y-0 left-0 z-30 hidden w-[260px] border-r border-gray-200 bg-white p-5 lg:block">
+      <button type="button" onClick={() => onNavigate("home")} className="mb-8">
         <Brand compact />
       </button>
-      <nav className="space-y-2">
+      <nav className="space-y-1">
         {navItems.map((item) => {
           const Icon = item.icon
           const selected = active === item.view
@@ -1026,30 +1015,29 @@ function DesktopSidebar({ active, onNavigate }: { active: View; onNavigate: (vie
               type="button"
               onClick={() => onNavigate(item.view)}
               className={cx(
-                "flex h-13 w-full items-center gap-3 rounded-2xl px-4 text-sm font-black uppercase tracking-[0.14em] transition",
-                selected ? "bg-[#e7fff7] text-[#007c61]" : "text-[#8a8f94] hover:bg-[#f2f5f5] hover:text-[#2c3133]",
+                "flex h-10 w-full items-center gap-2.5 rounded-lg px-3 text-sm font-medium transition",
+                selected ? "bg-emerald-50 text-emerald-700" : "text-gray-500 hover:bg-gray-50 hover:text-gray-900",
               )}
             >
-              <Icon className="h-5 w-5" />
+              <Icon className="h-4 w-4" />
               {item.label}
             </button>
           )
         })}
       </nav>
-      <div className="mt-8 rounded-[28px] bg-[#071413] p-5 text-white">
-        <p className="text-xs font-black uppercase tracking-[0.22em] text-[#49e7ba]">Prime access</p>
-        <h3 className="mt-3 text-2xl font-black tracking-[-0.05em]">The Exchange.</h3>
-        <p className="mt-2 text-sm text-white/65">Bid for premium court times and resell locked bookings.</p>
-        <AppButton onClick={() => onNavigate("auction")} className="mt-5 h-11 w-full text-xs">
-          Open Auction
+      <div className="mt-6 rounded-xl bg-gray-900 p-4 text-white">
+        <h3 className="text-sm font-semibold">Lelang & Resell</h3>
+        <p className="mt-1.5 text-xs leading-relaxed text-gray-400">Bid slot premium atau jual kembali booking Anda.</p>
+        <AppButton onClick={() => onNavigate("auction")} className="mt-4 h-9 w-full text-xs">
+          Buka Lelang
         </AppButton>
       </div>
-      <div className="mt-4 grid gap-3">
-        <a href="/merchant" className="rounded-2xl bg-[#eafff8] px-4 py-3 text-sm font-black text-[#007c61]">
-          Merchant Studio
+      <div className="mt-4 grid gap-2">
+        <a href="/merchant" className="rounded-lg bg-emerald-50 px-3 py-2.5 text-sm font-medium text-emerald-700 hover:bg-emerald-100">
+          Panel Merchant
         </a>
-        <a href="/admin" className="rounded-2xl bg-[#edf1f1] px-4 py-3 text-sm font-black text-[#5f666a]">
-          Admin Command
+        <a href="/admin" className="rounded-lg bg-gray-100 px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-200">
+          Panel Admin
         </a>
       </div>
     </aside>
@@ -1058,7 +1046,7 @@ function DesktopSidebar({ active, onNavigate }: { active: View; onNavigate: (vie
 
 function BottomNav({ active, onNavigate }: { active: View; onNavigate: (view: View) => void }) {
   return (
-    <nav className="mx-auto mt-8 flex h-[84px] max-w-[430px] items-center justify-around rounded-t-[24px] bg-white px-3 shadow-[0_-18px_45px_rgb(31_174_139/0.12)] lg:hidden">
+    <nav className="mx-auto mt-6 flex h-16 max-w-[430px] items-center justify-around border-t border-gray-200 bg-white px-2 lg:hidden">
       {navItems.map((item) => {
         const Icon = item.icon
         const selected = active === item.view || (item.view === "profile" && ["settings", "notifications", "help", "privacy"].includes(active))
@@ -1067,12 +1055,11 @@ function BottomNav({ active, onNavigate }: { active: View; onNavigate: (view: Vi
             key={item.view}
             type="button"
             onClick={() => onNavigate(item.view)}
-            className={cx("flex min-w-0 flex-col items-center gap-1 rounded-2xl px-3 py-2 text-[10px] font-black uppercase tracking-[0.14em]", selected ? "bg-[#eafff8] text-[#00a983]" : "text-[#a2a6ad]")}
+            className={cx("flex min-w-0 flex-col items-center gap-0.5 rounded-lg px-3 py-1.5 text-[10px] font-medium", selected ? "text-emerald-600" : "text-gray-400")}
             aria-current={selected ? "page" : undefined}
           >
             <Icon className="h-5 w-5" />
             <span>{item.label}</span>
-            {selected && <span className="h-1 w-1 rounded-full bg-current" />}
           </button>
         )
       })}
@@ -1202,34 +1189,34 @@ function HomeScreen({
   return (
     <>
       <MobileTopBar title="Jakarta" brand={false} onBell={() => onNavigate("notifications")} />
-      <div className="px-6 py-8 lg:px-0">
-        <div className="lg:grid lg:grid-cols-[minmax(0,1.1fr)_420px] lg:gap-8">
+      <div className="px-5 py-6 lg:px-0">
+        <div className="lg:grid lg:grid-cols-[minmax(0,1.1fr)_400px] lg:gap-8">
           <div>
             <button
               type="button"
               onClick={() => onNavigate("explore")}
-              className="flex h-14 w-full items-center gap-4 rounded-full bg-[#eceff0] px-5 text-left text-base font-semibold text-[#9ba0a4] lg:max-w-xl"
+              className="flex h-11 w-full items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 text-left text-sm text-gray-400 lg:max-w-xl"
             >
-              <Search className="h-6 w-6 text-[#777e83]" />
+              <Search className="h-4 w-4 text-gray-400" />
               Cari venue olahraga...
             </button>
 
             <button
               type="button"
               onClick={() => onNavigate("flash")}
-              className="mt-7 w-full overflow-hidden rounded-[28px] bg-[#006b56] p-6 text-left text-white shadow-sm lg:min-h-[260px] lg:p-8"
+              className="mt-6 w-full overflow-hidden rounded-2xl bg-emerald-700 p-6 text-left text-white lg:min-h-[240px] lg:p-8"
             >
-              <div className="max-w-[360px]">
-                <div className="mb-6 rounded-full bg-[#ffc107] px-4 py-1 text-xs font-black uppercase tracking-wide text-[#33403c]">
-                  <Zap className="mr-1 inline h-3.5 w-3.5" />
-                  Limited time
+              <div className="max-w-[340px]">
+                <div className="mb-4 inline-flex items-center rounded-md bg-amber-400 px-3 py-1 text-xs font-bold text-amber-900">
+                  <Zap className="mr-1 h-3 w-3" />
+                  Waktu Terbatas
                 </div>
-                <h2 className="text-[28px] font-black leading-tight tracking-[-0.05em] lg:text-5xl">ULTRA FLASH SALE GET UP TO 70% OFF</h2>
-                <p className="mt-4 text-base font-semibold text-white/70">Book your premier courts today.</p>
+                <h2 className="text-2xl font-bold leading-tight lg:text-4xl">Promo Kilat Diskon Hingga 70%</h2>
+                <p className="mt-3 text-sm text-white/70">Pesan lapangan favorit Anda sekarang.</p>
               </div>
             </button>
 
-            <div className="mt-8 grid grid-cols-3 gap-4 lg:grid-cols-6">
+            <div className="mt-6 grid grid-cols-3 gap-3 lg:grid-cols-6">
               {quickActions.map((action) => {
                 const Icon = action.icon
                 return (
@@ -1237,43 +1224,43 @@ function HomeScreen({
                     key={action.label}
                     type="button"
                     onClick={() => onNavigate(action.view)}
-                    className="grid min-h-[98px] place-items-center rounded-[24px] bg-white p-4 text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                    className="grid min-h-[88px] place-items-center rounded-xl bg-white p-3 text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                   >
-                    <span className={cx("grid h-12 w-12 place-items-center rounded-2xl", action.hot ? "bg-[#dcfff6] text-[#007c61]" : "bg-[#eceff0] text-[#7b8085]")}>
-                      <Icon className="h-6 w-6" />
+                    <span className={cx("grid h-10 w-10 place-items-center rounded-lg", action.hot ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-500")}>
+                      <Icon className="h-5 w-5" />
                     </span>
-                    <span className="mt-3 text-[11px] font-black uppercase text-[#62686d]">{action.label}</span>
+                    <span className="mt-2 text-[11px] font-semibold text-gray-600">{action.label}</span>
                   </button>
                 )
               })}
             </div>
 
-            <SectionTitle title="Flash Sale" subtitle="Snatched these deals before they're gone" action="See all" onAction={() => onNavigate("flash")} />
-            <div className="sportcation-scrollbar -mx-6 flex snap-x gap-4 overflow-x-auto px-6 lg:mx-0 lg:grid lg:grid-cols-2 lg:overflow-visible lg:px-0">
-              {catalogStatus === "loading" && <CatalogInlineState title="Loading venues" message="Mengambil katalog terbaru dari database." />}
-              {catalogStatus === "error" && <CatalogInlineState title="Catalog unavailable" message={catalogError || "Gagal memuat katalog."} />}
+            <SectionTitle title="Promo Kilat" subtitle="Pesan sebelum kehabisan" action="Lihat semua" onAction={() => onNavigate("flash")} />
+            <div className="sportcation-scrollbar -mx-5 flex snap-x gap-4 overflow-x-auto px-5 lg:mx-0 lg:grid lg:grid-cols-2 lg:overflow-visible lg:px-0">
+              {catalogStatus === "loading" && <CatalogInlineState title="Memuat venue" message="Mengambil katalog terbaru dari database." />}
+              {catalogStatus === "error" && <CatalogInlineState title="Katalog tidak tersedia" message={catalogError || "Gagal memuat katalog."} />}
               {catalogStatus !== "error" && flashDeals.slice(0, 2).map((deal) => (
                 <DealCard key={deal.id + deal.name} deal={deal} onClick={() => onVenue(deal.id)} />
               ))}
               {catalogStatus !== "loading" && catalogStatus !== "error" && flashDeals.length === 0 && (
-                <CatalogInlineState title="No public venues" message="Belum ada venue published untuk ditampilkan." />
+                <CatalogInlineState title="Belum ada venue" message="Belum ada venue published untuk ditampilkan." />
               )}
             </div>
           </div>
 
-          <aside className="mt-10 lg:mt-0">
-            <SectionTitle title="Recommended" subtitle="Selected for your lifestyle" />
+          <aside className="mt-8 lg:mt-0">
+            <SectionTitle title="Rekomendasi" subtitle="Pilihan terbaik untuk Anda" />
             {recommended ? (
               <RecommendedCard venue={recommended} onBook={() => onVenue(recommended.id)} />
             ) : (
-              <CatalogInlineState title="No recommendation yet" message="Venue published akan muncul di area ini." />
+              <CatalogInlineState title="Belum ada rekomendasi" message="Venue published akan muncul di area ini." />
             )}
             <button
               type="button"
               onClick={() => onNavigate("resell")}
-              className="mt-8 ml-auto grid h-16 w-16 place-items-center rounded-full bg-[#007c61] text-white shadow-[0_18px_35px_rgb(0_124_97/0.28)] lg:hidden"
+              className="mt-6 ml-auto grid h-14 w-14 place-items-center rounded-xl bg-emerald-600 text-white shadow-md lg:hidden"
             >
-              <Plus className="h-8 w-8" />
+              <Plus className="h-7 w-7" />
             </button>
           </aside>
         </div>
@@ -1284,13 +1271,13 @@ function HomeScreen({
 
 function SectionTitle({ title, subtitle, action, onAction }: { title: string; subtitle?: string; action?: string; onAction?: () => void }) {
   return (
-    <div className="mt-10 mb-5 flex items-end justify-between gap-4 lg:mt-12">
+    <div className="mt-8 mb-4 flex items-end justify-between gap-4">
       <div>
-        <h2 className="text-2xl font-black uppercase tracking-[-0.06em] text-[#2d3234] lg:text-3xl">{title}</h2>
-        {subtitle && <p className="mt-1 text-xs font-black uppercase tracking-[0.2em] text-[#747b80]">{subtitle}</p>}
+        <h2 className="text-xl font-bold text-gray-900 lg:text-2xl">{title}</h2>
+        {subtitle && <p className="mt-0.5 text-sm text-gray-500">{subtitle}</p>}
       </div>
       {action && (
-        <button type="button" onClick={onAction} className="text-xs font-black uppercase tracking-[0.22em] text-[#007c61]">
+        <button type="button" onClick={onAction} className="text-sm font-semibold text-emerald-600 hover:text-emerald-700">
           {action}
         </button>
       )}
@@ -1300,10 +1287,10 @@ function SectionTitle({ title, subtitle, action, onAction }: { title: string; su
 
 function CatalogInlineState({ title, message }: { title: string; message: string }) {
   return (
-    <div className="min-w-[264px] rounded-[28px] border border-dashed border-[#d9dfdf] bg-white p-8 text-center shadow-sm lg:col-span-2 lg:min-w-0">
-      <Search className="mx-auto h-8 w-8 text-[#a4aaae]" />
-      <h3 className="mt-4 text-lg font-black">{title}</h3>
-      <p className="mt-2 text-sm font-semibold leading-relaxed text-[#777d82]">{message}</p>
+    <div className="min-w-[264px] rounded-xl border border-dashed border-gray-200 bg-white p-8 text-center shadow-sm lg:col-span-2 lg:min-w-0">
+      <Search className="mx-auto h-7 w-7 text-gray-400" />
+      <h3 className="mt-3 text-base font-bold text-gray-900">{title}</h3>
+      <p className="mt-1.5 text-sm leading-relaxed text-gray-500">{message}</p>
     </div>
   )
 }
@@ -1327,33 +1314,33 @@ function CatalogEmptyState({ onExplore }: { onExplore: () => void }) {
 
 function DealCard({ deal, onClick }: { deal: FlashDeal; onClick: () => void }) {
   return (
-    <article className="min-w-[264px] snap-start overflow-hidden rounded-[28px] bg-white shadow-sm lg:min-w-0">
+    <article className="min-w-[264px] snap-start overflow-hidden rounded-xl bg-white shadow-sm lg:min-w-0">
       <div className="relative h-40 overflow-hidden">
         <img src={deal.image} alt={deal.name} className="h-full w-full object-cover" />
-        <span className="absolute left-4 top-4 rounded-lg bg-[#d71f38] px-3 py-1 text-[10px] font-black text-white">{deal.discount ?? "HOT DEAL"}</span>
-        {deal.ends && <span className="absolute bottom-4 right-4 rounded-full bg-black/25 px-3 py-1 text-xs font-black text-white">{deal.ends}</span>}
+        <span className="absolute left-3 top-3 rounded-md bg-red-600 px-2.5 py-1 text-[10px] font-bold text-white">{deal.discount ?? "HOT DEAL"}</span>
+        {deal.ends && <span className="absolute bottom-3 right-3 rounded-md bg-black/30 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur">{deal.ends}</span>}
       </div>
-      <div className="p-5">
-        <div className="flex items-start justify-between gap-4">
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-lg font-black tracking-[-0.04em]">{deal.name}</h3>
-            <p className="mt-1 flex items-center gap-1 text-sm font-semibold text-[#777d82]">
-              <MapPin className="h-4 w-4" />
+            <h3 className="text-base font-bold text-gray-900">{deal.name}</h3>
+            <p className="mt-1 flex items-center gap-1 text-sm text-gray-500">
+              <MapPin className="h-3.5 w-3.5" />
               {deal.location}
             </p>
           </div>
-          <span className="flex items-center gap-1 text-xs font-black text-[#786b1b]">
-            <Star className="h-4 w-4 fill-current" />
+          <span className="flex items-center gap-0.5 text-xs font-semibold text-amber-700">
+            <Star className="h-3.5 w-3.5 fill-current" />
             {deal.rating}
           </span>
         </div>
-        <div className="mt-5 flex items-end justify-between">
+        <div className="mt-4 flex items-end justify-between">
           <div>
-            {deal.oldPrice && <p className="text-xs font-semibold text-[#9aa0a4] line-through">{formatRp(deal.oldPrice)}</p>}
-            <p className="text-xl font-black tracking-[-0.04em] text-[#007c61]">{formatRp(deal.price)}<span className="text-xs text-[#687073]">/hr</span></p>
+            {deal.oldPrice && <p className="text-xs text-gray-400 line-through">{formatRp(deal.oldPrice)}</p>}
+            <p className="text-lg font-bold text-emerald-600">{formatRp(deal.price)}<span className="text-xs text-gray-500">/jam</span></p>
           </div>
-          <button type="button" onClick={onClick} className="grid h-11 w-11 place-items-center rounded-full bg-[#007c61] text-white">
-            <ChevronRight className="h-5 w-5" />
+          <button type="button" onClick={onClick} className="grid h-9 w-9 place-items-center rounded-lg bg-emerald-600 text-white">
+            <ChevronRight className="h-4 w-4" />
           </button>
         </div>
       </div>
@@ -1363,30 +1350,30 @@ function DealCard({ deal, onClick }: { deal: FlashDeal; onClick: () => void }) {
 
 function RecommendedCard({ venue, onBook }: { venue: Venue; onBook: () => void }) {
   return (
-    <article className="overflow-hidden rounded-[34px] bg-white shadow-sm">
-      <div className="relative h-72 overflow-hidden">
+    <article className="overflow-hidden rounded-2xl bg-white shadow-sm">
+      <div className="relative h-60 overflow-hidden">
         <img src={venue.image} alt={venue.name} className="h-full w-full object-cover" />
-        <div className="absolute left-6 top-6 flex gap-2">
-          <span className="rounded-full bg-[#49e7ba] px-4 py-1.5 text-xs font-black uppercase text-[#007c61]">Trending</span>
-          <span className="rounded-full bg-white px-4 py-1.5 text-xs font-black text-[#2d3234]">
-            <Star className="mr-1 inline h-3.5 w-3.5 fill-current" />
+        <div className="absolute left-5 top-5 flex gap-2">
+          <span className="rounded-md bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">Trending</span>
+          <span className="rounded-md bg-white px-3 py-1 text-xs font-semibold text-gray-800">
+            <Star className="mr-0.5 inline h-3 w-3 fill-current text-amber-500" />
             {venue.rating}
           </span>
         </div>
       </div>
-      <div className="p-8">
-        <h3 className="text-3xl font-black leading-tight tracking-[-0.06em]">{venue.name}</h3>
-        <p className="mt-8 text-base font-semibold leading-relaxed text-[#777d82]">{venue.description}</p>
-        <div className="mt-7 flex flex-wrap gap-2">
+      <div className="p-6">
+        <h3 className="text-2xl font-bold text-gray-900">{venue.name}</h3>
+        <p className="mt-3 text-sm leading-relaxed text-gray-500">{venue.description}</p>
+        <div className="mt-5 flex flex-wrap gap-2">
           {venue.facilities.slice(3).map((item) => (
-            <span key={item} className="rounded-full border border-[#dce1e1] px-4 py-1 text-xs font-black text-[#777d82]">
+            <span key={item} className="rounded-md border border-gray-200 px-3 py-1 text-xs font-medium text-gray-600">
               {item}
             </span>
           ))}
         </div>
-        <AppButton onClick={onBook} className="mt-8 w-full">
-          Book Now
-          <ChevronRight className="h-5 w-5" />
+        <AppButton onClick={onBook} className="mt-6 w-full">
+          Pesan Sekarang
+          <ChevronRight className="h-4 w-4" />
         </AppButton>
       </div>
     </article>
@@ -1417,24 +1404,24 @@ function ExploreScreen({
   return (
     <>
       <MobileTopBar title="Jakarta" brand={false} />
-      <div className="px-6 py-7 lg:px-0">
-        <div className="lg:grid lg:grid-cols-[340px_minmax(0,1fr)] lg:gap-8">
-          <aside className="lg:sticky lg:top-28 lg:h-fit">
-            <p className="text-xs font-black uppercase tracking-[0.24em] text-[#007c61]">Curated Play</p>
-            <h1 className="mt-3 text-4xl font-black leading-[1.05] tracking-[-0.07em] lg:text-6xl">Find Your Next Arena.</h1>
-            <div className="mt-8 flex h-14 items-center gap-3 rounded-full bg-[#eceff0] px-5">
-              <Search className="h-5 w-5 text-[#747b80]" />
-              <input value={query} onChange={(event) => onQueryChange(event.target.value)} placeholder="Search venues, sports, or areas..." className="min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none placeholder:text-[#92989c]" />
+      <div className="px-5 py-6 lg:px-0">
+        <div className="lg:grid lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-8">
+          <aside className="lg:sticky lg:top-24 lg:h-fit">
+            <p className="text-sm font-semibold text-emerald-600">Jelajahi Venue</p>
+            <h1 className="mt-2 text-3xl font-bold leading-snug text-gray-900 lg:text-4xl">Temukan Lapangan Favorit Anda</h1>
+            <div className="mt-6 flex h-11 items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-4">
+              <Search className="h-4 w-4 text-gray-400" />
+              <input value={query} onChange={(event) => onQueryChange(event.target.value)} placeholder="Cari venue, olahraga, atau area..." className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-gray-400" />
             </div>
-            <div className="sportcation-scrollbar mt-7 flex gap-3 overflow-x-auto pb-2 lg:flex-wrap lg:overflow-visible">
+            <div className="sportcation-scrollbar mt-5 flex gap-2 overflow-x-auto pb-2 lg:flex-wrap lg:overflow-visible">
               {categories.map((item) => (
                 <button
                   key={item}
                   type="button"
                   onClick={() => onCategoryChange(item)}
                   className={cx(
-                    "h-11 shrink-0 rounded-full px-6 text-sm font-black shadow-sm",
-                    category === item ? "bg-[#007c61] text-white" : "bg-white text-[#73797e]",
+                    "h-9 shrink-0 rounded-lg px-4 text-sm font-medium transition",
+                    category === item ? "bg-emerald-600 text-white" : "bg-white text-gray-500 shadow-sm hover:bg-gray-50",
                   )}
                 >
                   {item}
@@ -1442,16 +1429,16 @@ function ExploreScreen({
               ))}
             </div>
           </aside>
-          <section className="mt-8 grid gap-7 lg:mt-0 lg:grid-cols-2">
+          <section className="mt-6 grid gap-5 lg:mt-0 lg:grid-cols-2">
             {catalogStatus === "loading" ? (
-              <CatalogInlineState title="Loading catalog" message="Mencari venue sesuai filter..." />
+              <CatalogInlineState title="Memuat katalog" message="Mencari venue sesuai filter..." />
             ) : catalogStatus === "error" ? (
-              <CatalogInlineState title="Catalog error" message={catalogError || "Katalog tidak dapat dimuat."} />
+              <CatalogInlineState title="Terjadi kesalahan" message={catalogError || "Katalog tidak dapat dimuat."} />
             ) : list.length === 0 ? (
-              <div className="rounded-[28px] border border-dashed border-[#d9dfdf] bg-white p-10 text-center lg:col-span-2">
-                <Search className="mx-auto h-9 w-9 text-[#a4aaae]" />
-                <h2 className="mt-4 text-xl font-black">No venue found</h2>
-                <p className="mt-2 text-sm font-semibold text-[#777d82]">Try another sport, venue, or Jakarta area.</p>
+              <div className="rounded-xl border border-dashed border-gray-200 bg-white p-8 text-center lg:col-span-2">
+                <Search className="mx-auto h-7 w-7 text-gray-400" />
+                <h2 className="mt-3 text-lg font-bold">Venue tidak ditemukan</h2>
+                <p className="mt-1.5 text-sm text-gray-500">Coba kata kunci lain.</p>
               </div>
             ) : (
               list.map((venue, index) => <VenueListCard key={venue.id} venue={venue} featured={index === 0} onClick={() => onVenue(venue.id)} />)
@@ -1466,21 +1453,21 @@ function ExploreScreen({
 function VenueListCard({ venue, featured, onClick }: { venue: Venue; featured?: boolean; onClick: () => void }) {
   if (featured) {
     return (
-      <button type="button" onClick={onClick} className="relative min-h-[210px] overflow-hidden rounded-[28px] bg-[#0d1717] p-7 text-left text-white shadow-sm lg:col-span-2">
-        <img src={venue.image} alt={venue.name} className="absolute inset-0 h-full w-full object-cover opacity-75" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/65 via-black/25 to-transparent" />
-        <div className="relative flex min-h-[170px] flex-col justify-between">
+      <button type="button" onClick={onClick} className="relative min-h-[200px] overflow-hidden rounded-2xl bg-gray-900 p-6 text-left text-white shadow-sm lg:col-span-2">
+        <img src={venue.image} alt={venue.name} className="absolute inset-0 h-full w-full object-cover opacity-60" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
+        <div className="relative flex min-h-[160px] flex-col justify-between">
           <div className="flex justify-between">
-            <span className="rounded-full bg-[#49e7ba] px-3 py-1 text-xs font-black uppercase text-[#007c61]">Featured</span>
-            <Heart className="h-6 w-6 text-white" />
+            <span className="rounded-md bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">Featured</span>
+            <Heart className="h-5 w-5 text-white/70" />
           </div>
           <div className="grid grid-cols-[1fr_auto] items-end gap-4">
             <div>
-              <p className="text-xs font-black text-[#49e7ba]">{venue.rating} - {venue.category} - {venue.distance}</p>
-              <h3 className="mt-1 text-3xl font-black leading-tight tracking-[-0.06em]">{venue.name}</h3>
-              <p className="mt-1 text-sm font-semibold text-white/70">{venue.location}</p>
+              <p className="text-xs font-medium text-emerald-300">{venue.rating} · {venue.category} · {venue.distance}</p>
+              <h3 className="mt-1 text-2xl font-bold">{venue.name}</h3>
+              <p className="mt-1 text-sm text-white/70">{venue.location}</p>
             </div>
-            <p className="text-right text-2xl font-black text-[#49e7ba]">{formatRp(venue.price)}<span className="block text-[10px] uppercase tracking-[0.2em] text-white/60">per hour</span></p>
+            <p className="text-right text-xl font-bold text-emerald-300">{formatRp(venue.price)}<span className="block text-[10px] text-white/60">per jam</span></p>
           </div>
         </div>
       </button>
@@ -1488,30 +1475,30 @@ function VenueListCard({ venue, featured, onClick }: { venue: Venue; featured?: 
   }
 
   return (
-    <article className="overflow-hidden rounded-[28px] bg-white shadow-sm">
+    <article className="overflow-hidden rounded-xl bg-white shadow-sm">
       <button type="button" onClick={onClick} className="block w-full text-left">
-        <div className="relative h-72 overflow-hidden">
+        <div className="relative h-56 overflow-hidden">
           <img src={venue.image} alt={venue.name} className="h-full w-full object-cover" />
-          <span className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-white/25 text-white backdrop-blur">
-            <Heart className="h-5 w-5" />
+          <span className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-lg bg-white/20 text-white backdrop-blur">
+            <Heart className="h-4 w-4" />
           </span>
         </div>
-        <div className="p-5">
+        <div className="p-4">
           <div className="flex items-center justify-between gap-3">
-            <h3 className="text-xl font-black tracking-[-0.04em]">{venue.name}</h3>
-            <span className="flex items-center gap-1 text-xs font-black text-[#776814]">
-              <Star className="h-4 w-4 fill-current" />
+            <h3 className="text-lg font-bold text-gray-900">{venue.name}</h3>
+            <span className="flex items-center gap-0.5 text-xs font-semibold text-amber-700">
+              <Star className="h-3.5 w-3.5 fill-current" />
               {venue.rating}
             </span>
           </div>
-          <p className="mt-2 flex items-center gap-1 text-sm font-semibold text-[#777d82]">
-            <MapPin className="h-4 w-4" />
+          <p className="mt-1.5 flex items-center gap-1 text-sm text-gray-500">
+            <MapPin className="h-3.5 w-3.5" />
             {venue.location}
           </p>
-          <div className="mt-5 flex items-center justify-between border-t border-[#edf1f1] pt-5">
-            <p className="text-lg font-black text-[#007c61]">{formatRp(venue.price)} <span className="text-xs text-[#777d82]">/ hour</span></p>
-            <span className="grid h-10 w-10 place-items-center rounded-full bg-[#edf1f1] text-[#2d3234]">
-              <ChevronRight className="h-5 w-5" />
+          <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-4">
+            <p className="text-base font-bold text-emerald-600">{formatRp(venue.price)} <span className="text-xs text-gray-500">/ jam</span></p>
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-gray-100 text-gray-600">
+              <ChevronRight className="h-4 w-4" />
             </span>
           </div>
         </div>

@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState, type FormEvent } from "react"
-import { AlertCircle, ArrowRight, Eye, EyeOff, LoaderCircle, LockKeyhole, Mail, MapPin, UserRound } from "lucide-react"
+import { AlertCircle, ArrowLeft, ArrowRight, Eye, EyeOff, LoaderCircle, LockKeyhole, Mail, UserRound } from "lucide-react"
 import { authClient } from "@/lib/auth-client"
 
 type Mode = "login" | "register"
@@ -56,50 +56,47 @@ export function AuthPanel({ mode, nextPath }: { mode: Mode; nextPath?: string })
   }
 
   return (
-    <main className="min-h-screen bg-[#f3f6f6] text-[#2c3133] lg:grid lg:grid-cols-[minmax(420px,0.9fr)_1.1fr]">
-      <section className="relative hidden min-h-screen overflow-hidden bg-[#071413] lg:block">
-        <img src="/padel-court-modern.jpg" alt="" className="absolute inset-0 h-full w-full object-cover opacity-55" />
-        <div className="absolute inset-0 bg-[#071413]/45" />
-        <div className="relative flex h-full min-h-screen flex-col justify-between p-12 text-white">
-          <Link href="/" className="flex items-center gap-3 text-2xl font-black italic tracking-[-0.05em]">
-            <span className="h-10 w-10 rounded-xl bg-[#12d5aa]" />
-            SPORTCATION
+    <main className="flex min-h-screen">
+      {/* Left panel — branding (desktop only) */}
+      <section className="relative hidden w-[480px] shrink-0 overflow-hidden bg-gray-900 lg:block xl:w-[540px]">
+        <img src="/padel-court-modern.jpg" alt="" className="absolute inset-0 h-full w-full object-cover opacity-40" />
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/50 to-gray-900/30" />
+        <div className="relative flex h-full flex-col justify-between p-10">
+          <Link href="/" className="flex items-center gap-2.5 text-xl font-bold text-white">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-sm font-extrabold text-white">S</span>
+            Sportcation
           </Link>
-          <div className="max-w-lg">
-            <p className="text-xs font-black uppercase tracking-[0.28em] text-[#49e7ba]">Secure access</p>
-            <h1 className="mt-5 text-6xl font-black leading-[0.96] tracking-[-0.07em]">
-              Book, operate, and govern one sports platform.
+          <div className="max-w-sm">
+            <h1 className="text-3xl font-bold leading-snug text-white">
+              Satu platform untuk semua kebutuhan venue olahraga Anda.
             </h1>
-            <p className="mt-6 max-w-md text-lg font-semibold leading-relaxed text-white/72">
-              Satu session aman untuk pengguna, merchant partner, dan tim administrasi Sportcation.
+            <p className="mt-4 text-base leading-relaxed text-white/60">
+              Booking lapangan, kelola venue, dan pantau operasional — semua dari satu akun.
             </p>
           </div>
-          <div className="flex items-center gap-3 text-sm font-bold text-white/70">
-            <MapPin className="h-5 w-5 text-[#49e7ba]" />
-            Jakarta, Indonesia
-          </div>
+          <p className="text-sm text-white/40">© 2024 Sportcation. All rights reserved.</p>
         </div>
       </section>
 
-      <section className="flex min-h-screen items-center justify-center px-5 py-10 sm:px-8 lg:px-12">
-        <div className="w-full max-w-[520px]">
-          <Link href="/" className="mb-10 flex items-center gap-3 text-xl font-black italic tracking-[-0.05em] lg:hidden">
-            <span className="h-9 w-9 rounded-xl bg-[#12d5aa]" />
-            SPORTCATION
+      {/* Right panel — form */}
+      <section className="flex flex-1 items-center justify-center bg-gray-50 px-5 py-10 sm:px-8 lg:px-12">
+        <div className="w-full max-w-md">
+          {/* Mobile logo */}
+          <Link href="/" className="mb-8 flex items-center gap-2.5 text-lg font-bold lg:hidden">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-sm font-extrabold text-white">S</span>
+            Sportcation
           </Link>
-          <p className="text-xs font-black uppercase tracking-[0.24em] text-[#007c61]">
-            {mode === "login" ? "Welcome back" : "Customer registration"}
-          </p>
-          <h2 className="mt-4 text-5xl font-black leading-none tracking-[-0.07em]">
-            {mode === "login" ? "Access your arena." : "Create your account."}
+
+          <h2 className="text-2xl font-bold text-gray-900">
+            {mode === "login" ? "Masuk ke akun Anda" : "Buat akun baru"}
           </h2>
-          <p className="mt-4 max-w-md font-semibold leading-relaxed text-[#687073]">
+          <p className="mt-2 text-sm leading-relaxed text-gray-500">
             {mode === "login"
-              ? "Login pengguna, merchant, dan admin menggunakan akun yang sama. Hak akses ditentukan oleh role server."
-              : "Registrasi publik hanya membuat akun customer. Akun merchant dan admin dibuat melalui proses bootstrap terkontrol."}
+              ? "Masukkan email dan password untuk melanjutkan. Berlaku untuk semua role (customer, merchant, admin)."
+              : "Daftar sebagai customer. Akun merchant dan admin dibuat oleh administrator."}
           </p>
 
-          <form onSubmit={submit} className="mt-9 space-y-5">
+          <form onSubmit={submit} className="mt-8 space-y-4">
             {mode === "register" && (
               <AuthField label="Nama lengkap" icon={UserRound}>
                 <input
@@ -109,8 +106,8 @@ export function AuthPanel({ mode, nextPath }: { mode: Mode; nextPath?: string })
                   maxLength={120}
                   required
                   autoComplete="name"
-                  placeholder="Alex Rivera"
-                  className="min-w-0 flex-1 bg-transparent text-sm font-bold outline-none placeholder:text-[#a2a8ab]"
+                  placeholder="Nama Anda"
+                  className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-gray-400"
                 />
               </AuthField>
             )}
@@ -121,8 +118,8 @@ export function AuthPanel({ mode, nextPath }: { mode: Mode; nextPath?: string })
                 onChange={(event) => setEmail(event.target.value)}
                 required
                 autoComplete="email"
-                placeholder="name@sportcation.com"
-                className="min-w-0 flex-1 bg-transparent text-sm font-bold outline-none placeholder:text-[#a2a8ab]"
+                placeholder="nama@email.com"
+                className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-gray-400"
               />
             </AuthField>
             <AuthField label="Password" icon={LockKeyhole}>
@@ -135,28 +132,28 @@ export function AuthPanel({ mode, nextPath }: { mode: Mode; nextPath?: string })
                 required
                 autoComplete={mode === "login" ? "current-password" : "new-password"}
                 placeholder="Minimal 8 karakter"
-                className="min-w-0 flex-1 bg-transparent text-sm font-bold outline-none placeholder:text-[#a2a8ab]"
+                className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-gray-400"
               />
-              <button type="button" onClick={() => setShowPassword((visible) => !visible)} title={showPassword ? "Sembunyikan password" : "Tampilkan password"} className="text-[#778085]">
-                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              <button type="button" onClick={() => setShowPassword((visible) => !visible)} title={showPassword ? "Sembunyikan" : "Tampilkan"} className="text-gray-400 hover:text-gray-600">
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </AuthField>
 
             {mode === "login" && (
-              <label className="flex items-center gap-3 text-sm font-bold text-[#687073]">
+              <label className="flex items-center gap-2.5 text-sm text-gray-500">
                 <input
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(event) => setRememberMe(event.target.checked)}
-                  className="h-4 w-4 accent-[#008f71]"
+                  className="h-4 w-4 rounded accent-emerald-600"
                 />
-                Pertahankan session di perangkat ini
+                Ingat saya di perangkat ini
               </label>
             )}
 
             {error && (
-              <div role="alert" className="flex items-start gap-3 rounded-2xl border border-[#ffd1d5] bg-[#fff0f1] px-4 py-3 text-sm font-bold text-[#c11f32]">
-                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+              <div role="alert" className="flex items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                 {error}
               </div>
             )}
@@ -164,19 +161,26 @@ export function AuthPanel({ mode, nextPath }: { mode: Mode; nextPath?: string })
             <button
               type="submit"
               disabled={submitting}
-              className="inline-flex h-14 w-full items-center justify-center gap-3 rounded-full bg-gradient-to-r from-[#008f71] to-[#49e7ba] px-6 text-sm font-black uppercase tracking-[0.14em] text-white shadow-[0_18px_35px_rgb(0_124_97/0.2)] disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {submitting ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <ArrowRight className="h-5 w-5" />}
-              {submitting ? "Memproses..." : mode === "login" ? "Login" : "Buat akun"}
+              {submitting ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+              {submitting ? "Memproses..." : mode === "login" ? "Masuk" : "Buat akun"}
             </button>
           </form>
 
-          <p className="mt-7 text-center text-sm font-semibold text-[#687073]">
-            {mode === "login" ? "Belum memiliki akun customer?" : "Sudah memiliki akun?"}{" "}
-            <Link href={mode === "login" ? "/register" : "/login"} className="font-black text-[#007c61]">
-              {mode === "login" ? "Register" : "Login"}
+          <p className="mt-6 text-center text-sm text-gray-500">
+            {mode === "login" ? "Belum punya akun?" : "Sudah punya akun?"}{" "}
+            <Link href={mode === "login" ? "/register" : "/login"} className="font-semibold text-emerald-600 hover:text-emerald-700">
+              {mode === "login" ? "Daftar" : "Masuk"}
             </Link>
           </p>
+
+          <div className="mt-6 text-center">
+            <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600">
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Kembali ke beranda
+            </Link>
+          </div>
         </div>
       </section>
     </main>
@@ -194,9 +198,9 @@ function AuthField({
 }) {
   return (
     <label className="block">
-      <span className="text-xs font-black uppercase tracking-[0.18em] text-[#687073]">{label}</span>
-      <span className="mt-2 flex h-14 items-center gap-3 rounded-2xl bg-white px-4 shadow-sm ring-1 ring-[#e6ebeb] focus-within:ring-2 focus-within:ring-[#49e7ba]">
-        <Icon className="h-5 w-5 shrink-0 text-[#008f71]" />
+      <span className="mb-1.5 block text-sm font-medium text-gray-700">{label}</span>
+      <span className="flex h-11 items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3.5 transition focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500">
+        <Icon className="h-4 w-4 shrink-0 text-gray-400" />
         {children}
       </span>
     </label>
@@ -220,10 +224,10 @@ function translateAuthError(message: string) {
     return "Email atau password tidak valid."
   }
   if (normalized.includes("already exists") || normalized.includes("already registered")) {
-    return "Email sudah terdaftar. Silakan login."
+    return "Email sudah terdaftar. Silakan masuk."
   }
   if (normalized.includes("too many")) {
-    return "Terlalu banyak percobaan. Tunggu sebentar sebelum mencoba kembali."
+    return "Terlalu banyak percobaan. Tunggu sebentar."
   }
   return message
 }
