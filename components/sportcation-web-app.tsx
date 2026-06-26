@@ -36,10 +36,13 @@ import {
   ShowerHead,
   Star,
   Store,
+  Tag,
   Ticket,
   Timer,
+  Trophy,
   User,
   Wallet,
+  X,
   Zap,
   type LucideIcon,
 } from "lucide-react"
@@ -57,6 +60,7 @@ type View =
   | "payment"
   | "success"
   | "bookings"
+  | "marketplace"
   | "notifications"
   | "profile"
   | "edit-profile"
@@ -67,10 +71,20 @@ type View =
 type Venue = PublicVenue
 type Slot = PublicSlot
 
+export interface PromoBanner {
+  id: string
+  title: string
+  imageUrl: string
+  termsAndConditions: string | null
+  linkUrl: string | null
+}
+
+
 const navItems: Array<{ view: View; label: string; icon: LucideIcon }> = [
   { view: "home", label: "Home", icon: Home },
   { view: "explore", label: "Explore", icon: Search },
   { view: "bookings", label: "Bookings", icon: Ticket },
+  { view: "marketplace", label: "Pasar", icon: Store },
   { view: "profile", label: "Profile", icon: User },
 ]
 
@@ -208,9 +222,103 @@ type ProfileUpdatePayload = {
   avatarUrl?: string
 }
 
-export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCatalogPayload }) {
+function MarketplaceScreen({ onBack }: { onBack?: () => void }) {
+  const [data, setData] = useState<{ resells: any[]; auctions: any[] } | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch("/api/marketplace")
+      .then((res) => res.json())
+      .then((d) => {
+        setData(d)
+        setLoading(false)
+      })
+      .catch((e) => {
+        console.error(e)
+        setLoading(false)
+      })
+  }, [])
+
+  return (
+    <>
+      <MobileTopBar title="Marketplace" brand={false} onBell={onBack} />
+      <div className="px-5 py-6 lg:px-0">
+        <div className="lg:max-w-4xl lg:mx-auto">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+              <Store className="h-8 w-8 text-emerald-600" />
+              Pasar Tiket
+            </h1>
+            <p className="mt-2 text-gray-600">Temukan tiket resell atau lelang dari pengguna lain dengan harga terbaik.</p>
+          </div>
+
+          <div className="mb-10">
+            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-4">
+              <Tag className="h-5 w-5 text-emerald-500" />
+              Tiket Resell (Jual Langsung)
+            </h2>
+            {loading ? (
+              <p className="text-gray-500">Memuat data...</p>
+            ) : data?.resells && data.resells.length > 0 ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {data.resells.map((r: any) => (
+                  <div key={r.id} className="p-4 border rounded-xl bg-white shadow-sm flex justify-between items-center">
+                    <div>
+                      <p className="font-semibold text-gray-900">Booking: {r.bookingId}</p>
+                      <p className="text-emerald-600 font-bold">Rp {r.price.toLocaleString("id-ID")}</p>
+                    </div>
+                    <button className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-emerald-700">
+                      Beli
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 bg-gray-50 p-6 rounded-xl border border-dashed border-gray-200 text-center">Belum ada tiket resell yang tersedia.</p>
+            )}
+          </div>
+
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-4">
+              <Gavel className="h-5 w-5 text-amber-500" />
+              Lelang Tiket
+            </h2>
+            {loading ? (
+              <p className="text-gray-500">Memuat data...</p>
+            ) : data?.auctions && data.auctions.length > 0 ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {data.auctions.map((a: any) => (
+                  <div key={a.id} className="p-4 border rounded-xl bg-white shadow-sm flex justify-between items-center">
+                    <div>
+                      <p className="font-semibold text-gray-900">Booking: {a.bookingId}</p>
+                      <p className="text-amber-600 font-bold">Mulai: Rp {a.startPrice.toLocaleString("id-ID")}</p>
+                    </div>
+                    <button className="bg-amber-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-amber-600">
+                      Ikut Lelang
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 bg-gray-50 p-6 rounded-xl border border-dashed border-gray-200 text-center">Belum ada tiket yang sedang dilelang.</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+export function SportcationWebApp({ 
+  initialCatalog, 
+  initialBanners = [] 
+}: { 
+  initialCatalog: PublicCatalogPayload
+  initialBanners?: PromoBanner[]
+}) {
   const [view, setView] = useState<View>("home")
   const [catalog, setCatalog] = useState(initialCatalog)
+  const [banners, setBanners] = useState<PromoBanner[]>(initialBanners)
   const [catalogStatus, setCatalogStatus] = useState<"idle" | "loading" | "error">("idle")
   const [catalogError, setCatalogError] = useState("")
   const [selectedVenueId, setSelectedVenueId] = useState(initialCatalog.venues[0]?.id ?? "")
@@ -347,9 +455,13 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
 
   useEffect(() => {
     const screen = new URLSearchParams(window.location.search).get("screen")
-    if (views.includes(screen as View)) {
+    const hasOnboarded = typeof window !== "undefined" && localStorage.getItem("sportcation_onboarded") === "true"
+
+    if (screen && views.includes(screen as View)) {
       const frame = window.requestAnimationFrame(() => setView(screen as View))
       return () => window.cancelAnimationFrame(frame)
+    } else if (!hasOnboarded) {
+      setView("onboarding")
     }
   }, [])
 
@@ -715,6 +827,7 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
             {view === "home" && (
               <HomeScreen
                 venues={catalog.venues}
+                banners={banners}
                 catalogStatus={catalogStatus}
                 catalogError={catalogError}
                 onNavigate={go}
@@ -773,6 +886,9 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
               <SuccessScreen booking={activeBooking} venue={selectedVenue} slot={selectedSlot} onTicket={() => go("bookings")} onHome={() => go("home")} />
             )}
             {view === "success" && !selectedVenue && <CatalogEmptyState onExplore={() => go("explore")} />}
+            {view === "marketplace" && (
+              <MarketplaceScreen onBack={() => go("home")} />
+            )}
             {view === "bookings" && (
               <BookingsScreen
                 bookings={customerBookings}
@@ -841,6 +957,62 @@ export function SportcationWebApp({ initialCatalog }: { initialCatalog: PublicCa
           {shouldShowBottomNav && <BottomNav active={view} onNavigate={go} />}
         </main>
       </div>
+    </div>
+  )
+}
+
+function PromoBannerCarousel({ banners }: { banners: PromoBanner[] }) {
+  const [currentIndex, setCurrentIndex] = useState(0)
+
+  useEffect(() => {
+    if (banners.length <= 1) return
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % banners.length)
+    }, 5000)
+    return () => clearInterval(timer)
+  }, [banners.length])
+
+  if (!banners || banners.length === 0) return null
+
+  return (
+    <div className="relative mt-6 overflow-hidden rounded-xl bg-gray-100 pb-[45%] lg:pb-[25%] shadow-sm">
+      {banners.map((banner, index) => (
+        <a
+          key={banner.id}
+          href={banner.linkUrl || "#"}
+          target={banner.linkUrl ? "_blank" : undefined}
+          className={cx(
+            "absolute inset-0 transition-opacity duration-500",
+            index === currentIndex ? "opacity-100 z-10" : "opacity-0 z-0"
+          )}
+        >
+          <img src={banner.imageUrl} alt={banner.title} className="h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+          <div className="absolute bottom-4 left-4 right-4 text-white">
+            <h3 className="font-bold text-lg leading-tight">{banner.title}</h3>
+            {banner.termsAndConditions && (
+              <p className="text-xs opacity-80 mt-1 line-clamp-1">{banner.termsAndConditions}</p>
+            )}
+          </div>
+        </a>
+      ))}
+      {banners.length > 1 && (
+        <div className="absolute bottom-4 right-4 z-20 flex gap-1.5">
+          {banners.map((_, index) => (
+            <button
+              key={index}
+              onClick={(e) => {
+                e.preventDefault()
+                setCurrentIndex(index)
+              }}
+              className={cx(
+                "h-1.5 rounded-full transition-all",
+                index === currentIndex ? "w-4 bg-white" : "w-1.5 bg-white/50 hover:bg-white/70"
+              )}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -1037,60 +1209,69 @@ function BottomNav({ active, onNavigate }: { active: View; onNavigate: (view: Vi
   )
 }
 
-function OnboardingScreen({ onLogin, onDemo }: { onLogin: () => void; onDemo: () => void }) {
+function OnboardingScreen({ onFinish }: { onFinish: () => void }) {
+  const [currentSlide, setCurrentSlide] = useState(0)
+
+  const slides = [
+    {
+      title: "Cari Lapangan Sporty",
+      description: "Temukan ratusan lapangan olahraga terbaik di sekitarmu dengan mudah dan cepat.",
+      color: "bg-[#48e3b6]"
+    },
+    {
+      title: "Ajak Teman Main",
+      description: "Buat jadwal, booking bareng, dan bayar patungan tanpa ribet.",
+      color: "bg-[#ffc532]"
+    },
+    {
+      title: "Jual Beli & Lelang",
+      description: "Batal main? Jual kembali atau lelang jadwalmu ke player lain di komunitas.",
+      color: "bg-[#ff6b6b]"
+    }
+  ]
+
   return (
-    <main className="min-h-screen bg-[#071413] lg:grid lg:grid-cols-[minmax(420px,0.95fr)_1.05fr]">
-      <section
-        className="relative min-h-screen overflow-hidden bg-cover bg-center text-white"
-        style={{ backgroundImage: "url('/padel-court-modern.jpg')" }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/35 to-[#071413]/90" />
-        <div className="relative flex min-h-screen flex-col px-8 py-10 lg:px-14">
-          <Brand inverse />
-          <div className="mt-20 max-w-[420px] lg:mt-28">
-            <h1 className="text-5xl font-black leading-[0.98] tracking-[-0.07em] lg:text-7xl">
-              Sport Venue <span className="text-[#20d9ad]">Booking App</span>
-            </h1>
-            <p className="mt-6 text-xl font-medium leading-relaxed text-white/82">Easy booking, real-time slots, resell & auction</p>
-            <button
-              type="button"
-              onClick={onLogin}
-              className="mt-12 flex h-16 w-full max-w-[330px] items-center justify-center gap-3 rounded-full border border-white/40 bg-white/30 px-8 text-base font-black text-white shadow-2xl backdrop-blur"
-            >
-              <Search className="h-5 w-5 text-[#22ddae]" />
-              Login via Email/No HP
-            </button>
-          </div>
-          <div className="mt-auto flex items-end justify-between gap-5 pb-8">
-            <div className="flex -space-x-3">
-              {[0, 1, 2].map((item) => (
-                <div key={item} className="h-10 w-10 rounded-full border-2 border-white bg-[#d9eee8]" />
-              ))}
-              <div className="grid h-10 w-10 place-items-center rounded-full bg-[#0dd8aa] text-xs font-black text-[#073b32]">+12k</div>
-            </div>
-            <div className="text-right">
-              <p className="text-[10px] font-black uppercase tracking-[0.35em] text-white/55">Trusted by</p>
-              <p className="mt-1 text-base font-black">450+ Sports Venue</p>
-            </div>
-          </div>
+    <main className="relative grid min-h-screen place-items-center overflow-hidden bg-[#f3f6f6] p-6">
+      <div className={`absolute -right-24 top-8 h-72 w-72 rounded-full blur-3xl transition-colors duration-500 ${slides[currentSlide].color}`} />
+      <div className="absolute -left-24 bottom-20 h-72 w-72 rounded-full bg-[#f3f6f6] blur-3xl mix-blend-overlay" />
+      <section className="relative w-full max-w-[560px] flex flex-col items-center text-center">
+        <div className="mb-12 h-64 w-full rounded-[34px] bg-white/50 backdrop-blur-sm shadow-xl flex items-center justify-center border border-white/20">
+           {/* Placeholder for illustration */}
+           <div className={`h-32 w-32 rounded-full opacity-80 ${slides[currentSlide].color}`} />
         </div>
-      </section>
-      <section className="hidden place-items-center bg-[#f3f6f6] p-10 lg:grid">
-        <div className="w-full max-w-[560px] rounded-[36px] bg-white/80 p-10 shadow-[0_35px_90px_rgb(0_0_0/0.08)]">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-[#007c61]">Web responsive build</p>
-          <h2 className="mt-5 text-5xl font-black leading-[1] tracking-[-0.07em]">Built from the Figma screen set.</h2>
-          <p className="mt-5 text-lg leading-relaxed text-[#687073]">
-            Mobile keeps the app-like bottom navigation. Desktop expands into a web booking dashboard with sidebar navigation and wider content.
-          </p>
-          <div className="mt-8 grid grid-cols-3 gap-3">
-            {["Explore", "Checkout", "Auction"].map((item) => (
-              <div key={item} className="rounded-3xl bg-[#f3f6f6] p-5 text-center text-sm font-black uppercase tracking-wide text-[#007c61]">
-                {item}
-              </div>
-            ))}
-          </div>
-          <AppButton onClick={onDemo} className="mt-8 w-full">
-            Enter Web App
+        
+        <h1 className="mb-4 text-3xl font-black tracking-tight text-[#0f2923] md:text-4xl">
+          {slides[currentSlide].title}
+        </h1>
+        <p className="mb-10 text-lg text-[#617a74]">
+          {slides[currentSlide].description}
+        </p>
+
+        <div className="flex gap-2 mb-10">
+          {slides.map((_, idx) => (
+            <div key={idx} className={`h-2 rounded-full transition-all duration-300 ${currentSlide === idx ? "w-8 bg-[#007c61]" : "w-2 bg-[#d1dada]"}`} />
+          ))}
+        </div>
+
+        <div className="w-full flex gap-4">
+          <AppButton 
+            variant="ghost" 
+            className="flex-1 border-[#007c61] text-[#007c61]" 
+            onClick={onFinish}
+          >
+            Lewati
+          </AppButton>
+          <AppButton 
+            className="flex-1" 
+            onClick={() => {
+              if (currentSlide < slides.length - 1) {
+                setCurrentSlide(prev => prev + 1)
+              } else {
+                onFinish()
+              }
+            }}
+          >
+            {currentSlide < slides.length - 1 ? "Lanjut" : "Mulai Sekarang"}
           </AppButton>
         </div>
       </section>
@@ -1098,7 +1279,24 @@ function OnboardingScreen({ onLogin, onDemo }: { onLogin: () => void; onDemo: ()
   )
 }
 
+import { authClient } from "@/lib/auth-client"
+
 function LoginScreen({ onBack, onSubmit }: { onBack: () => void; onSubmit: () => void }) {
+  const [isLoadingGoogle, setIsLoadingGoogle] = useState(false)
+
+  const handleGoogleLogin = async () => {
+    setIsLoadingGoogle(true)
+    try {
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/",
+      })
+    } catch (error) {
+      console.error(error)
+      setIsLoadingGoogle(false)
+    }
+  }
+
   return (
     <main className="relative grid min-h-screen place-items-center overflow-hidden bg-[#f3f6f6] p-6">
       <div className="absolute -right-24 top-8 h-72 w-72 rounded-full bg-[#48e3b6] blur-3xl" />
@@ -1127,7 +1325,14 @@ function LoginScreen({ onBack, onSubmit }: { onBack: () => void; onSubmit: () =>
           <span className="h-px flex-1 bg-[#dfe5e5]" />
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <button type="button" onClick={onSubmit} className="h-14 rounded-2xl bg-white text-sm font-black shadow-sm">Google</button>
+          <button 
+            type="button" 
+            onClick={handleGoogleLogin}
+            disabled={isLoadingGoogle}
+            className="h-14 rounded-2xl bg-white text-sm font-black shadow-sm disabled:opacity-50"
+          >
+            {isLoadingGoogle ? "Connecting..." : "Google"}
+          </button>
           <button type="button" onClick={onSubmit} className="h-14 rounded-2xl bg-white text-sm font-black shadow-sm">Apple</button>
         </div>
         <p className="mt-10 text-center text-xs text-[#687073]">
@@ -1141,12 +1346,14 @@ function LoginScreen({ onBack, onSubmit }: { onBack: () => void; onSubmit: () =>
 
 function HomeScreen({
   venues,
+  banners,
   catalogStatus,
   catalogError,
   onNavigate,
   onVenue,
 }: {
   venues: Venue[]
+  banners?: PromoBanner[]
   catalogStatus: "idle" | "loading" | "error"
   catalogError: string
   onNavigate: (view: View) => void
@@ -1168,6 +1375,8 @@ function HomeScreen({
               <Search className="h-4 w-4 text-gray-400" />
               Cari venue olahraga...
             </button>
+
+            {banners && banners.length > 0 && <PromoBannerCarousel banners={banners} />}
 
             <div className="mt-6 grid grid-cols-3 gap-3 lg:grid-cols-6">
               {quickActions.map((action) => {
@@ -1301,6 +1510,52 @@ function ExploreScreen({
   catalogError: string
   onVenue: (id: string) => void
 }) {
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [isLocating, setIsLocating] = useState(false)
+
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser")
+      return
+    }
+    setIsLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        })
+        setIsLocating(false)
+      },
+      (error) => {
+        console.error("Error getting location", error)
+        alert("Gagal mendapatkan lokasi. Pastikan izin lokasi diberikan.")
+        setIsLocating(false)
+      }
+    )
+  }
+
+  // Haversine formula
+  const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371 // Radius of the earth in km
+    const dLat = (lat2 - lat1) * (Math.PI / 180)
+    const dLon = (lon2 - lon1) * (Math.PI / 180)
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2)
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+    return R * c // Distance in km
+  }
+
+  const sortedList = [...list].sort((a, b) => {
+    if (userLocation && a.coordinates && b.coordinates) {
+      const distA = getDistance(userLocation.lat, userLocation.lng, a.coordinates.lat, a.coordinates.lng)
+      const distB = getDistance(userLocation.lat, userLocation.lng, b.coordinates.lat, b.coordinates.lng)
+      return distA - distB
+    }
+    return 0
+  })
+
   return (
     <>
       <MobileTopBar title="Jakarta" brand={false} />
@@ -1309,9 +1564,25 @@ function ExploreScreen({
           <aside className="lg:sticky lg:top-24 lg:h-fit">
             <p className="text-sm font-semibold text-emerald-600">Jelajahi Venue</p>
             <h1 className="mt-2 text-3xl font-bold leading-snug text-gray-900 lg:text-4xl">Temukan Lapangan Favorit Anda</h1>
-            <div className="mt-6 flex h-11 items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-4">
-              <Search className="h-4 w-4 text-gray-400" />
-              <input value={query} onChange={(event) => onQueryChange(event.target.value)} placeholder="Cari venue, olahraga, atau area..." className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-gray-400" />
+            <div className="mt-6 flex flex-col gap-3">
+              <div className="flex h-11 items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-4">
+                <Search className="h-4 w-4 text-gray-400" />
+                <input
+                  className="w-full bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-400"
+                  placeholder="Cari nama venue, area..."
+                  value={query}
+                  onChange={(e) => onQueryChange(e.target.value)}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleGetLocation}
+                disabled={isLocating}
+                className="flex h-11 items-center justify-center gap-2 rounded-lg bg-[#ecfdf5] text-sm font-semibold text-emerald-700 hover:bg-[#d1fae5] disabled:opacity-50"
+              >
+                <MapPin className="h-4 w-4" />
+                {isLocating ? "Mencari Lokasi..." : userLocation ? "Urutkan: Terdekat (GPS)" : "Gunakan Lokasi Saya"}
+              </button>
             </div>
             <div className="sportcation-scrollbar mt-5 flex gap-2 overflow-x-auto pb-2 lg:flex-wrap lg:overflow-visible">
               {categories.map((item) => (
@@ -1334,14 +1605,35 @@ function ExploreScreen({
               <CatalogInlineState title="Memuat katalog" message="Mencari venue sesuai filter..." />
             ) : catalogStatus === "error" ? (
               <CatalogInlineState title="Terjadi kesalahan" message={catalogError || "Katalog tidak dapat dimuat."} />
-            ) : list.length === 0 ? (
+            ) : sortedList.length === 0 ? (
               <div className="rounded-xl border border-dashed border-gray-200 bg-white p-8 text-center lg:col-span-2">
                 <Search className="mx-auto h-7 w-7 text-gray-400" />
                 <h2 className="mt-3 text-lg font-bold">Venue tidak ditemukan</h2>
-                <p className="mt-1.5 text-sm text-gray-500">Coba kata kunci lain.</p>
+                <p className="mt-1.5 text-sm text-gray-500">Coba kata kunci lain atau periksa lokasi Anda.</p>
               </div>
             ) : (
-              list.map((venue, index) => <VenueListCard key={venue.id} venue={venue} featured={index === 0} onClick={() => onVenue(venue.id)} />)
+              sortedList.map((venue, index) => {
+                let distanceText = venue.distance
+                if (userLocation && venue.coordinates) {
+                  const dist = getDistance(
+                    userLocation.lat,
+                    userLocation.lng,
+                    venue.coordinates.lat,
+                    venue.coordinates.lng
+                  )
+                  distanceText = dist < 1 ? `${(dist * 1000).toFixed(0)}m` : `${dist.toFixed(1)}km`
+                }
+                return (
+                  <div key={venue.id} className="relative">
+                    <VenueListCard venue={venue} featured={index === 0} onClick={() => onVenue(venue.id)} />
+                    {distanceText && (
+                      <div className="absolute left-4 top-4 rounded-full bg-black/60 px-2 py-1 text-xs font-medium text-white backdrop-blur-md">
+                        {distanceText}
+                      </div>
+                    )}
+                  </div>
+                )
+              })
             )}
           </section>
         </div>
@@ -1960,6 +2252,18 @@ function BookingsScreen({
                     <AppButton onClick={() => onOpenBooking(booking)} className="h-12 flex-1 normal-case tracking-normal">
                       {booking.status === "pending_payment" ? "Bayar" : "Manage"}
                     </AppButton>
+                    {booking.status === "confirmed" && (
+                      <AppButton 
+                        onClick={() => {
+                          if (confirm("Ingin menjual kembali tiket ini ke Pasar?")) {
+                            alert("Fitur upload ke pasar sedang diproses...")
+                          }
+                        }}
+                        className="h-12 flex-1 normal-case tracking-normal bg-[#ffc532] text-black"
+                      >
+                        Jual / Lelang
+                      </AppButton>
+                    )}
                     {["pending_payment", "confirmed"].includes(booking.status) && (
                       <button
                         type="button"
@@ -2566,3 +2870,5 @@ function PrivacyScreen({ onBack }: { onBack: () => void }) {
     </div>
   )
 }
+
+

@@ -133,6 +133,9 @@ export const merchantProfiles = sqliteTable(
     status: text("status", { enum: ["draft", "review", "verified", "suspended"] })
       .notNull()
       .default("draft"),
+    ktpUrl: text("ktp_url"),
+    npwpUrl: text("npwp_url"),
+    businessLicenseUrl: text("business_license_url"),
     ...timestamps,
   },
   (table) => [
@@ -439,3 +442,171 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
   booking: one(bookings, { fields: [payments.bookingId], references: [bookings.id] }),
   user: one(users, { fields: [payments.userId], references: [users.id] }),
 }))
+
+export const resells = sqliteTable(
+  "resells",
+  {
+    id: text("id").primaryKey(),
+    bookingId: text("booking_id")
+      .notNull()
+      .references(() => bookings.id),
+    sellerId: text("seller_id")
+      .notNull()
+      .references(() => users.id),
+    buyerId: text("buyer_id").references(() => users.id),
+    price: integer("price").notNull(),
+    status: text("status", { enum: ["active", "sold", "cancelled"] }).notNull().default("active"),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(strftime('%s', 'now'))`),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`(strftime('%s', 'now'))`),
+  },
+  (table) => [
+    index("resells_booking_id_idx").on(table.bookingId),
+    index("resells_status_idx").on(table.status),
+  ]
+)
+
+export const auctions = sqliteTable(
+  "auctions",
+  {
+    id: text("id").primaryKey(),
+    bookingId: text("booking_id")
+      .notNull()
+      .references(() => bookings.id),
+    sellerId: text("seller_id")
+      .notNull()
+      .references(() => users.id),
+    winnerId: text("winner_id").references(() => users.id),
+    startPrice: integer("start_price").notNull(),
+    buyNowPrice: integer("buy_now_price"),
+    currentHighestBid: integer("current_highest_bid").notNull().default(0),
+    endTime: integer("end_time", { mode: "timestamp" }).notNull(),
+    status: text("status", { enum: ["active", "ended", "cancelled"] }).notNull().default("active"),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(strftime('%s', 'now'))`),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`(strftime('%s', 'now'))`),
+  },
+  (table) => [
+    index("auctions_booking_id_idx").on(table.bookingId),
+    index("auctions_status_idx").on(table.status),
+  ]
+)
+
+export const auctionBids = sqliteTable(
+  "auction_bids",
+  {
+    id: text("id").primaryKey(),
+    auctionId: text("auction_id")
+      .notNull()
+      .references(() => auctions.id),
+    bidderId: text("bidder_id")
+      .notNull()
+      .references(() => users.id),
+    amount: integer("amount").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(strftime('%s', 'now'))`),
+  },
+  (table) => [
+    index("auction_bids_auction_id_idx").on(table.auctionId),
+  ]
+)
+
+export const resellsRelations = relations(resells, ({ one }) => ({
+  booking: one(bookings, { fields: [resells.bookingId], references: [bookings.id] }),
+  seller: one(users, { fields: [resells.sellerId], references: [users.id] }),
+  buyer: one(users, { fields: [resells.buyerId], references: [users.id] }),
+}))
+
+export const auctionsRelations = relations(auctions, ({ one, many }) => ({
+  booking: one(bookings, { fields: [auctions.bookingId], references: [bookings.id] }),
+  seller: one(users, { fields: [auctions.sellerId], references: [users.id] }),
+  winner: one(users, { fields: [auctions.winnerId], references: [users.id] }),
+  bids: many(auctionBids),
+}))
+
+export const auctionBidsRelations = relations(auctionBids, ({ one }) => ({
+  auction: one(auctions, { fields: [auctionBids.auctionId], references: [auctions.id] }),
+  bidder: one(users, { fields: [auctionBids.bidderId], references: [users.id] }),
+}))
+
+export const userWallets = sqliteTable(
+  "user_wallets",
+  {
+    userId: text("user_id").primaryKey().references(() => users.id),
+    availableBalance: integer("available_balance").notNull().default(0),
+    pendingBalance: integer("pending_balance").notNull().default(0),
+    pinCode: text("pin_code"),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(strftime('%s', 'now'))`),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`(strftime('%s', 'now'))`),
+  }
+)
+
+export const ledgerTransactions = sqliteTable(
+  "ledger_transactions",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => users.id),
+    type: text("type", { enum: ["booking_credit", "fee_deduction", "withdrawal", "resell_credit", "auction_credit", "refund"] }).notNull(),
+    amount: integer("amount").notNull(),
+    balanceType: text("balance_type", { enum: ["available", "pending"] }).notNull(),
+    referenceId: text("reference_id").notNull(),
+    description: text("description").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(strftime('%s', 'now'))`),
+  },
+  (table) => [
+    index("ledger_user_idx").on(table.userId),
+    index("ledger_type_idx").on(table.type),
+    index("ledger_ref_idx").on(table.referenceId),
+  ]
+)
+
+export const withdrawals = sqliteTable(
+  "withdrawals",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => users.id),
+    amount: integer("amount").notNull(),
+    adminFee: integer("admin_fee").notNull().default(2500),
+    netAmount: integer("net_amount").notNull(),
+    bankName: text("bank_name").notNull(),
+    accountNumber: text("account_number").notNull(),
+    accountHolder: text("account_holder").notNull(),
+    status: text("status", { enum: ["pending", "processing", "completed", "rejected"] }).notNull().default("pending"),
+    rejectedReason: text("rejected_reason"),
+    processedAt: integer("processed_at", { mode: "timestamp" }),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(strftime('%s', 'now'))`),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`(strftime('%s', 'now'))`),
+  },
+  (table) => [
+    index("withdrawals_user_idx").on(table.userId),
+    index("withdrawals_status_idx").on(table.status),
+  ]
+)
+
+export const userWalletsRelations = relations(userWallets, ({ one, many }) => ({
+  user: one(users, { fields: [userWallets.userId], references: [users.id] }),
+  transactions: many(ledgerTransactions),
+  withdrawals: many(withdrawals),
+}))
+
+export const ledgerTransactionsRelations = relations(ledgerTransactions, ({ one }) => ({
+  user: one(users, { fields: [ledgerTransactions.userId], references: [users.id] }),
+  wallet: one(userWallets, { fields: [ledgerTransactions.userId], references: [userWallets.userId] }),
+}))
+
+export const withdrawalsRelations = relations(withdrawals, ({ one }) => ({
+  user: one(users, { fields: [withdrawals.userId], references: [users.id] }),
+}))
+export const promoBanners = sqliteTable(
+  "promo_banners",
+  {
+    id: text("id").primaryKey(),
+    title: text("title").notNull(),
+    imageUrl: text("image_url").notNull(),
+    termsAndConditions: text("terms_and_conditions"),
+    linkUrl: text("link_url"),
+    isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+    sortOrder: integer("sort_order").notNull().default(0),
+    ...timestamps,
+  },
+  (table) => [
+    index("promo_banners_active_sort_idx").on(table.isActive, table.sortOrder),
+  ]
+)
