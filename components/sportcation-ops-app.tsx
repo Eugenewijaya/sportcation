@@ -43,6 +43,8 @@ import {
   Loader2,
   Tag,
   Star,
+  Clock,
+  HelpCircle,
   type LucideIcon,
 } from "lucide-react"
 
@@ -204,7 +206,7 @@ const adminRows = {
   ],
 }
 
-const merchantResources: Record<Exclude<MerchantSection, "overview" | "settings" | "pos">, ResourceConfig> = {
+const merchantResources: Record<Exclude<MerchantSection, "overview" | "settings" | "pos" | "verification">, ResourceConfig> = {
   venues: {
     title: "Venue Catalog",
     subtitle: "Manage venue identity, location, facility, image, and publish status.",
@@ -1070,7 +1072,7 @@ function toneBadge(tone: StatusTone) {
   return "bg-[#edf1f1] text-[#687073]"
 }
 
-function getMerchantResources(rows: typeof merchantRows): Record<Exclude<MerchantSection, "overview" | "settings" | "pos">, ResourceConfig> { return { venues: { ...merchantResources.venues, rows: rows.venues }, slots: { ...merchantResources.slots, rows: rows.slots }, bookings: { ...merchantResources.bookings, rows: rows.bookings }, finance: { ...merchantResources.finance, rows: rows.finance }, promotions: { ...merchantResources.promotions, rows: rows.promotions }, customers: { ...merchantResources.customers, rows: rows.customers }, reviews: { ...merchantResources.reviews, rows: rows.reviews } } }
+function getMerchantResources(rows: typeof merchantRows): Record<Exclude<MerchantSection, "overview" | "settings" | "pos" | "verification">, ResourceConfig> { return { venues: { ...merchantResources.venues, rows: rows.venues }, slots: { ...merchantResources.slots, rows: rows.slots }, bookings: { ...merchantResources.bookings, rows: rows.bookings }, finance: { ...merchantResources.finance, rows: rows.finance }, promotions: { ...merchantResources.promotions, rows: rows.promotions }, customers: { ...merchantResources.customers, rows: rows.customers }, reviews: { ...merchantResources.reviews, rows: rows.reviews } } }
 function getAdminResources(rows: typeof adminRows): Record<Exclude<AdminSection, "overview" | "settings" | "users" | "venues" | "bookings" | "payments">, ResourceConfig> { return { reports: { ...adminResources.reports, rows: rows.reports }, content: { ...adminResources.content, rows: rows.content } } }
 
 
