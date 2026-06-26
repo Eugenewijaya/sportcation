@@ -7,6 +7,7 @@ import { AdminBookingReviewWorkspace, AdminPaymentReviewWorkspace } from "@/comp
 import { MerchantBookingWorkspace } from "@/components/merchant-booking-workspace"
 import { MerchantFinanceWorkspace } from "@/components/merchant-finance-workspace"
 import { MerchantPersistentWorkspace } from "@/components/merchant-persistent-workspace"
+import { MerchantPosWorkspace } from "@/components/merchant-pos-workspace"
 import { OpsAccountControls } from "@/components/ops-account-controls"
 import {
   Activity,
@@ -14,6 +15,7 @@ import {
   BarChart3,
   Bell,
   CalendarClock,
+  Calculator,
   CheckCircle2,
   ChevronRight,
   CreditCard,
@@ -46,7 +48,7 @@ import {
 
 export type SportcationOpsRole = "merchant" | "admin"
 
-export type MerchantSection = "overview" | "venues" | "slots" | "bookings" | "finance" | "promotions" | "customers" | "reviews" | "settings"
+export type MerchantSection = "overview" | "venues" | "slots" | "bookings" | "pos" | "finance" | "promotions" | "customers" | "reviews" | "settings"
 export type AdminSection = "overview" | "users" | "venues" | "bookings" | "payments" | "reports" | "content" | "settings"
 export type SportcationOpsSection = MerchantSection | AdminSection
 
@@ -97,6 +99,7 @@ const merchantNav: NavItem[] = [
   { section: "venues", label: "Venues", href: "/merchant/venues", icon: Store },
   { section: "slots", label: "Slots", href: "/merchant/slots", icon: CalendarClock },
   { section: "bookings", label: "Bookings", href: "/merchant/bookings", icon: Ticket },
+  { section: "pos", label: "POS", href: "/merchant/pos", icon: Calculator },
   { section: "finance", label: "Finance", href: "/merchant/finance", icon: Wallet },
   { section: "promotions", label: "Promotions", href: "/merchant/promotions", icon: Tag },
   { section: "customers", label: "Customers", href: "/merchant/customers", icon: Users },
@@ -200,7 +203,7 @@ const adminRows = {
   ],
 }
 
-const merchantResources: Record<Exclude<MerchantSection, "overview" | "settings">, ResourceConfig> = {
+const merchantResources: Record<Exclude<MerchantSection, "overview" | "settings" | "pos">, ResourceConfig> = {
   venues: {
     title: "Venue Catalog",
     subtitle: "Manage venue identity, location, facility, image, and publish status.",
@@ -483,6 +486,7 @@ function WorkspaceRouter({
     }
     if (section === "bookings") return <MerchantBookingWorkspace onAction={onAction} />
     if (section === "finance") return <MerchantFinanceWorkspace onAction={onAction} />
+      if (section === "pos") return <MerchantPosWorkspace onAction={onAction} />
     return <CrudWorkspace config={getMerchantResources(merchantRows)[section as keyof ReturnType<typeof getMerchantResources>]} role="merchant" onAction={onAction} />
   }
 
@@ -1063,7 +1067,7 @@ function toneBadge(tone: StatusTone) {
   return "bg-[#edf1f1] text-[#687073]"
 }
 
-function getMerchantResources(rows: typeof merchantRows): Record<Exclude<MerchantSection, "overview" | "settings">, ResourceConfig> { return { venues: { ...merchantResources.venues, rows: rows.venues }, slots: { ...merchantResources.slots, rows: rows.slots }, bookings: { ...merchantResources.bookings, rows: rows.bookings }, finance: { ...merchantResources.finance, rows: rows.finance }, promotions: { ...merchantResources.promotions, rows: rows.promotions }, customers: { ...merchantResources.customers, rows: rows.customers }, reviews: { ...merchantResources.reviews, rows: rows.reviews } } }
+function getMerchantResources(rows: typeof merchantRows): Record<Exclude<MerchantSection, "overview" | "settings" | "pos">, ResourceConfig> { return { venues: { ...merchantResources.venues, rows: rows.venues }, slots: { ...merchantResources.slots, rows: rows.slots }, bookings: { ...merchantResources.bookings, rows: rows.bookings }, finance: { ...merchantResources.finance, rows: rows.finance }, promotions: { ...merchantResources.promotions, rows: rows.promotions }, customers: { ...merchantResources.customers, rows: rows.customers }, reviews: { ...merchantResources.reviews, rows: rows.reviews } } }
 function getAdminResources(rows: typeof adminRows): Record<Exclude<AdminSection, "overview" | "settings" | "users" | "venues" | "bookings" | "payments">, ResourceConfig> { return { reports: { ...adminResources.reports, rows: rows.reports }, content: { ...adminResources.content, rows: rows.content } } }
 
 
@@ -1104,6 +1108,8 @@ function mapAdminDataToRows(data: any) {
     content: (data.categories || []).map((c: any) => row(c.id, c.name, "Category", "Active", "N/A", c.isActive ? "Published" : "Draft", c.isActive ? "green" : "yellow"))
   };
 }
+
+
 
 
 

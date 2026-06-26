@@ -1391,10 +1391,16 @@ function VenueListCard({ venue, featured, onClick }: { venue: Venue; featured?: 
               {venue.rating}
             </span>
           </div>
-          <p className="mt-1.5 flex items-center gap-1 text-sm text-gray-500">
+          <div className="mt-1.5 flex items-center gap-1 text-sm text-gray-500">
             <MapPin className="h-3.5 w-3.5" />
-            {venue.location}
-          </p>
+            {venue.coordinates ? (
+              <a href={`https://www.google.com/maps/search/?api=1&query=${venue.coordinates.lat},${venue.coordinates.lng}`} target="_blank" rel="noreferrer" className="hover:underline hover:text-emerald-600" onClick={(e) => e.stopPropagation()}>
+                {venue.location}
+              </a>
+            ) : (
+              <span>{venue.location}</span>
+            )}
+          </div>
           <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-4">
             <p className="text-base font-bold text-emerald-600">{formatRp(venue.price)} <span className="text-xs text-gray-500">/ jam</span></p>
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-gray-100 text-gray-600">
@@ -1442,7 +1448,13 @@ function VenueDetailScreen({
               <h1 className="mt-4 max-w-[560px] text-3xl font-bold leading-tight text-white lg:text-5xl">{venue.name}</h1>
               <div className="mt-3 flex flex-wrap gap-4 text-sm font-medium text-white/90">
                 <span className="flex items-center gap-1"><Star className="h-4 w-4 fill-amber-400 text-amber-400" /> {venue.rating} (124 ulasan)</span>
-                <span className="flex items-center gap-1"><MapPin className="h-4 w-4" /> {venue.location}</span>
+                {venue.coordinates ? (
+                  <a href={`https://www.google.com/maps/search/?api=1&query=${venue.coordinates.lat},${venue.coordinates.lng}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:underline">
+                    <MapPin className="h-4 w-4" /> {venue.location}
+                  </a>
+                ) : (
+                  <span className="flex items-center gap-1"><MapPin className="h-4 w-4" /> {venue.location}</span>
+                )}
               </div>
             </div>
           </div>

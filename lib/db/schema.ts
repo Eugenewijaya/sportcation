@@ -1,5 +1,5 @@
 import { relations, sql } from "drizzle-orm"
-import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core"
+import { index, integer, primaryKey, sqliteTable, text, uniqueIndex, real } from "drizzle-orm/sqlite-core"
 
 const timestamps = {
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
@@ -192,6 +192,8 @@ export const venues = sqliteTable(
     address: text("address").notNull(),
     city: text("city").notNull(),
     area: text("area"),
+    latitude: real("latitude"),
+    longitude: real("longitude"),
     priceFrom: integer("price_from").notNull().default(0),
     rating: integer("rating").notNull().default(0),
     reviewCount: integer("review_count").notNull().default(0),

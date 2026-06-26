@@ -61,6 +61,8 @@ export async function getPublicVenue(
       rating: venues.rating,
       reviewCount: venues.reviewCount,
       imageUrl: venues.imageUrl,
+      latitude: venues.latitude,
+      longitude: venues.longitude,
     })
     .from(venues)
     .innerJoin(sportCategories, eq(venues.categoryId, sportCategories.id))
@@ -105,6 +107,8 @@ async function listPublicVenueRows(db: SportcationDbExecutor, query: PublicCatal
       rating: venues.rating,
       reviewCount: venues.reviewCount,
       imageUrl: venues.imageUrl,
+      latitude: venues.latitude,
+      longitude: venues.longitude,
     })
     .from(venues)
     .innerJoin(sportCategories, eq(venues.categoryId, sportCategories.id))
@@ -220,6 +224,7 @@ function mapPublicVenue(
     category: venue.categoryName,
     categorySlug: venue.categorySlug,
     location: [venue.area, venue.city].filter(Boolean).join(", "),
+    coordinates: venue.latitude && venue.longitude ? { lat: venue.latitude, lng: venue.longitude } : undefined,
     city: venue.city,
     area: venue.area ?? "",
     price,

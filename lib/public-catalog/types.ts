@@ -29,6 +29,7 @@ export type PublicVenue = {
   category: string
   categorySlug: string
   location: string
+  coordinates?: { lat: number; lng: number }
   city: string
   area: string
   price: number
