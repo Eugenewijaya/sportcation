@@ -38,12 +38,15 @@ import {
   UserCog,
   Users,
   Wallet,
+  Loader2,
+  Tag,
+  Star,
   type LucideIcon,
 } from "lucide-react"
 
 export type SportcationOpsRole = "merchant" | "admin"
 
-export type MerchantSection = "overview" | "venues" | "slots" | "bookings" | "finance" | "settings"
+export type MerchantSection = "overview" | "venues" | "slots" | "bookings" | "finance" | "promotions" | "customers" | "reviews" | "settings"
 export type AdminSection = "overview" | "users" | "venues" | "bookings" | "payments" | "reports" | "content" | "settings"
 export type SportcationOpsSection = MerchantSection | AdminSection
 
@@ -95,6 +98,9 @@ const merchantNav: NavItem[] = [
   { section: "slots", label: "Slots", href: "/merchant/slots", icon: CalendarClock },
   { section: "bookings", label: "Bookings", href: "/merchant/bookings", icon: Ticket },
   { section: "finance", label: "Finance", href: "/merchant/finance", icon: Wallet },
+  { section: "promotions", label: "Promotions", href: "/merchant/promotions", icon: Tag },
+  { section: "customers", label: "Customers", href: "/merchant/customers", icon: Users },
+  { section: "reviews", label: "Reviews", href: "/merchant/reviews", icon: Star },
   { section: "settings", label: "Settings", href: "/merchant/settings", icon: Settings },
 ]
 
@@ -143,6 +149,21 @@ const merchantRows = {
     row("PAY-9001", "QRIS Settlement", "Padel Arena", "24 bookings", "Rp 18.450.000", "Ready payout", "green"),
     row("PAY-9002", "Voucher Subsidy", "Flash sale campaign", "12 redemptions", "Rp 2.100.000", "Review", "yellow"),
     row("PAY-9003", "Refund Hold", "Cancelled weather slots", "3 bookings", "Rp 840.000", "On hold", "red"),
+  ],
+  promotions: [
+    row("PRM-001", "Weekend Warrior", "10% off Saturday slots", "Valid till Dec 31", "124 used", "Active", "green"),
+    row("PRM-002", "Early Bird Padel", "Rp 50k off morning sessions", "Valid till Nov 30", "45 used", "Scheduled", "blue"),
+    row("PRM-003", "Flash Sale", "50% off last minute", "Expired yesterday", "89 used", "Ended", "gray"),
+  ],
+  customers: [
+    row("CUS-801", "Budi Santoso", "budi@example.com", "Member since Jan 2024", "12 bookings", "VIP", "green"),
+    row("CUS-802", "Siti Aminah", "siti@example.com", "Member since Mar 2024", "5 bookings", "Regular", "blue"),
+    row("CUS-803", "Andi Wijaya", "andi@example.com", "Member since Oct 2024", "1 booking", "New", "yellow"),
+  ],
+  reviews: [
+    row("REV-501", "Padel Arena", "Court 01 was fantastic!", "By Budi Santoso", "5 Stars", "Published", "green"),
+    row("REV-502", "Elite Tennis SCBD", "Net needs fixing", "By Siti Aminah", "3 Stars", "Needs Reply", "yellow"),
+    row("REV-503", "Metro Futsal Hub", "Great location but hot", "By Andi Wijaya", "4 Stars", "Replied", "blue"),
   ],
 }
 
@@ -236,6 +257,45 @@ const merchantResources: Record<Exclude<MerchantSection, "overview" | "settings"
       { label: "Reference", placeholder: "PAY-9001" },
       { label: "Amount", placeholder: "18450000", type: "number" },
       { label: "Reason", placeholder: "Settlement correction", type: "textarea" },
+    ],
+  },
+  promotions: {
+    title: "Marketing & Promotions",
+    subtitle: "Launch flash sales, discount codes, and special rates to boost bookings.",
+    createLabel: "New Promo",
+    entityName: "promotion",
+    helper: "Ready to be wired to a new 'promotions' schema table.",
+    rows: merchantRows.promotions,
+    formFields: [
+      { label: "Promo Name", placeholder: "Weekend Warrior" },
+      { label: "Discount Type", placeholder: "Percentage / Fixed", type: "select" },
+      { label: "Value", placeholder: "10", type: "number" },
+      { label: "Valid Until", placeholder: "2024-12-31" },
+    ],
+  },
+  customers: {
+    title: "Customer CRM",
+    subtitle: "Understand your player base, frequency, and loyalty.",
+    createLabel: "Export CRM",
+    entityName: "customer",
+    helper: "Aggregates users who have booked your venues.",
+    rows: merchantRows.customers,
+    formFields: [
+      { label: "Customer Name", placeholder: "Read only field" },
+      { label: "Loyalty Status", placeholder: "VIP / Regular / New", type: "select" },
+      { label: "Admin Note", placeholder: "Internal note about this player", type: "textarea" },
+    ],
+  },
+  reviews: {
+    title: "Ratings & Reviews",
+    subtitle: "Monitor feedback and reply to customers to maintain your reputation.",
+    createLabel: "Appeal Review",
+    entityName: "review",
+    helper: "Ready for 'venue_reviews' table mapping.",
+    rows: merchantRows.reviews,
+    formFields: [
+      { label: "Reply Message", placeholder: "Thank you for the feedback...", type: "textarea" },
+      { label: "Status", placeholder: "Published / Hidden", type: "select" },
     ],
   },
 }
@@ -351,6 +411,11 @@ export function SportcationOpsApp({
   role: SportcationOpsRole
   section?: SportcationOpsSection
 }) {
+  const { data, loading } = useOpsDashboard(role);
+  
+  const currentMerchantRows = useMemo(() => mapMerchantDataToRows(role === "merchant" ? data : null), [data, role]);
+  const currentAdminRows = useMemo(() => mapAdminDataToRows(role === "admin" ? data : null), [data, role]);
+
   const nav = role === "merchant" ? merchantNav : adminNav
   const normalizedSection = nav.some((item) => item.section === section) ? section : "overview"
   const [actionMessage, setActionMessage] = useState(
@@ -366,18 +431,30 @@ export function SportcationOpsApp({
   return (
     <main className="min-h-screen bg-[#f3f6f6] text-[#2c3133]">
       <div className="lg:flex">
-        <OpsSidebar role={role} nav={nav} active={normalizedSection} />
+        <OpsSidebar role={role} nav={nav} active={normalizedSection as SportcationOpsSection} />
         <section className="min-h-screen flex-1 lg:pl-[292px]">
           <OpsTopBar role={role} title={roleTitle} subtitle={roleSubtitle} />
           <div className="mx-auto w-full max-w-[430px] px-5 py-6 lg:max-w-none lg:px-8 lg:py-8">
-            <MobileOpsNav nav={nav} active={normalizedSection} />
+            <MobileOpsNav nav={nav} active={normalizedSection as SportcationOpsSection} />
             {actionMessage && (
               <div className="mb-6 flex items-center gap-3 rounded-2xl border border-[#c7f7e7] bg-[#eafff8] px-4 py-3 text-sm font-bold text-[#007c61] lg:hidden">
                 <Database className="h-4 w-4" />
                 {actionMessage}
               </div>
             )}
-            {renderOpsSection(role, normalizedSection, setActionMessage)}
+            {loading ? (
+              <div className="flex h-full items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+              </div>
+            ) : (
+              <WorkspaceRouter
+                role={role}
+                section={normalizedSection}
+                merchantRows={currentMerchantRows}
+                adminRows={currentAdminRows}
+                onAction={setActionMessage}
+              />
+            )}
           </div>
         </section>
       </div>
@@ -385,29 +462,37 @@ export function SportcationOpsApp({
   )
 }
 
-function renderOpsSection(
-  role: SportcationOpsRole,
-  section: SportcationOpsSection,
-  onAction: (message: string) => void,
-) {
+function WorkspaceRouter({
+  role,
+  section,
+  merchantRows,
+  adminRows,
+  onAction,
+}: {
+  role: SportcationOpsRole
+  section: string
+  merchantRows: any
+  adminRows: any
+  onAction: (message: string) => void
+}) {
   if (role === "merchant") {
-    if (section === "overview") return <MerchantOverview onAction={onAction} />
+    if (section === "overview") return <MerchantOverview onAction={onAction} merchantRows={merchantRows} />
     if (section === "settings") return <SettingsWorkspace role="merchant" onAction={onAction} />
     if (section === "venues" || section === "slots") {
       return <MerchantPersistentWorkspace resource={section} onAction={onAction} />
     }
     if (section === "bookings") return <MerchantBookingWorkspace onAction={onAction} />
     if (section === "finance") return <MerchantFinanceWorkspace onAction={onAction} />
-    return <CrudWorkspace config={merchantResources[section as Exclude<MerchantSection, "overview" | "settings">]} role="merchant" onAction={onAction} />
+    return <CrudWorkspace config={getMerchantResources(merchantRows)[section as keyof ReturnType<typeof getMerchantResources>]} role="merchant" onAction={onAction} />
   }
 
-  if (section === "overview") return <AdminOverview onAction={onAction} />
+  if (section === "overview") return <AdminOverview onAction={onAction} adminRows={adminRows} />
   if (section === "settings") return <SettingsWorkspace role="admin" onAction={onAction} />
   if (section === "users") return <AdminUserDirectoryWorkspace onAction={onAction} />
   if (section === "venues") return <AdminVenueModerationWorkspace onAction={onAction} />
   if (section === "bookings") return <AdminBookingReviewWorkspace onAction={onAction} />
   if (section === "payments") return <AdminPaymentReviewWorkspace onAction={onAction} />
-  return <CrudWorkspace config={adminResources[section as Exclude<AdminSection, "overview" | "settings">]} role="admin" onAction={onAction} />
+  return <CrudWorkspace config={getAdminResources(adminRows)[section as keyof ReturnType<typeof getAdminResources>]} role="admin" onAction={onAction} />
 }
 
 function OpsSidebar({
@@ -534,7 +619,7 @@ function MobileOpsNav({
   )
 }
 
-function MerchantOverview({ onAction }: { onAction: (message: string) => void }) {
+function MerchantOverview({ onAction, merchantRows }: { onAction: (message: string) => void; merchantRows: any }) {
   return (
     <div className="space-y-8">
       <OpsHero
@@ -556,7 +641,7 @@ function MerchantOverview({ onAction }: { onAction: (message: string) => void })
   )
 }
 
-function AdminOverview({ onAction }: { onAction: (message: string) => void }) {
+function AdminOverview({ onAction, adminRows }: { onAction: (message: string) => void; adminRows: any }) {
   const [stats, setStats] = useState<StatCard[]>(adminStats)
 
   useEffect(() => {
@@ -736,25 +821,27 @@ function CrudWorkspace({
           </div>
           <div className="divide-y divide-[#edf1f1]">
             {filteredRows.map((item) => (
-              <article key={item.id} className="grid gap-4 px-6 py-5 lg:grid-cols-[minmax(260px,1fr)_140px_150px_auto] lg:items-center">
-                <button type="button" onClick={() => trigger("Read", item)} className="flex min-w-0 items-center gap-4 text-left">
+              <article key={item.id} className="grid gap-4 px-6 py-5 hover:bg-[#f9fbfb] transition-colors lg:grid-cols-[minmax(260px,1fr)_140px_150px_auto] lg:items-center">
+                <button type="button" onClick={() => trigger("Read", item)} className="flex min-w-0 items-center gap-4 text-left hover:opacity-80 transition-opacity">
                   {item.image ? (
-                    <img src={item.image} alt="" className="h-16 w-16 rounded-2xl object-cover" />
+                    <img src={item.image} alt="" className="h-16 w-16 rounded-2xl object-cover shadow-sm" />
                   ) : (
-                    <span className="grid h-16 w-16 place-items-center rounded-2xl bg-[#dcfff6] text-[#007c61]">
+                    <span className="grid h-16 w-16 place-items-center rounded-2xl bg-[#dcfff6] text-[#007c61] shadow-sm">
                       <Database className="h-7 w-7" />
                     </span>
                   )}
                   <span className="min-w-0">
-                    <span className="block text-lg font-black leading-tight">{item.primary}</span>
+                    <span className="block text-lg font-black leading-tight text-[#1f2326]">{item.primary}</span>
                     <span className="mt-1 block truncate text-sm font-semibold text-[#687073]">{item.secondary}</span>
-                    <span className="mt-1 block text-xs font-black uppercase tracking-[0.14em] text-[#9aa1a6]">{item.id}</span>
+                    <span className="mt-1.5 block text-[10px] font-black uppercase tracking-[0.16em] text-[#9aa1a6]">{item.id}</span>
                   </span>
                 </button>
-                <p className="text-sm font-bold text-[#5f666a]">{item.meta}</p>
+                <p className="text-sm font-bold text-[#5f666a] truncate">{item.meta}</p>
                 <div>
-                  <p className="text-lg font-black">{item.metric}</p>
-                  <StatusBadge label={item.status} tone={item.statusTone} />
+                  <p className="text-lg font-black text-[#1f2326]">{item.metric}</p>
+                  <div className="mt-1">
+                    <StatusBadge label={item.status} tone={item.statusTone} />
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <IconButton label="Edit" icon={Edit3} onClick={() => trigger("Update", item)} />
@@ -975,3 +1062,48 @@ function toneBadge(tone: StatusTone) {
   if (tone === "blue") return "bg-[#e3f0ff] text-[#2263b7]"
   return "bg-[#edf1f1] text-[#687073]"
 }
+
+function getMerchantResources(rows: typeof merchantRows): Record<Exclude<MerchantSection, "overview" | "settings">, ResourceConfig> { return { venues: { ...merchantResources.venues, rows: rows.venues }, slots: { ...merchantResources.slots, rows: rows.slots }, bookings: { ...merchantResources.bookings, rows: rows.bookings }, finance: { ...merchantResources.finance, rows: rows.finance }, promotions: { ...merchantResources.promotions, rows: rows.promotions }, customers: { ...merchantResources.customers, rows: rows.customers }, reviews: { ...merchantResources.reviews, rows: rows.reviews } } }
+function getAdminResources(rows: typeof adminRows): Record<Exclude<AdminSection, "overview" | "settings" | "users" | "venues" | "bookings" | "payments">, ResourceConfig> { return { reports: { ...adminResources.reports, rows: rows.reports }, content: { ...adminResources.content, rows: rows.content } } }
+
+
+function useOpsDashboard(role: SportcationOpsRole) {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    fetch(role === "merchant" ? "/api/merchant/dashboard" : "/api/admin/dashboard")
+      .then(res => res.json())
+      .then(res => { setData(res); setLoading(false); })
+      .catch(err => { console.error(err); setLoading(false); });
+  }, [role]);
+  return { data, loading };
+}
+
+
+function mapMerchantDataToRows(data: any) {
+  if (!data) return merchantRows;
+  return {
+    venues: (data.venues || []).map((v: any) => row(v.id, v.name, v.address ?? "No address", v.courts?.length + " courts", v.price ? "Rp " + v.price : "Variable", v.status ?? "Published", "green", v.imageUrl)),
+    slots: (data.slots || []).map((s: any) => row(s.id, s.court?.name + " - " + s.startTime, s.venue?.name, new Date(s.slotDate).toLocaleDateString(), "Rp " + s.price, s.status === "booked" ? "Booked" : "Available", s.status === "booked" ? "blue" : "green")),
+    bookings: (data.bookings || []).map((b: any) => row(b.id, b.user?.name || "Customer", b.venue?.name, new Date(b.createdAt).toLocaleDateString(), "Rp " + b.totalAmount, b.status, b.status === "confirmed" ? "green" : "yellow")),
+    finance: (data.payments || []).map((p: any) => row(p.payment.id, p.payment.method || "Payment", p.venue?.name, p.payment.status, "Rp " + p.payment.amount, p.payment.status, p.payment.status === "paid" ? "green" : "yellow")),
+    promotions: data.promotions || merchantRows.promotions,
+    customers: data.customers || merchantRows.customers,
+    reviews: data.reviews || merchantRows.reviews,
+  };
+}
+
+function mapAdminDataToRows(data: any) {
+  if (!data) return adminRows;
+  return {
+    users: (data.users || []).map((u: any) => row(u.id, u.name, u.email, u.role, u.status, u.status, u.status === "active" ? "green" : "red")),
+    venues: (data.venues || []).map((v: any) => row(v.id, v.name, v.merchant?.businessName || "Merchant", v.status, v.price ? "Rp " + v.price : "Variable", v.status ?? "Published", "green", v.imageUrl)),
+    bookings: (data.bookings || []).map((b: any) => row(b.id, b.user?.name || "Customer", b.venue?.name, new Date(b.createdAt).toLocaleDateString(), "Rp " + b.totalAmount, b.status, b.status === "confirmed" ? "green" : "yellow")),
+    payments: (data.payments || []).map((p: any) => row(p.id, p.method || "Payment", p.booking?.id, p.status, "Rp " + p.amount, p.status, p.status === "paid" ? "green" : "yellow")),
+    reports: data.reports || adminRows.reports,
+    content: (data.categories || []).map((c: any) => row(c.id, c.name, "Category", "Active", "N/A", c.isActive ? "Published" : "Draft", c.isActive ? "green" : "yellow"))
+  };
+}
+
+
+
