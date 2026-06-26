@@ -11,7 +11,7 @@ export default async function MerchantLayout({ children }: { children: ReactNode
 
   // Check merchant verification status
   const session = await requirePageRole(["merchant_owner", "merchant_staff"], "/merchant")
-  if (session && "actor" in session) {
+  if (session) {
     const { getDb } = await import("@/lib/db")
     const { merchantProfiles } = await import("@/lib/db/schema")
     const { eq } = await import("drizzle-orm")
@@ -19,7 +19,7 @@ export default async function MerchantLayout({ children }: { children: ReactNode
     
     const db = getDb()
     const merchant = await db.query.merchantProfiles.findFirst({
-      where: eq(merchantProfiles.ownerUserId, session.actor.user.id)
+      where: eq(merchantProfiles.ownerUserId, session.user.id)
     })
 
     const isVerificationPage = pathname === "/merchant/verification"

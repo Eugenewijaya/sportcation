@@ -49,9 +49,9 @@ export function AuthPanel({ mode, nextPath, role = "customer" }: { mode: Mode; n
       })
       if (result.error) throw new Error(result.error.message || "Email atau password tidak valid.")
 
-      const role = result.data?.user.role
+      const userRole = result.data?.user.role
       const requestedPath = safeInternalPath(nextPath)
-      const destination = requestedPath ?? defaultDestination(role ?? undefined)
+      const destination = requestedPath ?? defaultDestination(userRole ?? undefined)
       router.push(destination)
       router.refresh()
     } catch (authError) {
