@@ -48,7 +48,7 @@ import {
 
 export type SportcationOpsRole = "merchant" | "admin"
 
-export type MerchantSection = "overview" | "venues" | "slots" | "bookings" | "pos" | "finance" | "promotions" | "customers" | "reviews" | "settings"
+export type MerchantSection = "overview" | "venues" | "slots" | "bookings" | "pos" | "finance" | "promotions" | "customers" | "reviews" | "settings" | "verification"
 export type AdminSection = "overview" | "users" | "venues" | "bookings" | "payments" | "reports" | "content" | "settings"
 export type SportcationOpsSection = MerchantSection | AdminSection
 
