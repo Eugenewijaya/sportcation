@@ -1,4 +1,4 @@
-import { desc } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { SportcationDb } from "@/lib/db";
 import { users, venues, bookings, payments, sportCategories } from "@/lib/db/schema";
 
@@ -30,9 +30,12 @@ export async function getAdminDashboard(db: SportcationDb) {
     limit: 5,
   });
 
-  // 5. Reports (mock for now as we don't have reports table)
+  // 5. Reports (Dynamic generation from data)
+  const totalGmvResult = await db.select({ total: sql`SUM(${payments.amount})` }).from(payments).where(eq(payments.status, "paid"));
+  const totalGmv = totalGmvResult[0]?.total || 0;
+  
   const reports = [
-    { id: "RPT-01", title: "GMV Performance", subtitle: "Daily revenue and take rate", stat1: "Updated 09:00", stat2: "Rp 8.2B", status: "Healthy", color: "green" },
+    { id: "RPT-01", title: "GMV Performance", subtitle: "Total Revenue generated", stat1: "All Time", stat2: "Rp " + Number(totalGmv).toLocaleString("id-ID"), status: "Healthy", color: "green" },
   ];
 
   // 6. Content (Categories)

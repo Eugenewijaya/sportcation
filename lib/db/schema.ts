@@ -274,6 +274,9 @@ export const bookings = sqliteTable(
     })
       .notNull()
       .default("pending_payment"),
+    source: text("source", { enum: ["online", "pos"] })
+      .notNull()
+      .default("online"),
     subtotal: integer("subtotal").notNull(),
     platformFee: integer("platform_fee").notNull().default(0),
     totalAmount: integer("total_amount").notNull(),

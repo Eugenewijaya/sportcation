@@ -1,4 +1,4 @@
-import * as crypto from "crypto"
+import crypto from "crypto"
 
 export type BayarGgCreatePaymentInput = {
   amount: number
@@ -16,15 +16,18 @@ export type BayarGgPaymentResponse = {
   amount: number
 }
 
-const BAYAR_GG_BASE_URL = "https://www.bayar.gg/api"
+const BASE_URL = "https://www.bayar.gg"
+
+function getApiKey() {
+  const key = process.env.BAYAR_GG_API_KEY
+  if (!key) throw new Error("BAYAR_GG_API_KEY is not set")
+  return key
+}
 
 export async function createBayarGgPayment(input: BayarGgCreatePaymentInput): Promise<BayarGgPaymentResponse> {
-  const apiKey = process.env.BAYAR_GG_API_KEY
-  if (!apiKey) {
-    throw new Error("BAYAR_GG_API_KEY is not set")
-  }
-
-  const response = await fetch(`${BAYAR_GG_BASE_URL}/create-payment.php`, {
+  const apiKey = getApiKey()
+  
+  const response = await fetch(`${BASE_URL}/api/create-payment.php`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -40,25 +43,18 @@ export async function createBayarGgPayment(input: BayarGgCreatePaymentInput): Pr
   })
 
   if (!response.ok) {
-    const text = await response.text()
-    throw new Error(`bayar.gg create payment failed: ${response.status} ${text}`)
+    const errorText = await response.text()
+    throw new Error(`Bayar.gg create payment failed: ${response.status} ${errorText}`)
   }
 
-  const result = await response.json()
-  if (result.error) {
-    throw new Error(`bayar.gg API error: ${result.error}`)
-  }
-
-  return result as BayarGgPaymentResponse
+  const data = await response.json()
+  return data
 }
 
 export async function checkBayarGgPaymentStatus(invoiceId: string): Promise<BayarGgPaymentResponse> {
-  const apiKey = process.env.BAYAR_GG_API_KEY
-  if (!apiKey) {
-    throw new Error("BAYAR_GG_API_KEY is not set")
-  }
-
-  const response = await fetch(`${BAYAR_GG_BASE_URL}/check-payment.php?invoice_id=${invoiceId}`, {
+  const apiKey = getApiKey()
+  
+  const response = await fetch(`${BASE_URL}/api/check-payment.php?invoice_id=${invoiceId}`, {
     method: "GET",
     headers: {
       "X-API-Key": apiKey,
@@ -66,30 +62,16 @@ export async function checkBayarGgPaymentStatus(invoiceId: string): Promise<Baya
   })
 
   if (!response.ok) {
-    const text = await response.text()
-    throw new Error(`bayar.gg check payment failed: ${response.status} ${text}`)
+    const errorText = await response.text()
+    throw new Error(`Bayar.gg check payment failed: ${response.status} ${errorText}`)
   }
 
-  const result = await response.json()
-  if (result.error) {
-    throw new Error(`bayar.gg API error: ${result.error}`)
-  }
-
-  return result as BayarGgPaymentResponse
+  const data = await response.json()
+  return data
 }
 
 export function verifyBayarGgWebhookSignature(rawBody: string, signature: string): boolean {
-  const apiKey = process.env.BAYAR_GG_API_KEY
-  if (!apiKey) {
-    return false
-  }
-
-  try {
-    const expectedSignature = crypto.createHmac("sha256", apiKey).update(rawBody).digest("hex")
-    // Use timing-safe equal to prevent timing attacks
-    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))
-  } catch (err) {
-    console.error("Signature verification error:", err)
-    return false
-  }
+  const apiKey = getApiKey()
+  const expectedSignature = crypto.createHmac("sha256", apiKey).update(rawBody).digest("hex")
+  return signature === expectedSignature
 }

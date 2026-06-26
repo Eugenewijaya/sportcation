@@ -5,6 +5,9 @@ import { Calculator, CreditCard, Banknote, ShoppingCart, Search, Plus, Trash2, T
 
 export function MerchantPosWorkspace({ onAction }: { onAction: (message: string) => void }) {
   const [cart, setCart] = useState<{ id: string; name: string; price: number; type: string }[]>([])
+  const [activeVenue, setActiveVenue] = useState<string>("venue-1") // Hardcoded dummy venue ID for MVP
+  const [isProcessing, setIsProcessing] = useState<boolean>(false)
+  const [qrisUrl, setQrisUrl] = useState<string | null>(null)
 
   const availableItems = [
     { id: "SLT-1", name: "Padel Court 01 - 18:00 (Walk-in)", price: 350000, type: "slot" },
@@ -26,10 +29,39 @@ export function MerchantPosWorkspace({ onAction }: { onAction: (message: string)
 
   const total = cart.reduce((sum, item) => sum + item.price, 0)
 
-  const handleCheckout = (method: string) => {
-    if (cart.length === 0) return
-    onAction(`Processed ${method} payment of Rp ${total.toLocaleString("id-ID")} for ${cart.length} items`)
-    setCart([])
+  const handleCheckout = async (method: "Cash" | "QRIS") => {
+    if (cart.length === 0 || !activeVenue) return
+    setIsProcessing(true)
+    
+    try {
+      const response = await fetch("/api/merchant/pos/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          venueId: activeVenue,
+          slotIds: cart.map((item) => item.id),
+          paymentMethod: method,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Gagal memproses pembayaran")
+      }
+
+      const data = await response.json()
+      
+      if (method === "QRIS" && data.qrisUrl) {
+        setQrisUrl(data.qrisUrl)
+      } else {
+        onAction(`Pembayaran ${method} sukses sejumlah Rp ${total.toLocaleString("id-ID")}`)
+        setCart([])
+      }
+    } catch (error: any) {
+      alert(error.message)
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   return (
@@ -112,23 +144,40 @@ export function MerchantPosWorkspace({ onAction }: { onAction: (message: string)
             <div className="mt-6 grid gap-2">
               <button
                 onClick={() => handleCheckout("Cash")}
-                disabled={cart.length === 0}
+                disabled={cart.length === 0 || isProcessing}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#007c61] py-3 text-sm font-bold text-white transition hover:bg-[#006650] disabled:opacity-50"
               >
                 <Banknote className="h-4 w-4" />
-                Pay with Cash
+                {isProcessing ? "Processing..." : "Pay with Cash"}
               </button>
               <button
                 onClick={() => handleCheckout("QRIS")}
-                disabled={cart.length === 0}
+                disabled={cart.length === 0 || isProcessing}
                 className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#edf1f1] bg-white py-3 text-sm font-bold text-[#1f2326] transition hover:bg-[#f9fbfb] disabled:opacity-50"
               >
                 <CreditCard className="h-4 w-4" />
-                Generate QRIS
+                {isProcessing ? "Processing..." : "Generate QRIS"}
               </button>
             </div>
           </div>
         </div>
+
+        {qrisUrl && (
+          <div className="rounded-[30px] bg-white p-6 shadow-sm flex flex-col items-center justify-center">
+            <h3 className="text-lg font-bold text-[#1f2326] mb-4">Silahkan Scan QRIS</h3>
+            <a href={qrisUrl} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline mb-4 break-all text-center">Buka QRIS</a>
+            <button 
+              onClick={() => {
+                setQrisUrl(null)
+                setCart([])
+                onAction("QRIS Checkout completed")
+              }}
+              className="rounded-xl bg-[#007c61] px-4 py-2 text-white text-sm font-bold hover:bg-[#006650]"
+            >
+              Tutup & Selesai
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -578,7 +578,7 @@ function mapCustomerBooking(row: Awaited<ReturnType<ReturnType<typeof selectCust
   }
 }
 
-function createBookingCode() {
+export function createBookingCode() {
   return `SP-${crypto.randomUUID().replaceAll("-", "").slice(0, 8).toUpperCase()}`
 }
 

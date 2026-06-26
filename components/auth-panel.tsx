@@ -66,6 +66,19 @@ export function AuthPanel({ mode, nextPath, role = "customer" }: { mode: Mode; n
     }
   }
 
+  function fillDemoAccount(demoRole: "customer" | "merchant" | "admin") {
+    if (demoRole === "admin") {
+      setEmail("admin@sportcation.com")
+      setPassword("password123")
+    } else if (demoRole === "merchant") {
+      setEmail("merchant@sportcation.com")
+      setPassword("password123")
+    } else {
+      setEmail("customer@sportcation.com")
+      setPassword("password123")
+    }
+  }
+
   return (
     <main className="flex min-h-screen">
       {/* Left panel — branding (desktop only) */}
@@ -217,6 +230,35 @@ export function AuthPanel({ mode, nextPath, role = "customer" }: { mode: Mode; n
               {mode === "login" ? "Daftar" : "Masuk"}
             </Link>
           </p>
+
+          {mode === "login" && (
+            <div className="mt-8 rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
+              <p className="mb-3 text-center text-xs font-semibold text-emerald-800">Coba Akun Demo</p>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => fillDemoAccount("customer")}
+                  className="rounded-lg bg-white px-2 py-1.5 text-xs font-medium text-emerald-700 shadow-sm border border-emerald-200 hover:bg-emerald-50"
+                >
+                  Customer
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fillDemoAccount("merchant")}
+                  className="rounded-lg bg-white px-2 py-1.5 text-xs font-medium text-emerald-700 shadow-sm border border-emerald-200 hover:bg-emerald-50"
+                >
+                  Merchant
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fillDemoAccount("admin")}
+                  className="rounded-lg bg-white px-2 py-1.5 text-xs font-medium text-emerald-700 shadow-sm border border-emerald-200 hover:bg-emerald-50"
+                >
+                  Admin
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="mt-6 text-center">
             <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600">
