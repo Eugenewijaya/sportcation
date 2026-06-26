@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { AdminUserDirectoryWorkspace, AdminVenueModerationWorkspace } from "@/components/admin-directory-workspace"
 import { AdminBookingReviewWorkspace, AdminPaymentReviewWorkspace } from "@/components/admin-review-workspace"
+import { AdminFinanceWorkspace } from "@/components/admin-finance-workspace"
 import { MerchantBookingWorkspace } from "@/components/merchant-booking-workspace"
 import { MerchantFinanceWorkspace } from "@/components/merchant-finance-workspace"
 import { MerchantPersistentWorkspace } from "@/components/merchant-persistent-workspace"
@@ -45,13 +46,14 @@ import {
   Star,
   Clock,
   HelpCircle,
+  Landmark,
   type LucideIcon,
 } from "lucide-react"
 
 export type SportcationOpsRole = "merchant" | "admin"
 
 export type MerchantSection = "overview" | "venues" | "slots" | "bookings" | "pos" | "finance" | "promotions" | "customers" | "reviews" | "settings" | "verification"
-export type AdminSection = "overview" | "users" | "venues" | "bookings" | "payments" | "reports" | "content" | "settings"
+export type AdminSection = "overview" | "users" | "venues" | "bookings" | "payments" | "finance" | "reports" | "content" | "settings"
 export type SportcationOpsSection = MerchantSection | AdminSection
 
 type StatusTone = "green" | "yellow" | "red" | "gray" | "blue"
@@ -116,6 +118,7 @@ const adminNav: NavItem[] = [
   { section: "venues", label: "Venues", href: "/admin/venues", icon: Store },
   { section: "bookings", label: "Bookings", href: "/admin/bookings", icon: Ticket },
   { section: "payments", label: "Payments", href: "/admin/payments", icon: CreditCard },
+  { section: "finance", label: "Finance", href: "/admin/finance", icon: Landmark },
   { section: "reports", label: "Reports", href: "/admin/reports", icon: BarChart3 },
   { section: "content", label: "Content", href: "/admin/content", icon: Megaphone },
   { section: "settings", label: "Settings", href: "/admin/settings", icon: Settings },
@@ -306,7 +309,7 @@ const merchantResources: Record<Exclude<MerchantSection, "overview" | "settings"
   },
 }
 
-const adminResources: Record<Exclude<AdminSection, "overview" | "settings">, ResourceConfig> = {
+const adminResources: Record<Exclude<AdminSection, "overview" | "settings" | "finance">, ResourceConfig> = {
   users: {
     title: "User Registry",
     subtitle: "Manage customers, merchant owners, staff roles, verification, and restrictions.",
@@ -500,6 +503,7 @@ function WorkspaceRouter({
   if (section === "venues") return <AdminVenueModerationWorkspace onAction={onAction} />
   if (section === "bookings") return <AdminBookingReviewWorkspace onAction={onAction} />
   if (section === "payments") return <AdminPaymentReviewWorkspace onAction={onAction} />
+  if (section === "finance") return <AdminFinanceWorkspace onAction={onAction} />
   if (section === "content") return <AdminBannersWorkspace onAction={onAction} />
   return <CrudWorkspace config={getAdminResources(adminRows)[section as keyof ReturnType<typeof getAdminResources>]} role="admin" onAction={onAction} />
 }
@@ -1073,7 +1077,7 @@ function toneBadge(tone: StatusTone) {
 }
 
 function getMerchantResources(rows: typeof merchantRows): Record<Exclude<MerchantSection, "overview" | "settings" | "pos" | "verification">, ResourceConfig> { return { venues: { ...merchantResources.venues, rows: rows.venues }, slots: { ...merchantResources.slots, rows: rows.slots }, bookings: { ...merchantResources.bookings, rows: rows.bookings }, finance: { ...merchantResources.finance, rows: rows.finance }, promotions: { ...merchantResources.promotions, rows: rows.promotions }, customers: { ...merchantResources.customers, rows: rows.customers }, reviews: { ...merchantResources.reviews, rows: rows.reviews } } }
-function getAdminResources(rows: typeof adminRows): Record<Exclude<AdminSection, "overview" | "settings" | "users" | "venues" | "bookings" | "payments">, ResourceConfig> { return { reports: { ...adminResources.reports, rows: rows.reports }, content: { ...adminResources.content, rows: rows.content } } }
+function getAdminResources(rows: typeof adminRows): Record<Exclude<AdminSection, "overview" | "settings" | "users" | "venues" | "bookings" | "payments" | "finance">, ResourceConfig> { return { reports: { ...adminResources.reports, rows: rows.reports }, content: { ...adminResources.content, rows: rows.content } } }
 
 
 function useOpsDashboard(role: SportcationOpsRole) {

@@ -348,6 +348,14 @@ export function SportcationWebApp({
   const [darkMode, setDarkMode] = useState(false)
   const [pushEnabled, setPushEnabled] = useState(true)
   const [biometricEnabled, setBiometricEnabled] = useState(true)
+  const [showOnboarding, setShowOnboarding] = useState(false)
+
+  useEffect(() => {
+    const hasSeen = localStorage.getItem("sportcation_onboarding")
+    if (!hasSeen) {
+      setShowOnboarding(true)
+    }
+  }, [])
 
   const categories = useMemo(() => ["All Venues", ...catalog.categories.map((item) => item.name)], [catalog.categories])
   const selectedCategorySlug = useMemo(() => {
@@ -1188,7 +1196,7 @@ function DesktopSidebar({ active, onNavigate }: { active: View; onNavigate: (vie
 
 function BottomNav({ active, onNavigate }: { active: View; onNavigate: (view: View) => void }) {
   return (
-    <nav className="mx-auto mt-6 flex h-16 max-w-[430px] items-center justify-around border-t border-gray-200 bg-white px-2 lg:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 mx-auto flex h-16 w-full items-center justify-around border-t border-gray-200 bg-white px-2 lg:hidden">
       {navItems.map((item) => {
         const Icon = item.icon
         const selected = active === item.view || (item.view === "profile" && ["settings", "notifications", "help", "privacy"].includes(active))
@@ -1591,8 +1599,10 @@ function ExploreScreen({
                   type="button"
                   onClick={() => onCategoryChange(item)}
                   className={cx(
-                    "h-9 shrink-0 rounded-lg px-4 text-sm font-medium transition",
-                    category === item ? "bg-emerald-600 text-white" : "bg-white text-gray-500 shadow-sm hover:bg-gray-50",
+                    "whitespace-nowrap rounded-full px-5 py-2 text-sm font-black transition-all",
+                    category === item
+                      ? "bg-gradient-to-r from-[#48e3b6] to-[#007c61] text-white shadow-md shadow-[#48e3b6]/30 scale-105"
+                      : "bg-white text-[#687073] border border-gray-200 hover:bg-gray-50",
                   )}
                 >
                   {item}

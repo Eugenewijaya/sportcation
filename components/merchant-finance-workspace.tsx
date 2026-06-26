@@ -16,6 +16,10 @@ import {
   ShieldCheck,
   TrendingUp,
   WalletCards,
+  Lock,
+  Unlock,
+  Landmark,
+  ChevronRight,
   type LucideIcon,
 } from "lucide-react"
 import type {
@@ -201,6 +205,13 @@ export function MerchantFinanceWorkspace({ onAction }: { onAction: (message: str
             </section>
 
             <aside className="space-y-6 xl:sticky xl:top-28 xl:h-fit">
+              {dashboard.wallet && (
+                <WalletCard 
+                  wallet={dashboard.wallet} 
+                  onAction={onAction} 
+                  onSuccess={() => void load()} 
+                />
+              )}
               <PolicyCard dashboard={dashboard} />
               <PaymentBreakdownCard breakdown={dashboard.paymentBreakdown} />
             </aside>
@@ -340,6 +351,199 @@ function PaymentBreakdownCard({ breakdown }: { breakdown: MerchantFinancePayment
             <p className="text-right text-sm font-black">{rupiah(item.amount)}</p>
           </div>
         ))}
+      </div>
+    </section>
+  )
+}
+
+function WalletCard({ 
+  wallet, 
+  onAction,
+  onSuccess 
+}: { 
+  wallet: { availableBalance: number; pendingBalance: number; hasPin: boolean }
+  onAction: (message: string) => void
+  onSuccess: () => void
+}) {
+  const [view, setView] = useState<"overview" | "withdraw" | "pin">("overview")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+
+  // Withdraw state
+  const [amount, setAmount] = useState("")
+  const [bankName, setBankName] = useState("")
+  const [accountNumber, setAccountNumber] = useState("")
+  const [accountHolder, setAccountHolder] = useState("")
+  const [pinCode, setPinCode] = useState("")
+
+  // PIN state
+  const [newPin, setNewPin] = useState("")
+  const [currentPin, setCurrentPin] = useState("")
+
+  async function handleWithdraw(e: React.FormEvent) {
+    e.preventDefault()
+    setError("")
+    setLoading(true)
+    try {
+      const numAmount = parseInt(amount.replace(/\D/g, ""), 10)
+      if (isNaN(numAmount) || numAmount < 10000) throw new Error("Minimal penarikan adalah Rp 10.000")
+      if (!bankName || !accountNumber || !accountHolder) throw new Error("Semua field rekening wajib diisi")
+      if (pinCode.length !== 6) throw new Error("PIN harus 6 digit angka")
+
+      const res = await fetch("/api/merchant/finance/withdraw", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: numAmount, bankName, accountNumber, accountHolder, pinCode })
+      })
+
+      const payload = await res.json()
+      if (!res.ok) throw new Error(payload.error?.message || "Gagal melakukan penarikan")
+
+      onAction("Request penarikan dana berhasil diajukan")
+      setView("overview")
+      setAmount("")
+      setPinCode("")
+      onSuccess()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Terjadi kesalahan")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleSetPin(e: React.FormEvent) {
+    e.preventDefault()
+    setError("")
+    setLoading(true)
+    try {
+      if (newPin.length !== 6) throw new Error("PIN baru harus 6 digit angka")
+      
+      const body: Record<string, string> = { pin: newPin }
+      if (wallet.hasPin) {
+        if (currentPin.length !== 6) throw new Error("PIN saat ini harus 6 digit angka")
+        body.currentPin = currentPin
+      }
+
+      const res = await fetch("/api/merchant/finance/pin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      })
+
+      const payload = await res.json()
+      if (!res.ok) throw new Error(payload.error?.message || "Gagal menyimpan PIN")
+
+      onAction("PIN keamanan berhasil diperbarui")
+      setView("overview")
+      setNewPin("")
+      setCurrentPin("")
+      onSuccess()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Terjadi kesalahan")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (view === "pin") {
+    return (
+      <section className="rounded-[30px] bg-white p-6 shadow-sm">
+        <button onClick={() => setView("overview")} className="mb-4 text-sm font-bold text-[#687073] hover:text-black">← Kembali</button>
+        <h3 className="text-xl font-black">{wallet.hasPin ? "Ubah PIN" : "Buat PIN Baru"}</h3>
+        <p className="mt-2 text-sm text-[#687073]">PIN diperlukan untuk mengamankan penarikan dana Anda.</p>
+        <form onSubmit={handleSetPin} className="mt-5 space-y-4">
+          {wallet.hasPin && (
+            <div>
+              <label className="mb-1 block text-xs font-bold uppercase text-[#687073]">PIN Saat Ini</label>
+              <input type="password" maxLength={6} value={currentPin} onChange={e => setCurrentPin(e.target.value.replace(/\D/g, ""))} className="w-full rounded-xl bg-[#edf1f1] px-4 py-3 text-lg font-black outline-none" placeholder="******" />
+            </div>
+          )}
+          <div>
+            <label className="mb-1 block text-xs font-bold uppercase text-[#687073]">{wallet.hasPin ? "PIN Baru" : "Buat PIN (6 Digit)"}</label>
+            <input type="password" maxLength={6} value={newPin} onChange={e => setNewPin(e.target.value.replace(/\D/g, ""))} className="w-full rounded-xl bg-[#edf1f1] px-4 py-3 text-lg font-black tracking-[0.2em] outline-none" placeholder="******" />
+          </div>
+          {error && <p className="text-sm font-bold text-[#c11f32]">{error}</p>}
+          <button disabled={loading} type="submit" className="mt-2 w-full rounded-xl bg-[#007c61] py-3 text-sm font-black uppercase text-white hover:bg-[#00634e] disabled:opacity-50">
+            {loading ? "Menyimpan..." : "Simpan PIN"}
+          </button>
+        </form>
+      </section>
+    )
+  }
+
+  if (view === "withdraw") {
+    return (
+      <section className="rounded-[30px] bg-white p-6 shadow-sm">
+        <button onClick={() => setView("overview")} className="mb-4 text-sm font-bold text-[#687073] hover:text-black">← Kembali</button>
+        <h3 className="text-xl font-black">Tarik Dana</h3>
+        <p className="mt-2 text-sm text-[#687073]">Tarik saldo ke rekening bank Anda. Biaya admin Rp 2.500.</p>
+        <form onSubmit={handleWithdraw} className="mt-5 space-y-4">
+          <div>
+            <label className="mb-1 block text-xs font-bold uppercase text-[#687073]">Nominal (Min. Rp 10.000)</label>
+            <input type="text" value={amount} onChange={e => setAmount(e.target.value.replace(/\D/g, ""))} className="w-full rounded-xl bg-[#edf1f1] px-4 py-3 text-lg font-black outline-none" placeholder="Rp 0" />
+            <p className="mt-1 text-xs font-bold text-[#007c61]">Maks: {rupiah(wallet.availableBalance - 2500)}</p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-xs font-bold uppercase text-[#687073]">Nama Bank</label>
+              <input type="text" value={bankName} onChange={e => setBankName(e.target.value)} className="w-full rounded-xl bg-[#edf1f1] px-4 py-3 text-sm font-bold outline-none" placeholder="BCA / Mandiri" />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-bold uppercase text-[#687073]">No. Rekening</label>
+              <input type="text" value={accountNumber} onChange={e => setAccountNumber(e.target.value)} className="w-full rounded-xl bg-[#edf1f1] px-4 py-3 text-sm font-bold outline-none" placeholder="12345678" />
+            </div>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-bold uppercase text-[#687073]">Nama Pemilik Rekening</label>
+            <input type="text" value={accountHolder} onChange={e => setAccountHolder(e.target.value)} className="w-full rounded-xl bg-[#edf1f1] px-4 py-3 text-sm font-bold outline-none" placeholder="Ahmad Reza" />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-bold uppercase text-[#687073]">PIN Keamanan</label>
+            <input type="password" maxLength={6} value={pinCode} onChange={e => setPinCode(e.target.value.replace(/\D/g, ""))} className="w-full rounded-xl bg-[#edf1f1] px-4 py-3 text-lg font-black tracking-[0.2em] outline-none" placeholder="******" />
+          </div>
+          {error && <p className="text-sm font-bold text-[#c11f32]">{error}</p>}
+          <button disabled={loading} type="submit" className="mt-2 w-full rounded-xl bg-[#007c61] py-3 text-sm font-black uppercase text-white hover:bg-[#00634e] disabled:opacity-50">
+            {loading ? "Memproses..." : "Tarik Dana"}
+          </button>
+        </form>
+      </section>
+    )
+  }
+
+  return (
+    <section className="rounded-[30px] bg-[#007c61] p-6 text-white shadow-sm">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-black uppercase tracking-[0.22em] text-[#b8f3df]">Saldo Aktif</p>
+        <span className="grid h-10 w-10 place-items-center rounded-xl bg-white/20">
+          <WalletCards className="h-5 w-5" />
+        </span>
+      </div>
+      <h3 className="mt-3 text-4xl font-black tracking-[-0.05em]">{rupiah(wallet.availableBalance)}</h3>
+      <p className="mt-2 text-sm font-semibold text-white/80">
+        Saldo tertahan: {rupiah(wallet.pendingBalance)}
+      </p>
+
+      <div className="mt-6 flex flex-col gap-3">
+        <button 
+          onClick={() => {
+            if (!wallet.hasPin) {
+              setView("pin")
+            } else {
+              setView("withdraw")
+            }
+          }}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3 text-sm font-black uppercase text-[#007c61] transition hover:bg-[#eafff8]"
+        >
+          <Landmark className="h-5 w-5" />
+          {wallet.hasPin ? "Tarik Dana" : "Buat PIN untuk Tarik Dana"}
+        </button>
+        <button 
+          onClick={() => setView("pin")}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-white/10 py-3 text-sm font-black uppercase text-white transition hover:bg-white/20"
+        >
+          {wallet.hasPin ? <Lock className="h-5 w-5" /> : <Unlock className="h-5 w-5" />}
+          {wallet.hasPin ? "Ubah PIN Keamanan" : "Setup PIN Keamanan"}
+        </button>
       </div>
     </section>
   )

@@ -30,6 +30,9 @@ export type AdminUserReview = {
     businessName: string
     legalName: string | null
     status: AdminMerchantStatus
+    ktpUrl: string | null
+    npwpUrl: string | null
+    businessLicenseUrl: string | null
   } | null
   stats: {
     bookingCount: number

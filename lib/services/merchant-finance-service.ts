@@ -1,7 +1,7 @@
 import { desc, eq } from "drizzle-orm"
 import type { CustomerBookingStatus, CustomerPaymentMethod, CustomerPaymentStatus } from "@/lib/customer-bookings/types"
 import type { SportcationDbExecutor } from "@/lib/db"
-import { bookingItems, bookings, payments, venues } from "@/lib/db/schema"
+import { bookingItems, bookings, payments, venues, userWallets } from "@/lib/db/schema"
 import type {
   MerchantFinanceDashboard,
   MerchantFinancePaymentBreakdown,
@@ -30,6 +30,20 @@ export async function getMerchantFinanceDashboard(
     selectMerchantFinanceRows(db).where(eq(venues.merchantId, merchantId)).orderBy(desc(payments.createdAt)),
   ])
 
+  // Get merchant owner user id (to fetch wallet)
+  // we assume the merchantId here is basically referring to the merchant table, but wait, 
+  // where does the wallet live? It lives by userId. 
+  // Let's get the userId of the owner of this merchant.
+  // We can query merchants table to find ownerId.
+  const [merchantRec] = await db.select({ ownerId: venues.merchantId }).from(venues).where(eq(venues.merchantId, merchantId)).limit(1) // Actually wait, merchantId IS the userId of the owner in our setup!
+  
+  // Let's verify by just using merchantId as userId for the wallet
+  const [wallet] = await db.select({ 
+    availableBalance: userWallets.availableBalance, 
+    pendingBalance: userWallets.pendingBalance,
+    pinCode: userWallets.pinCode
+  }).from(userWallets).where(eq(userWallets.userId, merchantId))
+
   const rows = financeRows.filter(Boolean).map(mapFinanceRow)
   const settlements = mapSettlements(venueRows.filter(Boolean), rows)
   const summary = mapSummary(rows, options.now ?? (() => new Date()))
@@ -48,6 +62,11 @@ export async function getMerchantFinanceDashboard(
       settlementCadence: "MVP preview assumes weekly Friday settlement after paid booking review.",
       mutationScope: "Read-only foundation. Payout release, bank transfer, refund approval, and gateway reconciliation are not implemented yet.",
     },
+    wallet: wallet ? {
+      availableBalance: wallet.availableBalance,
+      pendingBalance: wallet.pendingBalance,
+      hasPin: !!wallet.pinCode
+    } : null
   }
 }
 

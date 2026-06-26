@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, gte, inArray, like, lte, or, type SQL } from "drizzle-orm"
 import type { SportcationDb, SportcationDbExecutor } from "@/lib/db"
-import { courts, slots, sportCategories, venues } from "@/lib/db/schema"
+import { courts, slots, sportCategories, venues, merchantProfiles } from "@/lib/db/schema"
 import type { PublicCatalogPayload, PublicCategory, PublicCourt, PublicSlot, PublicVenue } from "@/lib/public-catalog/types"
 import { publicCatalogQuerySchema, type PublicCatalogQuery } from "@/lib/validation/public-catalog"
 
@@ -66,7 +66,8 @@ export async function getPublicVenue(
     })
     .from(venues)
     .innerJoin(sportCategories, eq(venues.categoryId, sportCategories.id))
-    .where(and(eq(venues.id, id), eq(venues.status, "published"), eq(sportCategories.isActive, true)))
+    .innerJoin(merchantProfiles, eq(venues.merchantId, merchantProfiles.id))
+    .where(and(eq(venues.id, id), eq(venues.status, "published"), eq(sportCategories.isActive, true), eq(merchantProfiles.status, "verified")))
     .get()
 
   if (!row) return undefined
@@ -112,6 +113,7 @@ async function listPublicVenueRows(db: SportcationDbExecutor, query: PublicCatal
     })
     .from(venues)
     .innerJoin(sportCategories, eq(venues.categoryId, sportCategories.id))
+    .innerJoin(merchantProfiles, eq(venues.merchantId, merchantProfiles.id))
     .where(where)
     .orderBy(desc(venues.rating), asc(venues.priceFrom), asc(venues.name))
     .limit(query.pageSize + 1)
@@ -119,7 +121,7 @@ async function listPublicVenueRows(db: SportcationDbExecutor, query: PublicCatal
 }
 
 function buildVenueWhere(query: PublicCatalogQuery) {
-  const conditions: SQL[] = [eq(venues.status, "published"), eq(sportCategories.isActive, true)]
+  const conditions: SQL[] = [eq(venues.status, "published"), eq(sportCategories.isActive, true), eq(merchantProfiles.status, "verified")]
 
   if (query.category && query.category !== "all") {
     conditions.push(eq(sportCategories.slug, query.category))

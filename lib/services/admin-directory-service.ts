@@ -77,6 +77,9 @@ export async function listAdminUsers(
               businessName: ownedMerchant.businessName,
               legalName: ownedMerchant.legalName,
               status: ownedMerchant.status,
+              ktpUrl: ownedMerchant.ktpUrl,
+              npwpUrl: ownedMerchant.npwpUrl,
+              businessLicenseUrl: ownedMerchant.businessLicenseUrl,
             }
           : null,
         stats: {
@@ -255,6 +258,9 @@ function selectOwnedMerchantRows(db: SportcationDbExecutor) {
       businessName: merchantProfiles.businessName,
       legalName: merchantProfiles.legalName,
       status: merchantProfiles.status,
+      ktpUrl: merchantProfiles.ktpUrl,
+      npwpUrl: merchantProfiles.npwpUrl,
+      businessLicenseUrl: merchantProfiles.businessLicenseUrl,
     })
     .from(merchantProfiles)
 }

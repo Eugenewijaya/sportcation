@@ -19,7 +19,9 @@ type BookingServiceOptions = {
 }
 
 const defaultImage = "/padel-court-modern.jpg"
-const platformFee = 15_000
+function calculatePlatformFee(subtotal: number): number {
+  return Math.min(25000, Math.max(5000, Math.floor(subtotal * 0.05)))
+}
 const defaultPaymentExpiresInMinutes = 15
 
 export async function listCustomerBookings(db: SportcationDbExecutor, userId: string): Promise<CustomerBooking[]> {
@@ -100,7 +102,8 @@ export async function createCustomerBooking(
       const bookingId = newId()
       const bookingCode = bookingCodeFactory()
       const subtotal = selectedSlot.price
-      const totalAmount = subtotal + platformFee
+      const platformFee = calculatePlatformFee(subtotal)
+      const totalAmount = subtotal // Platform fee is deducted from merchant balance
 
       await tx.insert(bookings).values({
         id: bookingId,

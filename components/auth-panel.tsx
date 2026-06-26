@@ -263,10 +263,10 @@ export function AuthPanel({ mode, nextPath, role = "customer" }: { mode: Mode; n
           )}
 
           <div className="mt-6 text-center">
-            <a href="/" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600">
+            <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600">
               <ArrowLeft className="h-3.5 w-3.5" />
               Kembali ke beranda
-            </a>
+            </Link>
           </div>
         </div>
       </section>

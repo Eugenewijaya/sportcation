@@ -80,4 +80,9 @@ export type MerchantFinanceDashboard = {
     settlementCadence: string
     mutationScope: string
   }
+  wallet: {
+    availableBalance: number
+    pendingBalance: number
+    hasPin: boolean
+  } | null
 }

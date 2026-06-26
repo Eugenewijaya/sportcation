@@ -241,7 +241,12 @@ export function AdminUserDirectoryWorkspace({ onAction }: { onAction: (message: 
           )}
         </section>
 
-        <AdminUserDetailPanel selected={selected} detailLoading={detailLoading} />
+        <AdminUserDetailPanel 
+          selected={selected} 
+          detailLoading={detailLoading} 
+          onAction={onAction}
+          onRefresh={() => selected && void openDetail(selected.id)}
+        />
       </div>
     </AdminDirectoryFrame>
   )
@@ -496,7 +501,42 @@ function AdminDirectoryFrame({
   )
 }
 
-function AdminUserDetailPanel({ selected, detailLoading }: { selected: AdminUserReview | null; detailLoading: boolean }) {
+function AdminUserDetailPanel({ 
+  selected, 
+  detailLoading,
+  onAction,
+  onRefresh
+}: { 
+  selected: AdminUserReview | null
+  detailLoading: boolean
+  onAction: (message: string) => void
+  onRefresh: () => void
+}) {
+  const [updating, setUpdating] = useState(false)
+
+  async function handleMerchantStatus(status: "verified" | "suspended" | "draft") {
+    if (!selected?.ownedMerchant) return
+    setUpdating(true)
+    try {
+      const res = await fetch(`/api/admin/merchants/${selected.ownedMerchant.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status })
+      })
+      if (res.ok) {
+        onAction(`Merchant status updated to ${status}`)
+        onRefresh()
+      } else {
+        const err = await res.json()
+        alert(`Error: ${err.error?.message || "Failed to update status"}`)
+      }
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setUpdating(false)
+    }
+  }
+
   return (
     <aside className="h-fit rounded-[30px] bg-white p-6 shadow-sm xl:sticky xl:top-28">
       <PanelHeader title={selected?.name ?? "Select user"} loading={detailLoading} />
@@ -510,7 +550,40 @@ function AdminUserDetailPanel({ selected, detailLoading }: { selected: AdminUser
           <DetailRow icon={User} label="Role and status" value={`${userRoleLabel(selected.role)} / ${userStatusLabel(selected.status)}`} helper={`Email verified: ${selected.emailVerified ? "yes" : "no"}`} />
           <DetailRow icon={MapPin} label="Profile city" value={selected.profile.city ?? "No city"} helper={`User ID ${selected.id}`} />
           <DetailRow icon={CalendarClock} label="Booking count" value={`${selected.stats.bookingCount} bookings`} helper={`${selected.stats.activeBookings} active - ${rupiah(selected.stats.totalSpend)} spend`} />
-          <DetailRow icon={Building2} label="Merchant owner" value={selected.ownedMerchant?.businessName ?? "No owned merchant"} helper={selected.ownedMerchant ? `Status ${selected.ownedMerchant.status}` : `${selected.merchantMemberships.length} memberships`} />
+          <DetailRow icon={Building2} label="Merchant owner" value={selected.ownedMerchant?.businessName ?? "No owned merchant"} helper={selected.ownedMerchant ? `Status: ${selected.ownedMerchant.status}` : `${selected.merchantMemberships.length} memberships`} />
+          
+          {selected.ownedMerchant && (
+            <div className="rounded-2xl bg-[#f3f6f6] p-4 space-y-3 text-sm">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#687073]">Merchant Documents</p>
+              
+              <div className="grid gap-2">
+                <a href={selected.ownedMerchant.ktpUrl || "#"} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-lg bg-white p-3 hover:bg-gray-50">
+                  <span className="font-bold text-[#687073]">KTP</span>
+                  {selected.ownedMerchant.ktpUrl ? <CheckCircle2 className="h-4 w-4 text-[#007c61]" /> : <AlertCircle className="h-4 w-4 text-[#c11f32]" />}
+                </a>
+                <a href={selected.ownedMerchant.npwpUrl || "#"} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-lg bg-white p-3 hover:bg-gray-50">
+                  <span className="font-bold text-[#687073]">NPWP</span>
+                  {selected.ownedMerchant.npwpUrl ? <CheckCircle2 className="h-4 w-4 text-[#007c61]" /> : <AlertCircle className="h-4 w-4 text-[#c11f32]" />}
+                </a>
+                <a href={selected.ownedMerchant.businessLicenseUrl || "#"} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-lg bg-white p-3 hover:bg-gray-50">
+                  <span className="font-bold text-[#687073]">Surat Izin Usaha</span>
+                  {selected.ownedMerchant.businessLicenseUrl ? <CheckCircle2 className="h-4 w-4 text-[#007c61]" /> : <AlertCircle className="h-4 w-4 text-[#c11f32]" />}
+                </a>
+              </div>
+
+              {selected.ownedMerchant.status === "review" && (
+                <div className="mt-4 flex gap-2 pt-2 border-t border-[#edf1f1]">
+                  <button disabled={updating} onClick={() => handleMerchantStatus("verified")} className="flex-1 rounded-xl bg-[#007c61] py-2 text-xs font-black uppercase text-white hover:bg-[#00634e]">
+                    Approve
+                  </button>
+                  <button disabled={updating} onClick={() => handleMerchantStatus("draft")} className="flex-1 rounded-xl bg-[#c11f32] py-2 text-xs font-black uppercase text-white hover:bg-[#a01627]">
+                    Reject
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {selected.merchantMemberships.length > 0 && (
             <div className="rounded-2xl bg-[#f3f6f6] p-4">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-[#687073]">Merchant memberships</p>
