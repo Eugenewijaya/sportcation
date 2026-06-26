@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server"
 import { requireApiActor } from "@/lib/auth-access"
+import { writeFile, mkdir } from "fs/promises"
+import { join } from "path"
+import { existsSync } from "fs"
 
 export const runtime = "nodejs"
 
 export async function POST(request: Request) {
   try {
-    // Only allow authenticated users to upload
     const access = await requireApiActor(request, ["admin", "merchant_owner", "merchant_staff", "customer"])
     if ("response" in access) return access.response
 
@@ -16,15 +18,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 })
     }
 
-    // For MVP, since we don't have cloud storage configured, 
-    // we encode the image as a base64 data URL. This allows it to be saved
-    // directly into the database's text fields (like imageUrl or image)
-    // without requiring AWS S3 or Vercel Blob setup.
     const buffer = Buffer.from(await file.arrayBuffer())
-    const base64 = buffer.toString("base64")
-    const mimeType = file.type || "image/jpeg"
     
-    const dataUrl = `data:${mimeType};base64,${base64}`
+    // Create uploads directory if it doesn't exist
+    const uploadsDir = join(process.cwd(), "public", "uploads")
+    if (!existsSync(uploadsDir)) {
+      await mkdir(uploadsDir, { recursive: true })
+    }
+
+    // Generate unique filename
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`
+    const extension = file.name.split('.').pop() || 'png'
+    const filename = `${uniqueSuffix}.${extension}`
+    const filepath = join(uploadsDir, filename)
+
+    // Write file
+    await writeFile(filepath, buffer)
+
+    // Return the public URL path
+    const dataUrl = `/uploads/${filename}`
 
     return NextResponse.json({ url: dataUrl })
   } catch (error) {

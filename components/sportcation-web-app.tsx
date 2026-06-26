@@ -225,8 +225,10 @@ type ProfileUpdatePayload = {
 function MarketplaceScreen({ onBack }: { onBack?: () => void }) {
   const [data, setData] = useState<{ resells: any[]; auctions: any[] } | null>(null)
   const [loading, setLoading] = useState(true)
+  const [actionLoading, setActionLoading] = useState(false)
 
-  useEffect(() => {
+  const fetchMarketplace = () => {
+    setLoading(true)
     fetch("/api/marketplace")
       .then((res) => res.json())
       .then((d) => {
@@ -237,7 +239,61 @@ function MarketplaceScreen({ onBack }: { onBack?: () => void }) {
         console.error(e)
         setLoading(false)
       })
+  }
+
+  useEffect(() => {
+    fetchMarketplace()
   }, [])
+
+  const handleBuyResell = async (resell: any) => {
+    if (!confirm(`Yakin ingin membeli tiket ini seharga Rp ${resell.price.toLocaleString("id-ID")}?`)) return
+    setActionLoading(true)
+    try {
+      const res = await fetch(`/api/marketplace/resell/${resell.id}/buy`, {
+        method: "POST"
+      })
+      const result = await res.json()
+      if (res.ok) {
+        alert("Berhasil membeli tiket! Cek bagian Tiket Saya.")
+        fetchMarketplace()
+      } else {
+        alert(result.error || "Gagal membeli tiket.")
+      }
+    } catch (e) {
+      alert("Terjadi kesalahan jaringan.")
+    }
+    setActionLoading(false)
+  }
+
+  const handleBidAuction = async (auction: any) => {
+    const amountStr = prompt(`Masukkan tawaran Anda. Harus lebih besar dari Rp ${auction.currentHighestBid.toLocaleString("id-ID")}:`)
+    if (!amountStr) return
+    const amount = parseInt(amountStr.replace(/\D/g, ""), 10)
+    
+    if (isNaN(amount) || amount <= auction.currentHighestBid) {
+      alert(`Tawaran harus lebih besar dari Rp ${auction.currentHighestBid.toLocaleString("id-ID")}`)
+      return
+    }
+
+    setActionLoading(true)
+    try {
+      const res = await fetch(`/api/marketplace/auction/${auction.id}/bid`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount })
+      })
+      const result = await res.json()
+      if (res.ok) {
+        alert("Berhasil menawar tiket!")
+        fetchMarketplace()
+      } else {
+        alert(result.error || "Gagal menawar tiket.")
+      }
+    } catch (e) {
+      alert("Terjadi kesalahan jaringan.")
+    }
+    setActionLoading(false)
+  }
 
   return (
     <>
@@ -267,7 +323,11 @@ function MarketplaceScreen({ onBack }: { onBack?: () => void }) {
                       <p className="font-semibold text-gray-900">Booking: {r.bookingId}</p>
                       <p className="text-emerald-600 font-bold">Rp {r.price.toLocaleString("id-ID")}</p>
                     </div>
-                    <button className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-emerald-700">
+                    <button 
+                      onClick={() => handleBuyResell(r)}
+                      disabled={actionLoading}
+                      className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-emerald-700 disabled:opacity-50"
+                    >
                       Beli
                     </button>
                   </div>
@@ -293,7 +353,11 @@ function MarketplaceScreen({ onBack }: { onBack?: () => void }) {
                       <p className="font-semibold text-gray-900">Booking: {a.bookingId}</p>
                       <p className="text-amber-600 font-bold">Mulai: Rp {a.startPrice.toLocaleString("id-ID")}</p>
                     </div>
-                    <button className="bg-amber-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-amber-600">
+                    <button 
+                      onClick={() => handleBidAuction(a)}
+                      disabled={actionLoading}
+                      className="bg-amber-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-amber-600 disabled:opacity-50"
+                    >
                       Ikut Lelang
                     </button>
                   </div>
@@ -2264,12 +2328,59 @@ function BookingsScreen({
                     </AppButton>
                     {booking.status === "confirmed" && (
                       <AppButton 
-                        onClick={() => {
-                          if (confirm("Ingin menjual kembali tiket ini ke Pasar?")) {
-                            alert("Fitur upload ke pasar sedang diproses...")
+                        onClick={async () => {
+                          const action = prompt("Ketik 'JUAL' untuk jual biasa (Resell) atau 'LELANG' untuk mulai lelang:")
+                          if (!action) return
+                          
+                          if (action.toUpperCase() === "JUAL") {
+                            const priceStr = prompt("Masukkan harga jual (contoh: 50000):")
+                            if (!priceStr) return
+                            const price = parseInt(priceStr.replace(/\D/g, ""), 10)
+                            if (isNaN(price)) return
+                            
+                            try {
+                              const res = await fetch("/api/marketplace/resell", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ bookingId: booking.id, price })
+                              })
+                              if (res.ok) {
+                                alert("Berhasil dipasang di pasar Resell!")
+                                onRefresh()
+                              } else {
+                                const err = await res.json()
+                                alert(err.error || "Gagal memasang di pasar.")
+                              }
+                            } catch (e) {
+                              alert("Terjadi kesalahan jaringan.")
+                            }
+                          } else if (action.toUpperCase() === "LELANG") {
+                            const priceStr = prompt("Masukkan harga awal lelang (contoh: 20000):")
+                            if (!priceStr) return
+                            const startPrice = parseInt(priceStr.replace(/\D/g, ""), 10)
+                            if (isNaN(startPrice)) return
+                            
+                            try {
+                              const res = await fetch("/api/marketplace/auction", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ bookingId: booking.id, startPrice })
+                              })
+                              if (res.ok) {
+                                alert("Berhasil dipasang di pasar Lelang!")
+                                onRefresh()
+                              } else {
+                                const err = await res.json()
+                                alert(err.error || "Gagal memasang lelang.")
+                              }
+                            } catch (e) {
+                              alert("Terjadi kesalahan jaringan.")
+                            }
+                          } else {
+                            alert("Aksi tidak valid.")
                           }
                         }}
-                        className="h-12 flex-1 normal-case tracking-normal bg-[#ffc532] text-black"
+                        className="h-12 flex-1 normal-case tracking-normal bg-[#ffc532] text-black hover:bg-[#e5b12d]"
                       >
                         Jual / Lelang
                       </AppButton>

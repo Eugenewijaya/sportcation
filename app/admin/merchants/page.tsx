@@ -25,22 +25,27 @@ export default function AdminMerchantsPage() {
     }
   }
 
-  async function updateStatus(id: string, status: string) {
-    if (!confirm(`Yakin ingin mengubah status menjadi ${status}?`)) return
+  async function updateStatus(id: string, action: string) {
+    if (!confirm(`Yakin ingin melakukan ${action} pada merchant ini?`)) return
     
     try {
-      const res = await fetch(`/api/admin/merchants/${id}`, {
-        method: "PATCH",
+      const res = await fetch(`/api/admin/merchants/${id}/verify`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status })
+        body: JSON.stringify({ 
+          action,
+          reason: action === 'reject' ? prompt("Alasan penolakan?") || "Data tidak valid" : undefined
+        })
       })
       if (res.ok) {
         fetchMerchants()
       } else {
-        alert("Gagal update status")
+        const err = await res.json()
+        alert(err.error || "Gagal update status")
       }
     } catch (error) {
       console.error(error)
+      alert("Terjadi kesalahan jaringan.")
     }
   }
 
@@ -90,16 +95,16 @@ export default function AdminMerchantsPage() {
                 <td className="py-4 px-6 text-right">
                   {m.status === 'review' && (
                     <div className="flex justify-end gap-2">
-                      <button onClick={() => updateStatus(m.id, 'verified')} className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition">
+                      <button onClick={() => updateStatus(m.id, 'approve')} className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition">
                         <CheckCircle2 className="h-5 w-5" />
                       </button>
-                      <button onClick={() => updateStatus(m.id, 'rejected')} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition">
+                      <button onClick={() => updateStatus(m.id, 'reject')} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition">
                         <XCircle className="h-5 w-5" />
                       </button>
                     </div>
                   )}
                   {m.status === 'verified' && (
-                    <button onClick={() => updateStatus(m.id, 'rejected')} className="text-sm text-red-600 hover:underline">
+                    <button onClick={() => updateStatus(m.id, 'reject')} className="text-sm text-red-600 hover:underline">
                       Cabut Verifikasi
                     </button>
                   )}

@@ -7,6 +7,9 @@ export function WithdrawButton({ maxAmount, hasPin }: { maxAmount: number, hasPi
   const [isOpen, setIsOpen] = useState(false)
   const [amount, setAmount] = useState("")
   const [pin, setPin] = useState("")
+  const [bankName, setBankName] = useState("")
+  const [accountNumber, setAccountNumber] = useState("")
+  const [accountHolder, setAccountHolder] = useState("")
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,12 +29,43 @@ export function WithdrawButton({ maxAmount, hasPin }: { maxAmount: number, hasPi
     }
     
     setLoading(true)
-    // Here we would call the withdrawal API
-    setTimeout(() => {
-      alert(`Permintaan penarikan Rp ${numAmount.toLocaleString("id-ID")} berhasil dikirim. Menunggu persetujuan admin.`)
-      setIsOpen(false)
+    if (!bankName || !accountNumber || !accountHolder) {
+      alert("Harap lengkapi semua data rekening.")
+      return
+    }
+    
+    setLoading(true)
+    try {
+      const res = await fetch("/api/merchant/finance/withdraw", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          amount: numAmount, 
+          pin, 
+          bankName, 
+          accountNumber, 
+          accountHolder 
+        })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        alert(`Permintaan penarikan Rp ${numAmount.toLocaleString("id-ID")} berhasil dikirim. Menunggu persetujuan admin.`)
+        setIsOpen(false)
+        setAmount("")
+        setPin("")
+        setBankName("")
+        setAccountNumber("")
+        setAccountHolder("")
+        // Refresh the page to update the balance
+        window.location.reload()
+      } else {
+        alert(data.error || "Gagal melakukan penarikan.")
+      }
+    } catch (e) {
+      alert("Terjadi kesalahan jaringan.")
+    } finally {
       setLoading(false)
-    }, 1000)
+    }
   }
 
   return (
@@ -62,6 +96,41 @@ export function WithdrawButton({ maxAmount, hasPin }: { maxAmount: number, hasPi
                   onChange={(e) => setAmount(e.target.value)}
                   className="w-full rounded-lg border border-gray-300 p-3 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" 
                   placeholder="Contoh: 50000"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold mb-1">Nama Bank</label>
+                  <input 
+                    type="text" 
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 p-3 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" 
+                    placeholder="BCA / Mandiri"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-1">Nomor Rekening</label>
+                  <input 
+                    type="text" 
+                    value={accountNumber}
+                    onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ""))}
+                    className="w-full rounded-lg border border-gray-300 p-3 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" 
+                    placeholder="1234567890"
+                    required
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-1">Nama Pemilik Rekening</label>
+                <input 
+                  type="text" 
+                  value={accountHolder}
+                  onChange={(e) => setAccountHolder(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 p-3 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" 
+                  placeholder="John Doe"
                   required
                 />
               </div>

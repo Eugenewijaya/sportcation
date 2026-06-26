@@ -50,11 +50,17 @@ export function AdminFinanceWorkspace({ onAction }: { onAction: (message: string
 
   async function resolveWithdrawal(id: string, action: "approve" | "reject") {
     if (!confirm(`Are you sure you want to ${action} this withdrawal?`)) return
+    
+    let rejectedReason = undefined
+    if (action === "reject") {
+      rejectedReason = prompt("Reason for rejection?") || "Data tidak valid"
+    }
+
     try {
       const res = await fetch(`/api/admin/finance/withdraw/${id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action })
+        body: JSON.stringify({ action, rejectedReason })
       })
       if (res.ok) {
         onAction(`Withdrawal ${action}d successfully.`)
