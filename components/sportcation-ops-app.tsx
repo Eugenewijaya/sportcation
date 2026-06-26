@@ -116,6 +116,9 @@ const adminNav: NavItem[] = [
   { section: "overview", label: "Command", href: "/admin", icon: LayoutDashboard },
   { section: "users", label: "Users", href: "/admin/users", icon: Users },
   { section: "venues", label: "Venues", href: "/admin/venues", icon: Store },
+  // NOTE: Use a generic string to bypass type errors for custom pages if AdminSection is too strict
+  { section: "merchants" as any, label: "Verifikasi Mitra", href: "/admin/merchants", icon: ShieldCheck },
+  { section: "banners" as any, label: "Banners", href: "/admin/banners", icon: Tag },
   { section: "bookings", label: "Bookings", href: "/admin/bookings", icon: Ticket },
   { section: "payments", label: "Payments", href: "/admin/payments", icon: CreditCard },
   { section: "finance", label: "Finance", href: "/admin/finance", icon: Landmark },

@@ -18,7 +18,7 @@ export async function PATCH(request: Request, context: Context) {
     const body = await request.json()
     const status = body.status
 
-    if (!["verified", "draft", "suspended"].includes(status)) {
+    if (!["verified", "draft", "suspended", "review", "rejected"].includes(status)) {
       return internalError(new Error("Invalid status"))
     }
 

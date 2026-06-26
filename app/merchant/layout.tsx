@@ -9,6 +9,30 @@ export default async function MerchantLayout({ children }: { children: ReactNode
   const headersList = await headers()
   const pathname = headersList.get("x-invoke-path") || ""
 
+  // Check merchant verification status
+  const session = await requirePageRole(["merchant_owner", "merchant_staff"], "/merchant")
+  if (session && "actor" in session) {
+    const { getDb } = await import("@/lib/db")
+    const { merchantProfiles } = await import("@/lib/db/schema")
+    const { eq } = await import("drizzle-orm")
+    const { redirect } = await import("next/navigation")
+    
+    const db = getDb()
+    const merchant = await db.query.merchantProfiles.findFirst({
+      where: eq(merchantProfiles.ownerUserId, session.actor.user.id)
+    })
+
+    const isVerificationPage = pathname === "/merchant/verification"
+    
+    if (merchant && (merchant.status === "draft" || merchant.status === "review")) {
+      if (!isVerificationPage) {
+        redirect("/merchant/verification")
+      }
+    } else if (isVerificationPage && merchant && merchant.status === "verified") {
+      redirect("/merchant")
+    }
+  }
+
   const links = [
     { href: "/merchant", label: "Dashboard", icon: Home },
     { href: "/merchant/venues", label: "Manajemen Lapangan", icon: MapPin },

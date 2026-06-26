@@ -5,6 +5,7 @@ import { BlurText } from "@/components/animations/BlurText"
 import { FadeInScroll } from "@/components/animations/FadeInScroll"
 import { HoverTiltCard } from "@/components/animations/HoverTiltCard"
 import LandingInteractive from "@/components/LandingInteractive"
+import PromoSlider from "@/components/PromoSlider"
 
 export default function LandingPage() {
   return (
@@ -35,8 +36,11 @@ export default function LandingPage() {
           </div>
         </header>
 
+        {/* Promo Banners Slider */}
+        <PromoSlider />
+
         {/* Hero Content */}
-        <main className="w-full max-w-6xl mx-auto px-6 flex-1 flex flex-col justify-start pt-12 lg:pt-20 items-center text-center z-20 pb-32">
+        <main className="w-full max-w-6xl mx-auto px-6 flex-1 flex flex-col justify-start pt-6 lg:pt-10 items-center text-center z-20 pb-32">
           <FadeInScroll delay={0.1}>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/60 backdrop-blur-md border border-white/50 shadow-sm text-emerald-800 text-xs font-bold uppercase tracking-wider mb-8">
               <span className="relative flex h-2.5 w-2.5">
