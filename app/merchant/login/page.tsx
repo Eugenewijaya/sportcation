@@ -14,7 +14,7 @@ function safeInternalPath(value?: string) {
 function defaultDestination(role?: string) {
   if (role === "admin") return "/admin"
   if (role === "merchant_owner" || role === "merchant_staff") return "/merchant"
-  return "/"
+  return "/app"
 }
 
 export default function MerchantLoginPage({
