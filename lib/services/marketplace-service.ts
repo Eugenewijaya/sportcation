@@ -246,7 +246,7 @@ export async function confirmMarketplacePayment(
       await tx.update(bookings).set({ userId: payment.userId, updatedAt: now }).where(eq(bookings.id, payment.bookingId))
       
       // 3. Mark resell as sold
-      await tx.update(resells).set({ status: "sold", buyerId: payment.userId, updatedAt: now }).where(eq(resells.id, payment.resellId))
+      await tx.update(resells).set({ status: "sold", buyerId: payment.userId, updatedAt: new Date() }).where(eq(resells.id, payment.resellId))
       
       // 4. Credit Seller Wallet
       await creditAvailableBalance(
@@ -284,7 +284,7 @@ export async function confirmMarketplacePayment(
       await tx.update(bookings).set({ userId: payment.userId, updatedAt: now }).where(eq(bookings.id, payment.bookingId))
       
       // 3. Mark auction as ended
-      await tx.update(auctions).set({ status: "ended", winnerId: payment.userId, updatedAt: now }).where(eq(auctions.id, payment.auctionId))
+      await tx.update(auctions).set({ status: "ended", winnerId: payment.userId, updatedAt: new Date() }).where(eq(auctions.id, payment.auctionId))
       
       // 4. Credit Seller Wallet
       await creditAvailableBalance(
@@ -303,7 +303,7 @@ export async function confirmMarketplacePayment(
       .where(eq(payments.id, payment.id))
       
     if (payment.resellId) {
-      await tx.update(resells).set({ status: "active", updatedAt: now }).where(eq(resells.id, payment.resellId))
+      await tx.update(resells).set({ status: "active", updatedAt: new Date() }).where(eq(resells.id, payment.resellId))
       
       await tx.insert(notifications).values({
         id: crypto.randomUUID(),
@@ -315,7 +315,7 @@ export async function confirmMarketplacePayment(
       })
     } else if (payment.auctionId) {
       // Logic if auction payment fails
-      await tx.update(auctions).set({ status: "active", updatedAt: now }).where(eq(auctions.id, payment.auctionId))
+      await tx.update(auctions).set({ status: "active", updatedAt: new Date() }).where(eq(auctions.id, payment.auctionId))
     }
   }
 }

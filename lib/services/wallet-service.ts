@@ -24,7 +24,7 @@ export async function creditAvailableBalance(
   type: "resell_credit" | "auction_credit" | "booking_credit" | "refund"
 ) {
   return await db.transaction(async (tx) => {
-    await ensureWalletExists(tx as SportcationDb, userId)
+    await ensureWalletExists(tx as any, userId)
 
     await tx.update(userWallets)
       .set({
@@ -54,7 +54,7 @@ export async function deductAvailableBalance(
   type: "fee_deduction" | "withdrawal"
 ) {
   return await db.transaction(async (tx) => {
-    const wallet = await ensureWalletExists(tx as SportcationDb, userId)
+    const wallet = await ensureWalletExists(tx as any, userId)
     if (wallet.availableBalance < amount) {
       throw new DomainError("INSUFFICIENT_FUNDS", "Saldo tidak mencukupi.", 400)
     }

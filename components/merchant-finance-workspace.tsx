@@ -28,6 +28,7 @@ import type {
   MerchantFinanceTransaction,
   MerchantFinanceVenueSettlement,
   MerchantFinanceWithdrawal,
+  MerchantFinanceDashboard,
 } from "@/lib/merchant-finance/types"
 
 type Notice = { tone: "success" | "error"; message: string } | null
@@ -108,7 +109,7 @@ export function MerchantFinanceWorkspace({ onAction }: { onAction: (message: str
     const value = query.trim().toLowerCase()
     const settlements = dashboard?.settlements ?? []
     if (!value) return settlements
-    return settlements.filter((settlement) =>
+    return settlements.filter((settlement: MerchantFinanceVenueSettlement) =>
       [settlement.venue.name, settlement.venue.location, settlement.status].join(" ").toLowerCase().includes(value),
     )
   }, [dashboard, query])
@@ -117,7 +118,7 @@ export function MerchantFinanceWorkspace({ onAction }: { onAction: (message: str
     const value = query.trim().toLowerCase()
     const transactions = dashboard?.transactions ?? []
     if (!value) return transactions
-    return transactions.filter((transaction) =>
+    return transactions.filter((transaction: MerchantFinanceTransaction) =>
       [
         transaction.bookingCode,
         transaction.paymentMethod,
@@ -197,7 +198,7 @@ export function MerchantFinanceWorkspace({ onAction }: { onAction: (message: str
                 <StateBlock icon={Building2} title="No settlement records" body="Belum ada venue settlement yang cocok dengan filter." compact />
               ) : (
                 <div className="divide-y divide-[#edf1f1]">
-                  {filteredSettlements.map((settlement) => (
+                  {filteredSettlements.map((settlement: MerchantFinanceVenueSettlement) => (
                     <SettlementRow key={settlement.id} settlement={settlement} />
                   ))}
                 </div>
@@ -228,7 +229,7 @@ export function MerchantFinanceWorkspace({ onAction }: { onAction: (message: str
               <StateBlock icon={ReceiptText} title="No payment transactions" body="Tidak ada transaksi yang cocok dengan filter saat ini." compact />
             ) : (
               <div className="divide-y divide-[#edf1f1]">
-                {filteredTransactions.map((transaction) => (
+                {filteredTransactions.map((transaction: MerchantFinanceTransaction) => (
                   <TransactionRow key={transaction.id} transaction={transaction} />
                 ))}
               </div>

@@ -611,7 +611,7 @@ export async function confirmPaymentFromWebhook(
 
     if (payment.resellId || payment.auctionId) {
       const { confirmMarketplacePayment } = await import("@/lib/services/marketplace-service")
-      await confirmMarketplacePayment(tx as SportcationDb, payment, webhookStatus, now)
+      await confirmMarketplacePayment(tx as any, payment, webhookStatus, now)
       return
     }
 
