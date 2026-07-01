@@ -6,6 +6,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function generateId(prefix: string = ""): string {
-  const randomPart = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+  // ponytail: native random generator, 1 line
+  const randomPart = crypto.randomUUID().replace(/-/g, "").slice(0, 16)
   return prefix ? `${prefix}-${randomPart}` : randomPart
 }
