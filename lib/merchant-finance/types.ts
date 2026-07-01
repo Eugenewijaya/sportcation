@@ -75,6 +75,7 @@ export type MerchantFinanceDashboard = {
   settlements: MerchantFinanceVenueSettlement[]
   transactions: MerchantFinanceTransaction[]
   paymentBreakdown: MerchantFinancePaymentBreakdown[]
+  withdrawals: MerchantFinanceWithdrawal[]
   payoutPolicy: {
     platformFeeLabel: string
     settlementCadence: string
@@ -85,4 +86,17 @@ export type MerchantFinanceDashboard = {
     pendingBalance: number
     hasPin: boolean
   } | null
+}
+
+export type MerchantFinanceWithdrawal = {
+  id: string
+  amount: number
+  adminFee: number
+  netAmount: number
+  bankName: string
+  accountNumber: string
+  accountHolder: string
+  status: "pending" | "processing" | "completed" | "rejected"
+  createdAt: string
+  processedAt?: string | null
 }

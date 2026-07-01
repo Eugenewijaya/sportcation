@@ -1,13 +1,14 @@
 import { desc, eq } from "drizzle-orm"
 import type { CustomerBookingStatus, CustomerPaymentMethod, CustomerPaymentStatus } from "@/lib/customer-bookings/types"
 import type { SportcationDbExecutor } from "@/lib/db"
-import { bookingItems, bookings, payments, venues, userWallets } from "@/lib/db/schema"
+import { bookingItems, bookings, payments, venues, userWallets, withdrawals } from "@/lib/db/schema"
 import type {
   MerchantFinanceDashboard,
   MerchantFinancePaymentBreakdown,
   MerchantFinanceSettlementStatus,
   MerchantFinanceTransaction,
   MerchantFinanceVenueSettlement,
+  MerchantFinanceWithdrawal,
 } from "@/lib/merchant-finance/types"
 
 const defaultImage = "/padel-court-modern.jpg"
@@ -44,6 +45,19 @@ export async function getMerchantFinanceDashboard(
     pinCode: userWallets.pinCode
   }).from(userWallets).where(eq(userWallets.userId, merchantId))
 
+  const withdrawalRecords = await db.select({
+    id: withdrawals.id,
+    amount: withdrawals.amount,
+    adminFee: withdrawals.adminFee,
+    netAmount: withdrawals.netAmount,
+    bankName: withdrawals.bankName,
+    accountNumber: withdrawals.accountNumber,
+    accountHolder: withdrawals.accountHolder,
+    status: withdrawals.status,
+    createdAt: withdrawals.createdAt,
+    processedAt: withdrawals.processedAt,
+  }).from(withdrawals).where(eq(withdrawals.userId, merchantId)).orderBy(desc(withdrawals.createdAt))
+
   const rows = financeRows.filter(Boolean).map(mapFinanceRow)
   const settlements = mapSettlements(venueRows.filter(Boolean), rows)
   const summary = mapSummary(rows, options.now ?? (() => new Date()))
@@ -57,6 +71,11 @@ export async function getMerchantFinanceDashboard(
     settlements,
     transactions: rows,
     paymentBreakdown,
+    withdrawals: withdrawalRecords.map(w => ({
+      ...w,
+      createdAt: w.createdAt.toISOString(),
+      processedAt: w.processedAt?.toISOString() ?? null,
+    })),
     payoutPolicy: {
       platformFeeLabel: "Platform fee follows each booking.platformFee value.",
       settlementCadence: "MVP preview assumes weekly Friday settlement after paid booking review.",

@@ -597,14 +597,23 @@ export async function confirmPaymentFromWebhook(
       .select({
         id: payments.id,
         bookingId: payments.bookingId,
+        resellId: payments.resellId,
+        auctionId: payments.auctionId,
         status: payments.status,
         userId: payments.userId,
+        amount: payments.amount,
       })
       .from(payments)
       .where(eq(payments.providerReference, invoiceId))
       .get()
 
     if (!payment) return
+
+    if (payment.resellId || payment.auctionId) {
+      const { confirmMarketplacePayment } = await import("@/lib/services/marketplace-service")
+      await confirmMarketplacePayment(tx as SportcationDb, payment, webhookStatus, now)
+      return
+    }
 
     const booking = await tx
       .select({

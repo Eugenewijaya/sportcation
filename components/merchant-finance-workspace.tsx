@@ -23,11 +23,11 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import type {
-  MerchantFinanceDashboard,
   MerchantFinancePaymentBreakdown,
   MerchantFinanceSettlementStatus,
   MerchantFinanceTransaction,
   MerchantFinanceVenueSettlement,
+  MerchantFinanceWithdrawal,
 } from "@/lib/merchant-finance/types"
 
 type Notice = { tone: "success" | "error"; message: string } | null
@@ -212,6 +212,9 @@ export function MerchantFinanceWorkspace({ onAction }: { onAction: (message: str
                   onSuccess={() => void load()} 
                 />
               )}
+              {dashboard.withdrawals && dashboard.withdrawals.length > 0 && (
+                <WithdrawalHistoryCard withdrawals={dashboard.withdrawals} />
+              )}
               <PolicyCard dashboard={dashboard} />
               <PaymentBreakdownCard breakdown={dashboard.paymentBreakdown} />
             </aside>
@@ -353,6 +356,46 @@ function PaymentBreakdownCard({ breakdown }: { breakdown: MerchantFinancePayment
         ))}
       </div>
     </section>
+  )
+}
+
+function WithdrawalHistoryCard({ withdrawals }: { withdrawals: MerchantFinanceWithdrawal[] }) {
+  return (
+    <section className="rounded-[30px] bg-white p-6 shadow-sm">
+      <p className="text-xs font-black uppercase tracking-[0.22em] text-[#007c61]">History</p>
+      <h3 className="mt-3 text-2xl font-black tracking-[-0.05em]">Riwayat Penarikan</h3>
+      <div className="mt-5 max-h-80 overflow-y-auto pr-2 space-y-3">
+        {withdrawals.map((item) => (
+          <div key={item.id} className="flex flex-col gap-2 rounded-2xl bg-[#f3f6f6] p-4">
+            <div className="flex items-center justify-between">
+              <p className="font-black text-sm">{rupiah(item.amount)}</p>
+              <WithdrawalStatusBadge status={item.status} />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-[#687073]">{item.bankName} - {item.accountNumber}</p>
+              <p className="mt-1 text-[10px] font-bold text-[#9ca3a7]">
+                {formatDate(item.createdAt.slice(0, 10))} {new Date(item.createdAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function WithdrawalStatusBadge({ status }: { status: string }) {
+  const map: Record<string, { label: string; bg: string; text: string }> = {
+    pending: { label: "Pending", bg: "bg-orange-100", text: "text-orange-700" },
+    processing: { label: "Processing", bg: "bg-blue-100", text: "text-blue-700" },
+    completed: { label: "Completed", bg: "bg-[#eafff8]", text: "text-[#007c61]" },
+    rejected: { label: "Rejected", bg: "bg-red-100", text: "text-red-700" },
+  }
+  const badge = map[status] || map.pending
+  return (
+    <span className={`rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] ${badge.bg} ${badge.text}`}>
+      {badge.label}
+    </span>
   )
 }
 
