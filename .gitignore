@@ -2,6 +2,12 @@
 
 # dependencies
 /node_modules
+apps/*/node_modules
+packages/*/node_modules
+
+# next.js (monorepo)
+apps/*/.next/
+apps/*/out/
 
 # next.js
 /.next/

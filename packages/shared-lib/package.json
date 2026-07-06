@@ -1,0 +1,15 @@
+{
+  "name": "@sportcation/shared-lib",
+  "version": "0.0.1",
+  "private": true,
+  "exports": {
+    ".": "./index.ts",
+    "./auth": "./auth.ts",
+    "./auth-client": "./auth-client.ts",
+    "./auth-access": "./auth-access.ts",
+    "./auth-config": "./auth-config.ts",
+    "./db": "./db/index.ts",
+    "./domain": "./domain/index.ts",
+    "./utils": "./utils.ts"
+  }
+}
