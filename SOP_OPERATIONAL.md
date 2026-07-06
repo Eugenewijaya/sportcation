@@ -1,116 +1,92 @@
-# SOP Operasional & Prosedural Detail Sportcation
+# 🏢 SOP Operasional & Prosedural Sportcation
 
-Dokumen ini adalah panduan prosedural langkah demi langkah (SOP) komprehensif. Dokumen ini wajib dipatuhi oleh seluruh jajaran staf (Operasional, Customer Service, Keuangan, Manajemen, dan IT) guna menjamin kelancaran, keamanan, dan keandalan operasional *marketplace* penyewaan fasilitas olahraga Sportcation.
-
----
-
-## Bab 1: Prosedur Pendaftaran & Verifikasi Merchant (Mitra)
-**Tujuan**: Memastikan hanya entitas legal, pemilik asli, atau individu tervalidasi yang dapat membuka penyewaan lapangan di platform Sportcation guna meminimalisir penipuan (*fraud*).
-**PIC Utama**: Admin Operasional (Ops)
-
-**Prosedur Eksekusi**:
-1. **Registrasi**: Merchant mengisi data awal (Nama, Email, Password, NIK/NPWP entitas) melalui portal *Merchant Registration*.
-2. **Monitoring Harian**: Admin Ops wajib membuka URL Dashboard Admin `(tab Verifikasi Merchant)` minimal 2 (dua) kali sehari (Pukul 09:00 WIB dan 14:00 WIB).
-3. **Pengecekan Dokumen**:
-   - Klik ID/Nama Merchant yang berstatus `pending_verification`.
-   - Lakukan pencocokan (silang-cek) antara data teks yang di-input dengan file foto KTP/NPWP yang diunggah.
-   - Periksa konsistensi Nama Akun dengan Nama Rekening Bank yang digunakan.
-4. **Validasi & Keputusan**:
-   - **Kondisi Valid**: Jika foto tajam, terbaca jelas, dan data cocok -> Admin menekan tombol **`Approve`**. Sistem otomatis mengubah status menjadi `active` dan mengirimkan notifikasi *email/WhatsApp* sambutan.
-   - **Kondisi Invalid**: Jika dokumen buram, palsu, atau nama tidak sinkron -> Admin menekan tombol **`Reject`**. *Wajib* mengisi kolom catatan alasan spesifik (misal: "Foto KTP terpotong, mohon unggah ulang").
-   - **Kondisi Mencurigakan**: Hubungi nomor telepon pendaftar untuk verifikasi lisan singkat sebelum mengambil keputusan.
+Dokumen ini adalah **Standard Operating Procedure (SOP)** komprehensif yang mengatur alur bisnis, Service Level Agreement (SLA), dan tanggung jawab prosedural di dalam ekosistem Sportcation. Dokumen ini dirancang khusus untuk memenuhi standar operasional startup digital modern.
 
 ---
 
-## Bab 2: Prosedur Pengelolaan Ketersediaan Lapangan (Oleh Merchant)
-**Tujuan**: Menjaga integritas jadwal (ketersediaan) secara *real-time* dan menghindari insiden bentrok pesanan (*double booking*).
-**PIC Utama**: Merchant (Diawasi oleh Admin Ops)
+## 👥 1. Struktur Peran & Tanggung Jawab (Roles)
 
-**Prosedur Eksekusi**:
-1. **Pengaturan Awal Venue**: Merchant yang telah tervalidasi wajib masuk ke menu `My Venues`, menekan `Add Venue`, lalu melengkapi Foto HD, Deskripsi, Fasilitas (Parkir, Toilet, dll), serta Peraturan Khusus Lapangan.
-2. **Pengaturan Blok Waktu (*Time-Slots*)**:
-   - Merchant mengatur slot ketersediaan (contoh: blok per jam 08:00 - 09:00).
-   - Merchant diwajibkan melakukan penyesuaian harga (contoh: tarif *Peak Hour* sore hari dibandingkan tarif *Regular* pagi hari).
-3. **Tindakan Darurat Penutupan (Maintenance/Cuaca Buruk)**:
-   - Jika lapangan terendam banjir atau sedang diperbaiki, merchant **WAJIB SECARA AKTIF** masuk ke kalender dan melakukan `Block Slot` sebelum dibeli pelanggan.
-   - Jika slot sudah terlanjur dibayar, merchant **WAJIB** segera melapor ke CS Sportcation untuk inisiasi pembatalan dan masuk ke dalam sanksi denda performa (SP1).
+| Role | Kode Dashboard | Fokus Utama | SLA / Metrik Kunci |
+| :--- | :--- | :--- | :--- |
+| **Manajemen** | Super Admin | Keputusan strategis, pengaturan platform fee, dan pantauan performa GMV. | Laporan Bulanan |
+| **Admin Ops** | Ops | Verifikasi Merchant, moderasi listing (resell/auction), kontrol penipuan. | 1x24 Jam Kerja |
+| **Admin Finance**| Finance | Eksekusi pencairan dana (withdrawals), refund manual, rekonsiliasi kas. | Cut-off harian 14:00 |
+| **Admin CS** | CS | Penanganan komplain pelanggan, mediasi sengketa transaksi. | Respons < 2 Jam |
+| **Tim IT** | Developer | Incident response, uptime server (Vercel), hotfix, database maintenance. | Uptime 99.9% |
 
 ---
 
-## Bab 3: Prosedur Transaksi & Pembayaran Otomatis
-**Tujuan**: Melayani alur transaksi secara *end-to-end* yang kedap kesalahan.
-**PIC Utama**: Automasi Sistem IT & Payment Gateway (Bayar.gg)
+## 🛠️ 2. Prosedur Inti Operasional
 
-**Prosedur Eksekusi**:
-1. **Booking (*Locking*)**: Customer memilih slot jadwal lalu klik `Book`. Sistem mengunci jadwal tersebut selama 15 menit (status *pending/locked*) agar tidak bisa dipesan orang lain.
-2. **Invoicing**: Sistem mengirim payload *invoice* ke *Payment Gateway* Bayar.gg. QRIS/Virtual Account langsung tertampil kepada customer.
-3. **Konfirmasi Real-Time**: 
-   - Jika customer membayar, *Webhook* Bayar.gg mengirim sinyal `SUCCESS`. Sistem langsung menerbitkan e-Tiket kepada *Customer* dan merilis jadwal ke Merchant.
-4. **Kedaluwarsa (Expired)**:
-   - Jika 15 menit berlalu tanpa pembayaran, server (lewat proses *Vercel Cron-Job* rutin `expire-pending`) secara otomatis akan menggugurkan transaksi tersebut dan jadwal lapangan dikembalikan sebagai *Available* di katalog publik.
+### 2.1 Verifikasi & Onboarding Merchant (Admin Ops)
+> [!IMPORTANT]
+> Merchant tidak dapat menerima pesanan sebelum status entitas diverifikasi.
 
----
+1. **Jadwal Verifikasi**: Pengecekan *dashboard* dilakukan secara batch dua kali sehari: **09:00 WIB** dan **14:00 WIB**.
+2. **Validasi Data**:
+   - Bandingkan kesesuaian dokumen Legalitas (KTP/NPWP) dengan data yang didaftarkan.
+   - Verifikasi konsistensi nama pemilik dengan profil entitas.
+3. **Eksekusi**:
+   - Jika valid: Tekan **`Approve`** (Otomatis mengirim email *Welcome*).
+   - Jika cacat/buram: Tekan **`Reject`** (Wajib menyertakan *reasoning* penolakan yang jelas).
 
-## Bab 4: Prosedur Pembatalan, Refund, dan Resolusi Sengketa (Dispute)
-**Tujuan**: Perlindungan finansial konsumen serta penegakan hukum anti-*fraud* pada merchant nakal.
-**PIC Utama**: Admin Customer Service (CS) & Admin Finance
+### 2.2 Arus Transaksi & Pembayaran Otomatis
+Sistem Sportcation menggunakan automasi penuh untuk transaksi.
 
-**Prosedur Eksekusi**:
-1. **Penerimaan Laporan**: Pelanggan yang datang ke lokasi namun lapangan tutup/dipakai orang lain wajib melapor via *Call Center* / WA CS maksimal H+1.
-2. **Pembekuan Dana (*Hold Settlement*)**: 
-   - CS masuk ke dasbor, mencari ID Booking (`BKG-XXX`).
-   - CS segera menekan tombol/merubah status menjadi `DISPUTED`. Hal ini akan mencegah uang transaksi diteruskan ke saldo *Withdrawal* merchant.
-3. **Investigasi & Mediasi (SLA 2x24 Jam)**:
-   - CS menelepon pengelola lapangan (merchant). 
-   - **Keputusan A (Merchant Terbukti Salah)**:
-     - CS mengubah status tiket menjadi `APPROVED_REFUND`.
-     - Admin Finance mentransfer 100% dana kembali secara manual ke rekening *Customer*.
-     - CS mengunggah bukti transfer, dan Admin Ops mencatatkan teguran (Penalti/SP1) di riwayat merchant.
-   - **Keputusan B (Customer Terbukti Salah / Telat Hadir)**:
-     - CS menolak pengajuan Dispute. Status dikembalikan ke `Completed`, dana diteruskan menjadi hak merchant.
+```mermaid
+sequenceDiagram
+    participant Cust as Customer
+    participant Sys as Sistem Sportcation
+    participant PG as Bayar.gg (Gateway)
+    participant Mer as Merchant
 
----
+    Cust->>Sys: Pilih Slot & Klik Book
+    Sys->>Sys: Lock Jadwal (15 Menit)
+    Sys->>PG: Generate Invoice / QRIS
+    PG-->>Cust: Tampilkan QRIS
+    
+    alt Pembayaran Sukses
+        Cust->>PG: Bayar Lunas
+        PG->>Sys: Webhook (SUCCESS)
+        Sys->>Sys: Ubah Status -> Confirmed
+        Sys-->>Cust: Kirim e-Ticket
+        Sys-->>Mer: Notifikasi Pesanan Baru
+    else Pembayaran Kedaluwarsa
+        Sys->>Sys: Cron Job Expire (15 Menit)
+        Sys->>Sys: Lepas Lock Jadwal
+    end
+```
 
-## Bab 5: Prosedur Pencairan Dana Pendapatan (Withdrawal) Merchant
-**Tujuan**: Distribusi pendapatan (*settlement*) yang terpantau, direkonsiliasi, dan transparan.
-**PIC Utama**: Admin Keuangan (Finance)
+### 2.3 Pencairan Dana / Withdrawal (Admin Finance)
+> [!CAUTION]
+> Admin Finance wajib menekan tombol **Mark as Processed** setelah transfer bank berhasil agar ledger sistem tersinkronisasi. Jangan menekan tombol ini jika transfer belum dilakukan!
 
-**Prosedur Eksekusi**:
-1. **Pengajuan**: Merchant meminta pencairan dari menu `Finance` di portal mereka (saldo yang bisa ditarik adalah saldo transaksi yang sudah selesai lewat masa tenggang). Masuk ke antrean `pending_withdrawal`.
-2. **Cut-Off Operasional**: Pukul 14:00 WIB (Senin - Jumat), Admin Finance membuka menu Dasbor Admin `Withdrawals`.
-3. **Verifikasi Kas**: Finance mengunduh (export) data berformat CSV. Finance kemudian mencocokkan total pengajuan penarikan merchant dengan total uang kas yang mengendap di rekening giro perusahaan / Bayar.gg Settlement.
-4. **Eksekusi Bulk Transfer**: Menggunakan fitur *Cash Management* (misal: KlikBCA Bisnis / MCM), Finance mengeksekusi transfer massal ke nomor rekening masing-masing merchant.
-5. **Konfirmasi Final Sistem (Krusial)**: 
-   - Setelah transfer dari bank berhasil, Admin Finance **WAJIB** masuk kembali ke sistem Sportcation.
-   - Tekan tombol `Mark as Processed` untuk setiap antrean penarikan tersebut. (Sistem baru akan memotong angka saldo *ledger* merchant pada tahapan ini untuk menghindari utang fiktif).
+1. **Cut-Off Operasional**: Pukul **14:00 WIB** setiap hari kerja.
+2. **Rekapitulasi**: Admin Finance mengekspor data *Pending Withdrawals* menjadi CSV.
+3. **Eksekusi Transfer**: Lakukan *Bulk Transfer* ke rekening mitra via *Corporate Banking* (contoh: KlikBCA Bisnis / MCM).
+4. **Finalisasi**: Setelah bank memvalidasi transfer berhasil, Finance mengonfirmasi mutasi pada *Dashboard Sportcation*.
 
----
-
-## Bab 6: Prosedur Moderasi Pasar Sekunder (Lelang/Auction & Jual Ulang/Resell)
-**Tujuan**: Mencegah *scalping* (calo tiket harga gila-gilaan) dan pembeli abal-abal (*bot/troll bidding*).
-**PIC Utama**: Admin Operasional (Ops)
-
-**Prosedur Eksekusi**:
-1. **Moderasi Harga Resell**: 
-   - Ops melakukan inspeksi harian pada halaman *Resell Marketplace*.
-   - Standar Operasional: *Mark-up* harga maksimal diizinkan adalah **50% dari harga asli**.
-   - Jika ditemukan tiket dijual dengan *mark-up* di atas 50%, Admin Ops langsung melakukan `Force Takedown` (penghapusan paksa listing) tanpa surat peringatan.
-2. **Tindakan Anti-Bot (Lelang/Auction)**:
-   - Apabila sistem mencatat seorang *user* berhasil menang lelang (tertinggi) **sebanyak 3 (tiga) kali berturut-turut pada lelang berbeda namun tidak pernah membayarnya hingga kadaluwarsa**, maka Admin Ops segera melakukan *Banned / Suspend Permanent* pada IP dan Akun pengguna tersebut demi menjaga kesehatan ekosistem penawaran lelang bagi pembeli asli.
+### 2.4 Mediasi Sengketa & Refund (Admin CS & Finance)
+Jika *Customer* melapor lapangan tutup atau tidak bisa digunakan (maksimal H+1):
+1. **Hold Dana**: CS mencari kode pesanan (`BKG-XXX`) dan menandai transaksi sebagai **`DISPUTED`**.
+2. **Investigasi**: CS mengonfirmasi ke pihak lapangan (Merchant).
+3. **Resolusi**:
+   - Jika Merchant salah: CS me-request *Refund*, Finance melakukan transfer *refund* 100% ke Customer, Ops memberikan **Sanksi SP1** ke Merchant.
+   - Jika Customer salah: Transaksi diselesaikan (`Completed`), dana diteruskan ke hak Merchant.
 
 ---
 
-## Bab 7: Prosedur Respons Insiden Keamanan & IT (Incident Response)
-**Tujuan**: Menjamin *Service Level Agreement* uptime platform tetap 99.9%.
-**PIC Utama**: Lead Developer & IT Infra
+## 🚨 3. Prosedur Eskalasi Bencana IT (Incident Response)
 
-**Prosedur Eksekusi**:
-1. **Triage Bencana (P1/Blocker)**: 
-   - (Definisi Blocker: User sama sekali tidak bisa login, atau gagal masuk halaman *Checkout* massal).
-   - IT menyetop semua kegiatan pengembangan fitur baru (Sprint ditunda). Seluruh tim difokuskan mencari *Root Cause* di Log Vercel atau *Database Monitor*.
-2. **Prosedur Rollback Darurat (SLA 15 Menit)**:
-   - Jika sumber error kode tidak dapat diperbaiki (*Hotfix*) dalam waktu 15 menit pengerjaan, Lead IT **WAJIB** melakukan perintah `git revert` ke versi terakhir yang stabil (hari sebelumnya).
-   - Lakukan *Redeploy* instan di Vercel agar aplikasi bisa digunakan masyarakat kembali.
-3. **Manajemen Krisis (Public Relations)**:
-   - Jika *downtime* menyentuh 30 menit berturut-turut, Tim IT menginstruksikan Admin Ops untuk memasang *Maintenance Banner* di aplikasi dan mengirim email massal permohonan maaf ke Merchant aktif.
-4. **Post-Mortem & Preventif**: Maksimal H+1 pasca bencana sistem, Tim IT wajib merilis dokumen *Post-Mortem* internal. Laporan berisi Kronologi Waktu Detik-per-Detik, *Root Cause Analysis*, Perbaikan Permanen, dan langkah pencegahan teknis ke depannya.
+> [!WARNING]
+> Prosedur ini mengesampingkan rilis fitur baru demi menyelamatkan transaksi bisnis.
+
+1. **Triage Kritis (Blocker P1)**: 
+   - Gejala: Seluruh pengguna tidak bisa *login* atau fitur pembayaran mati 100%.
+   - Target Respon Tim IT: **< 15 Menit**.
+2. **Prosedur Rollback**:
+   - Jika sumber *error* tidak ditemukan/diperbaiki dalam waktu 15 menit pengerjaan, Lead IT **wajib** melakukan perintah `git revert` ke versi stabil (hari sebelumnya).
+   - Eksekusi *Redeploy* instan di Vercel.
+3. **Manajemen Komunikasi**: 
+   - Jika *downtime* menyentuh 30 menit, operasional menaikkan *Maintenance Banner*.
+   - H+1 pasca insiden, Tim IT merilis dokumen *Post-Mortem* (Root Cause Analysis).
