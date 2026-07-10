@@ -1,20 +1,21 @@
 import { requirePageRole } from "@/lib/auth-access"
-import { getDb } from "@/lib/db"
-import { venues } from "@/lib/db/schema"
-import { eq } from "drizzle-orm"
+import { apiFetch } from "@/lib/api/fetch"
 import { MapPin, Plus } from "lucide-react"
+import Link from "next/link"
+import { DeleteVenueButton } from "./delete-button"
 
-import { findMerchantContext } from "@/lib/repositories/merchant-repository"
+type Venue = {
+  id: string
+  name: string
+  city: string
+  status: string
+}
 
 export const dynamic = "force-dynamic"
 
 export default async function MerchantVenuesPage() {
-  const session = await requirePageRole(["merchant_owner", "merchant_staff"], "/merchant")
-  const db = getDb()
-  const merchantContext = await findMerchantContext(db, session.user.id)
-  if (!merchantContext) return null
-
-  const myVenues = await db.select().from(venues).where(eq(venues.merchantId, merchantContext.merchantId))
+  await requirePageRole(["merchant_owner", "merchant_staff"], "/merchant")
+  const myVenues = await apiFetch<Venue[]>("/api/merchant/venues")
 
   return (
     <div className="p-8">
@@ -23,10 +24,10 @@ export default async function MerchantVenuesPage() {
           <h1 className="text-2xl font-bold text-gray-900">Manajemen Lapangan</h1>
           <p className="text-gray-600 mt-1">Kelola daftar venue dan lapangan yang Anda sewakan.</p>
         </div>
-        <button className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-semibold transition">
+        <Link href="/merchant/venues/new" className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-semibold transition">
           <Plus className="h-5 w-5" />
           Tambah Venue
-        </button>
+        </Link>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -55,8 +56,9 @@ export default async function MerchantVenuesPage() {
                       {v.status.toUpperCase()}
                     </span>
                   </td>
-                  <td className="p-4">
+                  <td className="p-4 flex gap-4">
                     <button className="text-emerald-600 font-semibold hover:underline">Edit</button>
+                    <DeleteVenueButton id={v.id} venueName={v.name} />
                   </td>
                 </tr>
               ))}

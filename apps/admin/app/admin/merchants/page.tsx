@@ -1,123 +1,91 @@
-"use client"
+import { requirePageRole } from "@/lib/auth-access"
+import { apiFetch } from "@/lib/api/fetch"
+import { MerchantModerationButtons } from "./moderation-buttons"
+import { Search } from "lucide-react"
 
-import { useState, useEffect } from "react"
-import { CheckCircle2, XCircle, FileText, Loader2, Store, Search } from "lucide-react"
+type Merchant = {
+  id: string
+  businessName: string
+  status: string
+  ownerName: string | null
+  ownerEmail: string | null
+  ownerPhone: string | null
+}
 
-export default function AdminMerchantsPage() {
-  const [merchants, setMerchants] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+export default async function AdminMerchantsPage() {
+  await requirePageRole(["admin"], "/admin/login")
 
-  useEffect(() => {
-    fetchMerchants()
-  }, [])
-
-  async function fetchMerchants() {
-    try {
-      const res = await fetch("/api/admin/merchants")
-      const data = await res.json()
-      if (data.merchants) {
-        setMerchants(data.merchants)
-      }
-    } catch (error) {
-      console.error(error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function updateStatus(id: string, action: string) {
-    if (!confirm(`Yakin ingin melakukan ${action} pada merchant ini?`)) return
-    
-    try {
-      const res = await fetch(`/api/admin/merchants/${id}/verify`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          action,
-          reason: action === 'reject' ? prompt("Alasan penolakan?") || "Data tidak valid" : undefined
-        })
-      })
-      if (res.ok) {
-        fetchMerchants()
-      } else {
-        const err = await res.json()
-        alert(err.error || "Gagal update status")
-      }
-    } catch (error) {
-      console.error(error)
-      alert("Terjadi kesalahan jaringan.")
-    }
-  }
-
-  if (loading) {
-    return <div className="p-8 flex justify-center"><Loader2 className="animate-spin h-8 w-8 text-blue-600" /></div>
-  }
+  const merchants = await apiFetch<Merchant[]>("/api/admin/merchants")
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Verifikasi Mitra (Merchant)</h1>
+    <div className="p-6 max-w-6xl mx-auto space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Verifikasi Merchant</h1>
+          <p className="text-gray-500">Kelola status dan verifikasi pendaftaran merchant.</p>
+        </div>
+        <div className="relative w-full md:w-64">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input 
+            type="text" 
+            placeholder="Cari merchant..." 
+            className="w-full pl-9 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <table className="w-full text-left">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th className="py-4 px-6 font-medium text-gray-500">Nama Usaha</th>
-              <th className="py-4 px-6 font-medium text-gray-500">Pemilik (User ID)</th>
-              <th className="py-4 px-6 font-medium text-gray-500">Dokumen</th>
-              <th className="py-4 px-6 font-medium text-gray-500">Status</th>
-              <th className="py-4 px-6 font-medium text-gray-500 text-right">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {merchants.map((m) => (
-              <tr key={m.id} className="hover:bg-gray-50">
-                <td className="py-4 px-6 font-medium text-gray-900">{m.legalName || m.businessName}</td>
-                <td className="py-4 px-6 text-gray-500">{m.ownerUserId}</td>
-                <td className="py-4 px-6">
-                  <div className="flex gap-2">
-                    {m.ktpUrl && <a href={m.ktpUrl} target="_blank" className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100">KTP</a>}
-                    {m.npwpUrl && <a href={m.npwpUrl} target="_blank" className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100">NPWP</a>}
-                    {m.businessLicenseUrl && <a href={m.businessLicenseUrl} target="_blank" className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100">Izin Usaha</a>}
-                  </div>
-                </td>
-                <td className="py-4 px-6">
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                    m.status === 'verified' ? 'bg-green-100 text-green-800' :
-                    m.status === 'review' ? 'bg-amber-100 text-amber-800' :
-                    m.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {m.status.toUpperCase()}
-                  </span>
-                </td>
-                <td className="py-4 px-6 text-right">
-                  {m.status === 'review' && (
-                    <div className="flex justify-end gap-2">
-                      <button onClick={() => updateStatus(m.id, 'approve')} className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition">
-                        <CheckCircle2 className="h-5 w-5" />
-                      </button>
-                      <button onClick={() => updateStatus(m.id, 'reject')} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition">
-                        <XCircle className="h-5 w-5" />
-                      </button>
-                    </div>
-                  )}
-                  {m.status === 'verified' && (
-                    <button onClick={() => updateStatus(m.id, 'reject')} className="text-sm text-red-600 hover:underline">
-                      Cabut Verifikasi
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-            {merchants.length === 0 && (
+      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-gray-50 text-gray-700 font-medium border-b">
               <tr>
-                <td colSpan={5} className="py-8 text-center text-gray-500">Belum ada merchant yang mendaftar.</td>
+                <th className="px-6 py-4">Nama Bisnis</th>
+                <th className="px-6 py-4">Pemilik</th>
+                <th className="px-6 py-4">Kontak</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4 text-right">Aksi</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y">
+              {merchants.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                    Tidak ada data merchant.
+                  </td>
+                </tr>
+              ) : (
+                merchants.map((merchant) => (
+                  <tr key={merchant.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 font-medium text-gray-900">
+                      {merchant.businessName}
+                    </td>
+                    <td className="px-6 py-4">
+                      {merchant.ownerName || "-"}
+                    </td>
+                    <td className="px-6 py-4 text-gray-500">
+                      {merchant.ownerEmail}<br/>
+                      {merchant.ownerPhone}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium border ${
+                        merchant.status === 'verified' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        merchant.status === 'suspended' ? 'bg-red-50 text-red-700 border-red-200' :
+                        'bg-amber-50 text-amber-700 border-amber-200'
+                      }`}>
+                        {merchant.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex justify-end">
+                        <MerchantModerationButtons id={merchant.id} currentStatus={merchant.status} />
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   )

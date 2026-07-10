@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "plugins": [{ "name": "next" }],
+    "paths": {
+      "@/*": ["./*"],
+      "@/lib/*": ["../../packages/shared-lib/*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "../../packages/shared-lib/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
+}

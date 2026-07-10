@@ -8,9 +8,8 @@ const nextConfig = {
   // Izinkan Next.js transpile shared packages dari monorepo
   transpilePackages: ["@sportcation/shared-lib", "@sportcation/shared-ui"],
   // Pastikan file tracing mencakup seluruh monorepo root
-  experimental: {
-    outputFileTracingRoot: path.join(__dirname, "../../"),
-  },
+  outputFileTracingRoot: path.join(__dirname, "../../"),
+  experimental: {},
   images: {
     unoptimized: true,
   },

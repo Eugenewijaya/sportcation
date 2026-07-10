@@ -12,15 +12,13 @@ export default async function MerchantLayout({ children }: { children: ReactNode
   // Check merchant verification status
   const session = await requirePageRole(["merchant_owner", "merchant_staff"], "/merchant")
   if (session) {
-    const { getDb } = await import("@/lib/db")
-    const { merchantProfiles } = await import("@/lib/db/schema")
-    const { eq } = await import("drizzle-orm")
     const { redirect } = await import("next/navigation")
+    const { apiFetch } = await import("@/lib/api/fetch")
     
-    const db = getDb()
-    const merchant = await db.query.merchantProfiles.findFirst({
-      where: eq(merchantProfiles.ownerUserId, session.user.id)
-    })
+    // Note: api/merchant/verification doesn't use ok() wrapper, so apiFetch won't unwrap
+    // It returns { merchant: MerchantProfile }
+    const res = await apiFetch<{ merchant: { status: string } | null }>("/api/merchant/verification")
+    const merchant = res?.merchant
 
     const isVerificationPage = pathname === "/merchant/verification"
     

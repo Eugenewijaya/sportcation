@@ -10,6 +10,7 @@
     "./auth-config": "./auth-config.ts",
     "./db": "./db/index.ts",
     "./domain": "./domain/index.ts",
-    "./utils": "./utils.ts"
+    "./utils": "./utils.ts",
+    "./api/fetch": "./api/fetch.ts"
   }
 }

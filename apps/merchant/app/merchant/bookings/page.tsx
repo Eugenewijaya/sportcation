@@ -1,33 +1,22 @@
 import { requirePageRole } from "@/lib/auth-access"
-import { getDb } from "@/lib/db"
-import { bookings, payments, users } from "@/lib/db/schema"
-import { eq, desc } from "drizzle-orm"
+import { apiFetch } from "@/lib/api/fetch"
 import { CalendarDays, Filter } from "lucide-react"
 
-import { findMerchantContext } from "@/lib/repositories/merchant-repository"
-import { venues } from "@/lib/db/schema"
+type MerchantBooking = {
+  id: string
+  bookingCode: string
+  status: string
+  totalAmount: number
+  createdAt: string
+  customer: { name: string; email: string | null }
+  payment: { amount: number }
+}
 
 export const dynamic = "force-dynamic"
 
 export default async function MerchantBookingsPage() {
-  const session = await requirePageRole(["merchant_owner", "merchant_staff"], "/merchant")
-  const db = getDb()
-  const merchantContext = await findMerchantContext(db, session.user.id)
-  if (!merchantContext) return null
-
-  // Join bookings with users and payments and venues
-  const myBookings = await db
-    .select({
-      booking: bookings,
-      user: users,
-      payment: payments
-    })
-    .from(bookings)
-    .innerJoin(users, eq(bookings.userId, users.id))
-    .innerJoin(payments, eq(bookings.id, payments.bookingId))
-    .innerJoin(venues, eq(bookings.venueId, venues.id))
-    .where(eq(venues.merchantId, merchantContext.merchantId))
-    .orderBy(desc(bookings.createdAt))
+  await requirePageRole(["merchant_owner", "merchant_staff"], "/merchant")
+  const myBookings = await apiFetch<MerchantBooking[]>("/api/merchant/bookings")
 
   return (
     <div className="p-8">
@@ -61,17 +50,17 @@ export default async function MerchantBookingsPage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {myBookings.map((b) => (
-                <tr key={b.booking.id} className="hover:bg-gray-50">
-                  <td className="p-4 font-medium text-gray-900">{b.booking.bookingCode}</td>
-                  <td className="p-4 text-gray-600">{b.user.name || b.user.email}</td>
-                  <td className="p-4 text-gray-600">Rp {b.payment.amount.toLocaleString("id-ID")}</td>
+                <tr key={b.id} className="hover:bg-gray-50">
+                  <td className="p-4 font-medium text-gray-900">{b.bookingCode}</td>
+                  <td className="p-4 text-gray-600">{b.customer.name || b.customer.email}</td>
+                  <td className="p-4 text-gray-600">Rp {b.totalAmount.toLocaleString("id-ID")}</td>
                   <td className="p-4">
                     <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                      b.booking.status === "confirmed" ? "bg-green-100 text-green-700" :
-                      b.booking.status === "pending_payment" ? "bg-amber-100 text-amber-700" :
+                      b.status === "confirmed" ? "bg-green-100 text-green-700" :
+                      b.status === "pending_payment" ? "bg-amber-100 text-amber-700" :
                       "bg-gray-100 text-gray-700"
                     }`}>
-                      {b.booking.status.toUpperCase()}
+                      {b.status.toUpperCase()}
                     </span>
                   </td>
                   <td className="p-4">
@@ -86,3 +75,4 @@ export default async function MerchantBookingsPage() {
     </div>
   )
 }
+

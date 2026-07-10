@@ -1,30 +1,19 @@
 import { requirePageRole } from "@/lib/auth-access"
-import { findMerchantContext } from "@/lib/repositories/merchant-repository"
-import { getDb } from "@/lib/db"
-import { eq, desc } from "drizzle-orm"
-import { userWallets, ledgerTransactions, withdrawals } from "@/lib/db/schema"
-import { Wallet, ArrowUpRight, ArrowDownRight, Clock, ShieldCheck, Download } from "lucide-react"
+import { apiFetch } from "@/lib/api/fetch"
+import { Wallet, ArrowUpRight, ArrowDownRight, Clock, ShieldCheck } from "lucide-react"
 import { WithdrawButton } from "@/components/withdraw-button"
 
+type FinanceData = {
+  wallet: { availableBalance: number; pendingBalance: number } | null
+  transactions: Array<{ id: string; amount: number; description: string; balanceType: string; createdAt: string }>
+  withdrawals: Array<{ id: string; netAmount: number; bankName: string; accountNumber: string; status: string; createdAt: string }>
+}
+
 export default async function MerchantFinancePage() {
-  const session = await requirePageRole(["merchant_owner", "merchant_staff"], "/merchant")
-  const db = getDb()
-  const merchantContext = await findMerchantContext(db, session.user.id)
-  if (!merchantContext) return null
+  await requirePageRole(["merchant_owner", "merchant_staff"], "/merchant")
 
-  const [wallet] = await db.select().from(userWallets).where(eq(userWallets.userId, session.user.id))
-  
-  const transactions = await db.select()
-    .from(ledgerTransactions)
-    .where(eq(ledgerTransactions.userId, session.user.id))
-    .orderBy(desc(ledgerTransactions.createdAt))
-    .limit(10)
-
-  const wdList = await db.select()
-    .from(withdrawals)
-    .where(eq(withdrawals.userId, session.user.id))
-    .orderBy(desc(withdrawals.createdAt))
-    .limit(5)
+  const data = await apiFetch<FinanceData>("/api/merchant/finance")
+  const { wallet, transactions, withdrawals: wdList } = data
 
   return (
     <div className="mx-auto max-w-4xl p-6">
