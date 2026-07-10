@@ -10,14 +10,16 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@sportcation/shared-lib": "*",
     "@better-auth/drizzle-adapter": "^1.6.16",
     "@libsql/client": "^0.17.3",
+    "@sportcation/shared-lib": "*",
     "better-auth": "^1.6.16",
+    "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.2",
     "next": "^16.2.7",
     "react": "19.2.0",
     "react-dom": "19.2.0",
+    "tailwind-merge": "^3.6.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
