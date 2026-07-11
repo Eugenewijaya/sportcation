@@ -8,6 +8,7 @@ const { chromium } = require('playwright');
   page.on('response', response => {
     if (response.url().includes('sign-in')) {
       console.log('Login response status:', response.status());
+      console.log('Login Headers:', response.headers());
       response.text().then(text => console.log('Login response body:', text)).catch(() => {});
     }
   });

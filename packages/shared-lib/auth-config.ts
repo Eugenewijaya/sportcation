@@ -1,6 +1,12 @@
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"])
 
 export function getConfiguredAuthBaseURL(environment: NodeJS.ProcessEnv = process.env) {
+  if (environment.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${environment.VERCEL_PROJECT_PRODUCTION_URL}`
+  }
+  if (environment.VERCEL_URL) {
+    return `https://${environment.VERCEL_URL}`
+  }
   return environment.BETTER_AUTH_URL ?? environment.NEXT_PUBLIC_APP_URL
 }
 
