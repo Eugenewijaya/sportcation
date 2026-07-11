@@ -521,26 +521,26 @@ function OpsSidebar({
   active: SportcationOpsSection
 }) {
   return (
-    <aside className="fixed inset-y-0 left-0 hidden w-[292px] border-r border-[#e2e8e8] bg-white px-6 py-7 lg:block">
-      <Link href="/" className="flex items-center gap-3 font-black italic tracking-[-0.05em] text-[#1f2326]">
-        <span className="h-9 w-9 rounded-xl bg-[#12d5aa]" />
-        <span className="text-2xl">SPORTCATION</span>
+    <aside className="fixed inset-y-0 left-0 hidden w-[292px] border-r border-[#e2e8e8] bg-[#fdfdfd] px-6 py-7 lg:block">
+      <Link href="/" className="flex items-center gap-3 font-semibold text-[#111827]">
+        <span className="h-8 w-8 rounded-lg bg-[#059669] text-white flex items-center justify-center font-bold">S</span>
+        <span className="text-xl tracking-tight">Sportcation</span>
       </Link>
-      <div className="mt-8 rounded-[28px] bg-[#071413] p-5 text-white">
-        <p className="text-xs font-black uppercase tracking-[0.24em] text-[#49e7ba]">{role === "merchant" ? "Partner mode" : "Platform mode"}</p>
-        <h2 className="mt-3 text-2xl font-black tracking-[-0.05em]">{role === "merchant" ? "Merchant Studio" : "Admin Command"}</h2>
-        <p className="mt-2 text-sm leading-relaxed text-white/65">
+      <div className="mt-8 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-600">{role === "merchant" ? "Partner Mode" : "Platform Mode"}</p>
+        <h2 className="mt-1 text-lg font-semibold tracking-tight text-gray-900">{role === "merchant" ? "Merchant Studio" : "Admin Command"}</h2>
+        <p className="mt-1 text-xs text-gray-500">
           {role === "merchant" ? "Manage supply, bookings, and payout readiness." : "Govern demand, supply, payment risk, and content."}
         </p>
       </div>
-      <nav className="mt-7 space-y-2">
+      <nav className="mt-7 space-y-1">
         {nav.map((item) => (
           <OpsNavLink key={item.href} item={item} active={active === item.section} />
         ))}
       </nav>
       <div className="mt-8 grid gap-3">
         <OpsAccountControls />
-        <Link href="/" className="rounded-2xl bg-[#edf1f1] px-4 py-3 text-sm font-black text-[#5f666a]">
+        <Link href="/" className="flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
           Back to User App
         </Link>
       </div>
@@ -554,8 +554,8 @@ function OpsNavLink({ item, active }: { item: NavItem; active: boolean }) {
     <Link
       href={item.href}
       className={cx(
-        "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-black uppercase tracking-[0.14em] transition",
-        active ? "bg-[#eafff8] text-[#007c61]" : "text-[#8a9297] hover:bg-[#f3f6f6] hover:text-[#2c3133]",
+        "flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors",
+        active ? "bg-emerald-50 text-emerald-700" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
       )}
       aria-current={active ? "page" : undefined}
     >
@@ -578,20 +578,20 @@ function OpsTopBar({
     <header className="border-b border-[#e2e8e8] bg-white/80 px-5 py-4 backdrop-blur lg:sticky lg:top-0 lg:z-20 lg:px-8">
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#007c61]">{role === "merchant" ? "Jakarta Partner" : "Sportcation HQ"}</p>
-          <h1 className="truncate text-xl font-black tracking-[-0.05em] lg:text-2xl">{title}</h1>
-          <p className="hidden text-sm font-semibold text-[#687073] lg:block">{subtitle}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-600">{role === "merchant" ? "Jakarta Partner" : "Sportcation HQ"}</p>
+          <h1 className="truncate text-xl font-semibold tracking-tight text-gray-900 lg:text-2xl">{title}</h1>
+          <p className="hidden text-sm text-gray-500 lg:block">{subtitle}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Link href="/" className="hidden h-12 items-center gap-2 rounded-full bg-[#edf1f1] px-5 text-sm font-black text-[#5f666a] lg:flex">
+        <div className="flex items-center gap-3">
+          <Link href="/" className="hidden h-10 items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 lg:flex">
             <Home className="h-4 w-4" />
             User App
           </Link>
-          <button type="button" className="grid h-12 w-12 place-items-center rounded-full bg-white text-[#687073] shadow-sm">
-            <Bell className="h-5 w-5" />
+          <button type="button" className="grid h-10 w-10 place-items-center rounded-lg border border-gray-200 bg-white text-gray-500 shadow-sm transition hover:bg-gray-50">
+            <Bell className="h-4 w-4" />
           </button>
-          <div className="grid h-12 w-12 place-items-center rounded-full border-2 border-[#49e7ba] bg-[#dcfff6] text-[#007c61]">
-            {role === "merchant" ? <Store className="h-5 w-5" /> : <ShieldCheck className="h-5 w-5" />}
+          <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-100 text-emerald-700">
+            {role === "merchant" ? <Store className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
           </div>
         </div>
       </div>
@@ -706,27 +706,27 @@ function OpsHero({
   onAction: () => void
 }) {
   return (
-    <section className="overflow-hidden rounded-[32px] bg-[#071413] p-7 text-white shadow-[0_26px_70px_rgb(0_124_97/0.18)] lg:p-9">
+    <section className="overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-800 to-emerald-950 p-7 text-white shadow-lg lg:p-9">
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.26em] text-[#49e7ba]">{label}</p>
-          <h2 className="mt-4 max-w-3xl text-4xl font-black leading-[1] tracking-[-0.07em] lg:text-6xl">{title}</h2>
-          <p className="mt-5 max-w-2xl text-base font-semibold leading-relaxed text-white/68 lg:text-lg">{body}</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-emerald-300">{label}</p>
+          <h2 className="mt-3 max-w-3xl text-3xl font-bold tracking-tight lg:text-5xl">{title}</h2>
+          <p className="mt-4 max-w-2xl text-base text-emerald-100 lg:text-lg">{body}</p>
           <button
             type="button"
             onClick={onAction}
-            className="mt-7 inline-flex h-13 items-center gap-2 rounded-full bg-gradient-to-r from-[#008f71] to-[#49e7ba] px-6 text-sm font-black uppercase tracking-[0.12em] text-white"
+            className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-white px-5 text-sm font-semibold text-emerald-900 shadow-sm transition hover:bg-emerald-50"
           >
-            <Plus className="h-5 w-5" />
+            <Plus className="h-4 w-4" />
             {action}
           </button>
         </div>
-        <div className="rounded-[28px] bg-white/8 p-5">
+        <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-sm">
           <div className="grid grid-cols-2 gap-3">
             {["Create", "Read", "Update", "Delete"].map((item, index) => (
-              <div key={item} className="rounded-2xl bg-white/10 p-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/45">CRUD {index + 1}</p>
-                <p className="mt-2 text-xl font-black">{item}</p>
+              <div key={item} className="rounded-xl bg-white/10 p-4">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-200">CRUD {index + 1}</p>
+                <p className="mt-1 text-lg font-bold">{item}</p>
               </div>
             ))}
           </div>
@@ -743,16 +743,18 @@ function StatsGrid({ stats }: { stats: StatCard[] }) {
         // Fallback icon mapping if API doesn't return functions
         const Icon = stat.icon || (i === 0 ? TrendingUp : i === 1 ? Users : i === 2 ? ShieldCheck : Activity)
         return (
-          <article key={stat.label} className="rounded-[26px] bg-white p-6 shadow-sm">
+          <article key={stat.label} className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
             <div className="flex items-start justify-between gap-4">
-              <span className={cx("grid h-12 w-12 place-items-center rounded-2xl", toneBg(stat.tone ?? "green"))}>
+              <span className={cx("grid h-12 w-12 place-items-center rounded-xl", toneBg(stat.tone ?? "green"))}>
                 <Icon className="h-6 w-6" />
               </span>
-              <MoreHorizontal className="h-5 w-5 text-[#a1a8ac]" />
+              <button type="button" className="text-gray-400 transition hover:text-gray-600">
+                <MoreHorizontal className="h-5 w-5" />
+              </button>
             </div>
-            <p className="mt-6 text-xs font-black uppercase tracking-[0.2em] text-[#687073]">{stat.label}</p>
-            <h3 className="mt-2 text-3xl font-black tracking-[-0.06em]">{stat.value}</h3>
-            <p className="mt-2 text-sm font-semibold text-[#687073]">{stat.helper}</p>
+            <p className="mt-5 text-sm font-medium text-gray-500">{stat.label}</p>
+            <h3 className="mt-1 text-2xl font-bold tracking-tight text-gray-900">{stat.value}</h3>
+            <p className="mt-1 text-sm text-gray-500">{stat.helper}</p>
           </article>
         )
       })}
@@ -938,25 +940,25 @@ function OperationsBoard({
   onAction: (message: string) => void
 }) {
   return (
-    <section className="min-w-0 rounded-[30px] bg-white p-6 shadow-sm">
+    <section className="min-w-0 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
       <div className="mb-5 flex items-center justify-between gap-4">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-[#007c61]">Live queue</p>
-          <h2 className="mt-2 text-2xl font-black tracking-[-0.05em]">{title}</h2>
+          <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600">Live queue</p>
+          <h2 className="mt-1 text-xl font-bold tracking-tight text-gray-900">{title}</h2>
         </div>
-        <button type="button" onClick={() => onAction("Queue filter ready")} className="rounded-full bg-[#edf1f1] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#687073]">
+        <button type="button" onClick={() => onAction("Queue filter ready")} className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
           Latest
         </button>
       </div>
       <div className="space-y-3">
         {rows.map((item) => (
-          <button key={item.id} type="button" onClick={() => onAction(`Open ${item.id}`)} className="flex w-full items-center justify-between gap-4 rounded-2xl bg-[#f3f6f6] p-4 text-left">
+          <button key={item.id} type="button" onClick={() => onAction(`Open ${item.id}`)} className="flex w-full items-center justify-between gap-4 rounded-xl border border-transparent bg-gray-50 p-4 text-left transition hover:border-gray-200 hover:bg-white hover:shadow-sm">
             <span className="min-w-0">
-              <span className="block truncate font-black">{item.primary}</span>
-              <span className="block truncate text-sm font-semibold text-[#687073]">{item.secondary}</span>
+              <span className="block truncate font-semibold text-gray-900">{item.primary}</span>
+              <span className="block truncate text-sm text-gray-500">{item.secondary}</span>
             </span>
             <span className="text-right">
-              <span className="block font-black">{item.metric}</span>
+              <span className="block font-semibold text-gray-900">{item.metric}</span>
               <StatusBadge label={item.status} tone={item.statusTone} />
             </span>
           </button>
@@ -968,17 +970,16 @@ function OperationsBoard({
 
 function ReadinessPanel({ title, items }: { title: string; items: string[] }) {
   return (
-    <section className="min-w-0 rounded-[30px] bg-[#071413] p-6 text-white shadow-[0_26px_70px_rgb(0_0_0/0.12)]">
-      <p className="text-xs font-black uppercase tracking-[0.22em] text-[#49e7ba]">Next backend phase</p>
-      <h2 className="mt-3 text-2xl font-black tracking-[-0.05em]">{title}</h2>
-      <div className="mt-6 space-y-4">
+    <section className="min-w-0 rounded-2xl bg-gradient-to-br from-emerald-800 to-emerald-950 p-6 text-white shadow-lg">
+      <h2 className="text-xl font-bold tracking-tight">{title}</h2>
+      <ul className="mt-5 space-y-3">
         {items.map((item) => (
-          <div key={item} className="flex items-start gap-3 rounded-2xl bg-white/8 p-4">
-            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#49e7ba]" />
-            <p className="text-sm font-semibold leading-relaxed text-white/75">{item}</p>
-          </div>
+          <li key={item} className="flex items-start gap-3">
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
+            <span className="text-sm font-medium text-emerald-50">{item}</span>
+          </li>
         ))}
-      </div>
+      </ul>
     </section>
   )
 }
