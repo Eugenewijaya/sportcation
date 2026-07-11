@@ -426,12 +426,12 @@ export function SportcationOpsApp({
       : "Kelola pengguna, venue, pembayaran, laporan, dan konten."
 
   return (
-    <main className="min-h-screen bg-[#fcfcfd] text-foreground">
+    <main className="min-h-screen bg-[#faf9f6] text-foreground">
       <div className="lg:flex">
         <OpsSidebar role={role} nav={nav} active={normalizedSection as SportcationOpsSection} />
         <section className="min-h-screen flex-1 lg:pl-[260px]">
           <OpsTopBar role={role} title={roleTitle} subtitle={roleSubtitle} />
-          <div className="mx-auto w-full max-w-[430px] px-5 py-6 lg:max-w-none lg:px-8 lg:py-8">
+          <div className="mx-auto w-full max-w-[430px] px-5 py-2 lg:max-w-none lg:px-8">
             <MobileOpsNav nav={nav} active={normalizedSection as SportcationOpsSection} />
             {actionMessage && (
               <div className="mb-6 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 lg:hidden">
@@ -508,17 +508,16 @@ function OpsSidebar({
   active: SportcationOpsSection
 }) {
   return (
-    <aside className="fixed inset-y-0 left-0 hidden w-[260px] flex-col border-r border-border bg-white px-4 py-6 lg:flex">
-      <Link href="/" className="mb-6 flex items-center gap-2 px-2 font-bold text-foreground">
-        <div className="grid h-7 w-7 place-items-center rounded bg-zinc-900 text-white">
-          <ShieldCheck className="h-4 w-4" />
+    <aside className="fixed inset-y-0 left-0 hidden w-[260px] flex-col border-r border-border bg-[#faf9f6] px-4 py-6 lg:flex">
+      <Link href="/" className="mb-8 flex items-center gap-3 px-2 font-bold text-foreground">
+        <div className="grid h-8 w-8 place-items-center rounded-lg bg-[#f25f22] text-white">
+          <Database className="h-4 w-4" />
         </div>
-        <span className="text-lg tracking-tight">RecordaOps</span>
-        <button className="ml-auto text-muted-foreground"><SlidersHorizontal className="h-4 w-4" /></button>
+        <span className="text-lg tracking-tight">Athenaeum</span>
       </Link>
       
       <div className="flex-1 overflow-y-auto sportcation-scrollbar -mx-2 px-2">
-        <nav className="space-y-0.5">
+        <nav className="space-y-1">
           {nav.map((item) => (
             <OpsNavLink key={item.href} item={item} active={active === item.section} />
           ))}
@@ -526,34 +525,25 @@ function OpsSidebar({
       </div>
 
       <div className="mt-6 border-t border-border pt-6">
-        <div className="rounded-xl bg-[#f8f9fa] p-4">
-          <h4 className="text-sm font-bold text-foreground">Record anything</h4>
-          <p className="mt-1 text-xs text-muted-foreground">Capture your screen, camera, or both.</p>
-          <button className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2 text-xs font-bold text-white transition hover:bg-zinc-800">
-            <CheckCircle2 className="h-3.5 w-3.5" /> Start recording
+        <div className="rounded-xl bg-orange-50/50 p-4 border border-orange-100">
+          <h4 className="flex items-center gap-2 text-sm font-bold text-foreground"><Star className="h-3.5 w-3.5 text-[#f25f22]" /> Upgrade to Pro</h4>
+          <p className="mt-1 text-xs text-muted-foreground">Unlock AI insights & forecasts</p>
+          <button className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-xs font-bold text-white transition hover:bg-zinc-800">
+            Try 1 month free
           </button>
         </div>
-        <div className="mt-6 px-1">
-          <div className="flex items-center justify-between text-xs font-medium">
-            <span className="text-foreground">Storage</span>
-            <span className="cursor-pointer text-blue-600 hover:underline">Upgrade</span>
-          </div>
-          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-            <div className="h-full w-[40%] rounded-full bg-blue-600"></div>
-          </div>
-          <p className="mt-2 text-[10px] text-muted-foreground">78.4 GB of 200 GB used</p>
-        </div>
-        <div className="mt-6 flex items-center justify-between rounded-xl border border-border p-2 shadow-sm">
-          <div className="flex items-center gap-2">
-            <div className="grid h-8 w-8 place-items-center rounded bg-emerald-100 text-emerald-700">
-              <Users className="h-4 w-4" />
+        
+        <div className="mt-6 flex items-center justify-between rounded-xl bg-white p-2 shadow-sm border border-border">
+          <div className="flex items-center gap-3">
+            <div className="grid h-9 w-9 place-items-center rounded-full bg-[#f25f22] text-sm font-bold text-white">
+              NK
             </div>
             <div>
-              <p className="text-xs font-bold text-foreground">Cansaas Agency</p>
-              <p className="text-[10px] text-muted-foreground">Pro Plan</p>
+              <p className="text-sm font-bold text-foreground">Nadia Karim</p>
+              <p className="text-[10px] text-muted-foreground">Head Librarian</p>
             </div>
           </div>
-          <ChevronRight className="h-4 w-4 rotate-90 text-muted-foreground" />
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </div>
       </div>
     </aside>
@@ -566,12 +556,12 @@ function OpsNavLink({ item, active }: { item: NavItem; active: boolean }) {
     <Link
       href={item.href}
       className={cx(
-        "flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors",
-        active ? "bg-muted font-semibold text-foreground" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all",
+        active ? "bg-[#f25f22] text-white shadow-sm shadow-orange-500/20" : "text-muted-foreground hover:bg-black/5 hover:text-foreground",
       )}
       aria-current={active ? "page" : undefined}
     >
-      <Icon className={cx("h-4 w-4", active ? "text-foreground" : "text-muted-foreground")} />
+      <Icon className={cx("h-4 w-4", active ? "text-white" : "text-muted-foreground")} />
       {item.label}
     </Link>
   )
@@ -587,36 +577,37 @@ function OpsTopBar({
   subtitle: string
 }) {
   return (
-    <header className="flex h-16 items-center justify-between gap-4 border-b border-border bg-white px-5 lg:sticky lg:top-0 lg:z-20 lg:px-8">
-      <div className="flex flex-1 items-center gap-4">
-        <div className="relative hidden w-full max-w-md lg:block">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+    <header className="flex h-[88px] items-center justify-between gap-4 bg-transparent px-5 lg:px-8">
+      <div className="flex flex-1 items-center justify-center">
+        <div className="relative hidden w-full max-w-2xl lg:block">
           <input 
             type="text" 
-            placeholder="Search videos, tags, folders..." 
-            className="h-10 w-full rounded-lg border border-border bg-[#f8f9fa] pl-10 pr-4 text-sm outline-none transition focus:border-zinc-300 focus:bg-white focus:ring-2 focus:ring-zinc-100"
+            placeholder="Search books, members, ISBN..." 
+            className="h-12 w-full rounded-full border border-border bg-white px-6 text-sm shadow-sm outline-none transition focus:border-zinc-300 focus:ring-2 focus:ring-zinc-100"
           />
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 rounded border border-border px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-            /
-          </div>
         </div>
       </div>
-      <div className="flex items-center gap-3">
-        <button type="button" className="grid h-9 w-9 place-items-center rounded-lg border border-border bg-white text-muted-foreground transition hover:bg-muted/50">
-          <Bell className="h-4 w-4" />
-        </button>
-        <button className="hidden h-9 items-center gap-2 rounded-lg border border-border bg-white px-3 text-sm font-medium text-foreground transition hover:bg-muted/50 lg:flex">
-          <Filter className="h-4 w-4 text-muted-foreground" />
-          Filters
-          <ChevronRight className="ml-1 h-3 w-3 rotate-90 text-muted-foreground" />
-        </button>
-        <div className="hidden h-9 items-center gap-2 rounded-lg border border-border bg-white px-3 text-sm font-medium text-foreground transition hover:bg-muted/50 lg:flex">
-          Sort: Newest
-          <ChevronRight className="ml-1 h-3 w-3 rotate-90 text-muted-foreground" />
+      <div className="flex items-center gap-4">
+        <div className="hidden lg:flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#f25f22]"></span>
+          Saturday, May 12 2026
         </div>
-        <div className="hidden h-9 items-center rounded-lg border border-border bg-white p-1 lg:flex">
-          <button className="grid h-full w-8 place-items-center rounded bg-muted text-foreground"><LayoutDashboard className="h-3.5 w-3.5" /></button>
-          <button className="grid h-full w-8 place-items-center rounded text-muted-foreground hover:bg-muted/50"><MoreHorizontal className="h-3.5 w-3.5" /></button>
+        <div className="flex items-center gap-2 border-l border-border pl-4">
+          <button type="button" className="grid h-10 w-10 place-items-center rounded-full border border-border bg-white text-muted-foreground shadow-sm transition hover:bg-muted/50">
+            <Megaphone className="h-4 w-4" />
+          </button>
+          <button type="button" className="grid h-10 w-10 place-items-center rounded-full border border-border bg-white text-muted-foreground shadow-sm transition hover:bg-muted/50 relative">
+            <Bell className="h-4 w-4" />
+            <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-[#f25f22] ring-2 ring-white"></span>
+          </button>
+        </div>
+        <div className="hidden items-center gap-3 lg:flex">
+           <button className="h-10 rounded-full bg-white border border-border px-4 text-sm font-semibold shadow-sm hover:bg-muted/50">
+             Export report
+           </button>
+           <button className="h-10 rounded-full bg-[#f25f22] px-4 text-sm font-semibold text-white shadow-sm shadow-orange-500/20 hover:bg-[#ea580c] flex items-center gap-2">
+             <Plus className="h-4 w-4" /> New Checkout
+           </button>
         </div>
       </div>
     </header>
@@ -661,218 +652,183 @@ function MobileOpsNav({
   )
 }
 
-function MerchantOverview({ onAction, merchantRows }: { onAction: (message: string) => void; merchantRows: any }) {
-  return (
-    <div className="space-y-6">
-      <OpsHero
-        label="Selamat datang"
-        title="Kelola venue dan booking Anda dari satu tempat."
-        body="Tambah venue baru, atur jadwal slot, konfirmasi pesanan, dan pantau pendapatan harian Anda."
-        action="Tambah Venue"
-        onAction={() => onAction("Navigasi ke halaman venues untuk menambah venue baru")}
-      />
-      <StatsGrid stats={merchantStats} />
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_0.75fr]">
-        <OperationsBoard title="Antrian Hari Ini" rows={merchantRows.bookings} onAction={onAction} />
-        <ReadinessPanel
-          title="Checklist Operasional"
-          items={["Data venue sudah dilengkapi", "Jadwal slot sudah dipublikasikan", "Pesanan siap dikonfirmasi", "Pencairan dana terjadwal"]}
-        />
-      </div>
-    </div>
-  )
+function AdminOverview({ onAction, adminRows }: { onAction: (message: string) => void; adminRows: any }) {
+  return <AthenaeumOverview role="admin" onAction={onAction} />
 }
 
-function AdminOverview({ onAction, adminRows }: { onAction: (message: string) => void; adminRows: any }) {
-  const [stats, setStats] = useState<StatCard[]>(adminStats)
+function MerchantOverview({ onAction, merchantRows }: { onAction: (message: string) => void; merchantRows: any }) {
+  return <AthenaeumOverview role="merchant" onAction={onAction} />
+}
 
-  useEffect(() => {
-    fetch(`/api/admin/reports`, { credentials: "include" })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.stats) {
-          setStats(data.stats)
-        }
-      })
-      .catch(() => {})
-  }, [])
-
+function AthenaeumOverview({ role, onAction }: { role: SportcationOpsRole, onAction: (message: string) => void }) {
+  const [stats, setStats] = useState<StatCard[]>(role === "admin" ? adminStats : merchantStats)
+  
   return (
-    <div className="space-y-8 pb-10">
-      {/* Header Area */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">My Library</h1>
-          <p className="mt-2 text-sm text-muted-foreground">All your users, venues, bookings, and files in one place.</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => onAction("Create new record action triggered")}
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
-        >
-          <Plus className="h-4 w-4" />
-          New video
-          <ChevronRight className="ml-1 h-3 w-3 rotate-90 opacity-70" />
-        </button>
+    <div className="space-y-6 pb-10">
+      <div className="flex items-center justify-between text-sm">
+        <p className="text-muted-foreground">Your platform is buzzing — <span className="font-bold text-foreground">728 active visitors</span> right now.</p>
       </div>
 
-      {/* Tabs */}
-      <div className="border-b border-border">
-        <nav className="-mb-px flex gap-6">
-          {["All", "Videos", "Screenshots", "Files", "Folders"].map((tab, i) => (
-            <button
-              key={tab}
-              className={cx(
-                "border-b-2 px-1 pb-3 text-sm font-medium transition-colors",
-                i === 0 ? "border-zinc-900 text-zinc-900" : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
-              )}
-            >
-              {tab}
-            </button>
-          ))}
-        </nav>
-      </div>
+      <StatsGrid stats={stats} />
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-2">
-          {["Owner: Me", "Date created", "Any duration", "Any status", "Add tag"].map((filter) => (
-            <button key={filter} className="inline-flex h-8 items-center gap-1.5 rounded-full border border-border bg-white px-3 text-xs font-medium text-foreground transition hover:bg-muted/50">
-              {filter}
-              <ChevronRight className="h-3 w-3 rotate-90 text-muted-foreground" />
-            </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-4 text-sm">
-          <button className="flex items-center gap-1.5 text-muted-foreground transition hover:text-foreground">
-            <Activity className="h-4 w-4" /> Reset
-          </button>
-          <button className="font-semibold text-foreground transition hover:text-muted-foreground">Clear all</button>
-        </div>
-      </div>
-
-      {/* Featured / Continue Watching */}
-      <div className="space-y-4">
-        <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
-          Continue watching
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        </h2>
-        <div className="flex flex-col overflow-hidden rounded-[20px] border border-border bg-white p-2 shadow-sm sm:flex-row">
-          <div className="h-48 w-full shrink-0 overflow-hidden rounded-xl bg-muted sm:w-72">
-            <img src="/padel-court-modern.jpg" alt="Featured" className="h-full w-full object-cover" />
-          </div>
-          <div className="flex flex-1 flex-col p-4 sm:p-6">
-            <div className="flex items-start justify-between">
+      <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
+        <div className="space-y-6">
+          {/* Peak Traffic */}
+          <div className="rounded-3xl border border-border bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-xl font-bold text-foreground">Q1 Sales Dashboard Walkthrough</h3>
-                <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1.5">
-                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-700">CM</div>
-                    <span className="font-medium text-foreground">Caroline Meita</span>
-                  </div>
-                  <span>•</span>
-                  <span>1 hours ago</span>
-                </div>
-                <div className="mt-4 flex gap-2">
-                  <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">Product</span>
-                  <span className="rounded-full bg-zinc-50 px-2.5 py-1 text-xs font-medium text-zinc-700">Onboarding</span>
-                </div>
+                <h3 className="font-bold text-foreground flex items-center gap-2">Peak Traffic Hours <span className="text-[10px] font-bold uppercase tracking-wider text-[#f25f22] flex items-center gap-1"><TrendingUp className="h-3 w-3" /> Peak 5:00 PM</span></h3>
+                <p className="mt-1 text-xs text-muted-foreground">Footfall throughout the day - 3,145 visitors today</p>
               </div>
-              <button className="text-muted-foreground transition hover:text-foreground">
-                <MoreHorizontal className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-1 rounded-full border border-border p-1 text-xs font-medium shadow-sm">
+                <button className="rounded-full bg-white px-4 py-1.5 shadow-sm border border-border font-bold text-foreground">Day</button>
+                <button className="rounded-full px-4 py-1.5 text-muted-foreground hover:bg-muted/50">Week</button>
+                <button className="rounded-full px-4 py-1.5 text-muted-foreground hover:bg-muted/50">Month</button>
+              </div>
             </div>
-            <div className="mt-auto pt-6">
-              <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
-                <span>60% watched • 7:30 left</span>
-                <div className="flex gap-2">
-                  <button className="grid h-8 w-8 place-items-center rounded-lg border border-border transition hover:bg-muted/50">
-                    <LockKeyhole className="h-4 w-4" />
-                  </button>
-                  <button onClick={() => onAction("Resume clicked")} className="inline-flex h-8 items-center gap-2 rounded-lg bg-zinc-900 px-4 text-xs font-medium text-white transition hover:bg-zinc-800">
-                    <ChevronRight className="h-3.5 w-3.5" /> Resume
-                  </button>
+            <div className="mt-8 flex items-end justify-between gap-2 h-48 border-b border-border pb-4">
+               {[10, 20, 30, 45, 50, 60, 70, 90, 100, 80, 50, 40].map((h, i) => (
+                  <div key={i} className="w-full relative flex flex-col justify-end group h-full">
+                    <div style={{ height: `${h}%` }} className={cx("w-full rounded-t-md", h > 80 ? "bg-gradient-to-t from-[#ea580c] to-[#fd8444]" : "bg-[#f25f22]/30 group-hover:bg-[#f25f22]/50 transition-colors")} />
+                    <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-center text-[10px] font-semibold text-muted-foreground">{i + 8}a</span>
+                  </div>
+               ))}
+            </div>
+          </div>
+
+          {/* Most Popular */}
+          <div className="rounded-3xl border border-border bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h3 className="font-bold text-foreground">Most Popular {role === "admin" ? "Venues" : "Slots"}</h3>
+                <p className="mt-1 text-xs text-muted-foreground">Top items ranked by bookings this month</p>
+              </div>
+              <button className="text-xs font-bold text-[#f25f22] flex items-center gap-1 hover:underline">View all <ChevronRight className="h-3 w-3" /></button>
+            </div>
+            <div className="space-y-6">
+              {[
+                { name: "Padel Arena - Court 1", sub: "Kebayoran Baru", count: 412, color: "bg-gradient-to-br from-orange-400 to-red-500", w: "w-full" },
+                { name: "Elite Tennis SCBD", sub: "Sudirman", count: 389, color: "bg-gradient-to-br from-emerald-400 to-teal-500", w: "w-[90%]" },
+                { name: "Metro Futsal Hub", sub: "Senopati", count: 356, color: "bg-gradient-to-br from-amber-400 to-orange-500", w: "w-[85%]" },
+                { name: "Vantage Padel", sub: "Kemang", count: 321, color: "bg-gradient-to-br from-pink-400 to-rose-500", w: "w-[75%]" },
+                { name: "Urban Drive Range", sub: "Setiabudi", count: 298, color: "bg-gradient-to-br from-blue-400 to-indigo-500", w: "w-[70%]" },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-4 text-sm">
+                  <span className="w-5 text-xs text-muted-foreground font-semibold">0{i + 1}</span>
+                  <div className={cx("h-10 w-10 shrink-0 rounded-xl shadow-sm", item.color)} />
+                  <div className="w-48 min-w-0">
+                    <p className="truncate font-bold text-foreground">{item.name}</p>
+                    <p className="truncate text-xs font-medium text-muted-foreground">{item.sub}</p>
+                  </div>
+                  <div className="hidden sm:block">
+                    <span className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-bold text-muted-foreground">Sports</span>
+                  </div>
+                  <div className="flex-1 px-4">
+                    <div className="h-2 w-full rounded-full bg-orange-50">
+                      <div className={cx("h-full rounded-full bg-[#f25f22]", item.w)} />
+                    </div>
+                  </div>
+                  <div className="w-16 text-right font-bold text-foreground flex items-center justify-end gap-2">
+                    {item.count} <TrendingUp className="h-3 w-3 text-emerald-500" />
+                  </div>
                 </div>
-              </div>
-              <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                <div className="h-full w-[60%] rounded-full bg-blue-600"></div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Recent Grid */}
-      <div className="space-y-4 pt-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-foreground">Recent Videos</h2>
-          <button className="text-sm font-semibold text-foreground hover:underline">View all</button>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            {
-              title: "Q2 Sales Dashboard Tracker",
-              author: "Caroline Meita",
-              time: "2 hours ago",
-              tags: ["Dashboard", "Q2 Update"],
-              stats: "124 • 8",
-              timeLabel: "06:12"
-            },
-            {
-              title: "Product Demo - New Features",
-              author: "Soke Bahtera",
-              time: "Yesterday",
-              tags: ["Product", "Demo", "Research"],
-              stats: "124 • 8",
-              timeLabel: "12:45"
-            },
-            {
-              title: "Flow - Email Builder",
-              author: "Jenny",
-              time: "3 days ago",
-              tags: ["Product", "Onboarding"],
-              stats: "124 • 8",
-              timeLabel: "38:36"
-            },
-            {
-              title: "All Hands Dashboard May 2026",
-              author: "Patrick Wecker",
-              time: "2 days ago",
-              tags: ["Design", "Prototype"],
-              stats: "124 • 8",
-              timeLabel: "34:18"
-            }
-          ].map((item, i) => (
-            <div key={i} className="flex flex-col overflow-hidden rounded-[16px] border border-border bg-white shadow-sm transition hover:shadow-md">
-              <div className="relative h-36 w-full bg-muted">
-                <div className="absolute bottom-2 left-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-medium text-white">{item.timeLabel}</div>
+        <div className="space-y-6">
+          {/* Revenue by Source */}
+          <div className="rounded-3xl border border-border bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-foreground">Revenue by Source</h3>
+                <p className="mt-1 text-xs text-muted-foreground">May 2026 • all channels</p>
               </div>
-              <div className="flex flex-1 flex-col p-4">
-                <h3 className="font-bold text-foreground line-clamp-1">{item.title}</h3>
-                <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <div className="flex h-4 w-4 items-center justify-center rounded-full bg-zinc-100 text-[8px] font-bold text-zinc-600">{item.author.charAt(0)}</div>
-                  <span className="font-medium text-foreground">{item.author}</span>
-                  <span>•</span>
-                  <span>{item.time}</span>
-                </div>
-                <div className="mt-4 flex flex-wrap gap-1.5">
-                  {item.tags.map(tag => (
-                    <span key={tag} className="rounded-full border border-border px-2.5 py-1 text-[10px] font-medium text-muted-foreground">{tag}</span>
-                  ))}
-                </div>
-                <div className="mt-4 flex items-center justify-between text-xs font-medium text-muted-foreground">
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1"><Activity className="h-3 w-3" /> {item.stats.split('•')[0].trim()}</span>
-                    <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> {item.stats.split('•')[1].trim()}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <LockKeyhole className="h-3 w-3" />
-                    <Home className="h-3 w-3" />
-                  </div>
+              <span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-600">+8.7%</span>
+            </div>
+            
+            <div className="my-10 flex justify-center">
+              <div className="relative h-40 w-40 rounded-full border-[16px] border-[#f25f22] border-r-[#3b82f6] border-b-[#8b5cf6] border-l-[#f97316]">
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-[10px] font-semibold text-muted-foreground">Total Revenue</span>
+                  <span className="text-xl font-black">Rp 800M</span>
                 </div>
               </div>
             </div>
-          ))}
+
+            <div className="space-y-5">
+              {[
+                { label: "Bookings", pct: "60.3%", val: "Rp 482M", color: "bg-[#f97316]" },
+                { label: "Memberships", pct: "21.0%", val: "Rp 168M", color: "bg-[#fb923c]" },
+                { label: "Merchandise", pct: "11.6%", val: "Rp 94M", color: "bg-[#3b82f6]" },
+                { label: "Events", pct: "7.0%", val: "Rp 56M", color: "bg-[#8b5cf6]" },
+              ].map((src, i) => (
+                <div key={i} className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-3">
+                    <div className={cx("h-8 w-1.5 rounded-full", src.color)} />
+                    <div>
+                      <p className="font-bold text-foreground">{src.label}</p>
+                      <p className="text-[10px] font-medium text-muted-foreground">{src.pct} of total</p>
+                    </div>
+                  </div>
+                  <span className="font-bold text-foreground">{src.val}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Action Items */}
+          <div className="rounded-3xl border border-border bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="font-bold text-foreground">Action Items</h3>
+                <p className="mt-1 text-xs text-muted-foreground">Requires attention • 280 items</p>
+              </div>
+              <div className="grid h-10 w-10 place-items-center rounded-xl border border-orange-200 bg-orange-50 text-[#f25f22]">
+                <Activity className="h-5 w-5" />
+              </div>
+            </div>
+            <div className="rounded-2xl bg-gradient-to-br from-[#fd8444] to-[#f25f22] p-6 text-white shadow-md">
+              <p className="text-xs font-semibold text-white/90">Pending Verifications</p>
+              <p className="mt-1 text-3xl font-black">12 Venues</p>
+              <div className="mt-6 flex items-center justify-between text-[10px]">
+                <div>
+                  <p className="font-bold">1-7 days</p>
+                  <p className="font-medium text-white/80">8 venues</p>
+                </div>
+                <div>
+                  <p className="font-bold">8-30 days</p>
+                  <p className="font-medium text-white/80">3 venues</p>
+                </div>
+                <div>
+                  <p className="font-bold">90+ days</p>
+                  <p className="font-medium text-white/80">1 venue</p>
+                </div>
+              </div>
+              <div className="mt-3 h-1.5 w-full rounded-full bg-white/20 flex overflow-hidden">
+                <div className="h-full bg-white w-[70%]" />
+                <div className="h-full bg-white/70 w-[20%]" />
+                <div className="h-full bg-white/40 w-[10%]" />
+              </div>
+            </div>
+            <div className="mt-8">
+              <div className="flex items-center justify-between text-xs font-bold text-foreground mb-4">
+                <span>Recent reminders</span>
+                <button className="text-[#f25f22] flex items-center gap-1 hover:underline"><Megaphone className="h-3 w-3" /> Send all</button>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-3">
+                  <div className="grid h-10 w-10 place-items-center rounded-full bg-orange-100 text-xs font-bold text-[#f25f22]">TR</div>
+                  <div>
+                    <p className="font-bold text-foreground">Tahmid Rahman</p>
+                    <p className="text-[10px] font-medium text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" /> 14d overdue</p>
+                  </div>
+                </div>
+                <span className="font-bold text-foreground">Rp 1.25M</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -915,23 +871,35 @@ function OpsHero({
 
 export function StatsGrid({ stats }: { stats: StatCard[] }) {
   return (
-    <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <section className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
       {stats.map((stat, i) => {
-        // Fallback icon mapping if API doesn't return functions
-        const Icon = stat.icon || (i === 0 ? TrendingUp : i === 1 ? Users : i === 2 ? ShieldCheck : Activity)
+        const isPrimary = i === 0
+        const isDown = i === 2
         return (
-          <article key={stat.label} className="rounded-2xl border border-border bg-white p-6 shadow-sm">
-            <div className="flex items-start justify-between gap-4">
-              <span className={cx("grid h-12 w-12 place-items-center rounded-xl", toneBg(stat.tone ?? "green"))}>
-                <Icon className="h-6 w-6" />
-              </span>
-              <button type="button" className="text-muted-foreground transition hover:text-muted-foreground">
-                <MoreHorizontal className="h-5 w-5" />
-              </button>
+          <article key={stat.label} className={cx("relative overflow-hidden rounded-3xl p-6 shadow-sm border", isPrimary ? "border-transparent bg-gradient-to-br from-[#fd8444] to-[#ea580c] text-white" : "border-border bg-white")}>
+            <div className="flex items-start justify-between">
+              <div className={cx("grid h-10 w-10 place-items-center rounded-xl", isPrimary ? "bg-white/20 text-white" : "bg-orange-50 border border-orange-100 text-[#ea580c]")}>
+                {stat.icon && <stat.icon className="h-5 w-5" />}
+              </div>
+              <div className={cx("flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold shadow-sm", isPrimary ? "bg-white/20 text-white" : isDown ? "bg-red-50 text-red-600 border border-red-100" : "bg-emerald-50 text-emerald-600 border border-emerald-100")}>
+                <TrendingUp className={cx("h-3 w-3", isDown && "rotate-180")} />
+                {isDown ? "-3.2%" : "+12.4%"}
+              </div>
             </div>
-            <p className="mt-5 text-sm font-medium text-muted-foreground">{stat.label}</p>
-            <h3 className="mt-1 text-2xl font-bold tracking-tight text-foreground">{stat.value}</h3>
-            <p className="mt-1 text-sm text-muted-foreground">{stat.helper}</p>
+            <p className={cx("mt-6 text-xs font-semibold", isPrimary ? "text-white/90" : "text-muted-foreground")}>{stat.label}</p>
+            <h3 className={cx("mt-1 text-3xl font-black tracking-tight", isPrimary ? "text-white" : "text-foreground")}>{stat.value}</h3>
+            <p className={cx("mt-1 text-[10px] font-medium", isPrimary ? "text-white/80" : "text-muted-foreground")}>{stat.helper}</p>
+            <div className="absolute bottom-0 left-0 right-0 h-16 w-full opacity-60">
+              <svg viewBox="0 0 100 20" preserveAspectRatio="none" className="h-full w-full">
+                <path d={isDown ? "M0,5 Q25,20 50,10 T100,20" : "M0,20 Q25,5 50,15 T100,5"} fill="none" stroke={isPrimary ? "rgba(255,255,255,0.5)" : "url(#grad)"} strokeWidth="2.5" vectorEffect="non-scaling-stroke" />
+                <defs>
+                  <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#3b82f6" />
+                    <stop offset="100%" stopColor="#8b5cf6" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
           </article>
         )
       })}
