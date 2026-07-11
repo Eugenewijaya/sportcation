@@ -61,7 +61,7 @@ export default function AdminLoginPage({
             <ShieldAlert className="h-8 w-8" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-white">System Admin</h1>
-          <p className="mt-2 text-sm text-zinc-400">Restricted Access Only</p>
+          <p className="mt-2 text-sm text-zinc-400">Restricted Access Only {/* Trigger build */}</p>
         </div>
 
         <form onSubmit={submit} className="space-y-4">
