@@ -23,8 +23,23 @@ type ApiActor = {
   merchantRole?: MerchantMembershipRole
 }
 
+import { getConfiguredAuthBaseURL } from "@/lib/auth-config"
+
 export async function getServerSession() {
-  return auth.api.getSession({ headers: await headers() })
+  const reqHeaders = await headers()
+  const customHeaders = new Headers(reqHeaders)
+  
+  // Vercel multi-host hack: Force Host to match baseURL so better-auth doesn't drop the cookie
+  const configuredBaseURL = getConfiguredAuthBaseURL(process.env)
+  if (configuredBaseURL) {
+    try {
+      const url = new URL(configuredBaseURL)
+      customHeaders.set("Host", url.host)
+      customHeaders.set("X-Forwarded-Host", url.host)
+    } catch {}
+  }
+  
+  return auth.api.getSession({ headers: customHeaders })
 }
 
 export async function requirePageRole(allowedRoles: readonly AppRole[], destination: string) {
@@ -64,7 +79,17 @@ export async function requireApiActor(
     }
   }
 
-  const session = await auth.api.getSession({ headers: request.headers })
+  const customHeaders = new Headers(request.headers)
+  const configuredBaseURL = getConfiguredAuthBaseURL(process.env)
+  if (configuredBaseURL) {
+    try {
+      const url = new URL(configuredBaseURL)
+      customHeaders.set("Host", url.host)
+      customHeaders.set("X-Forwarded-Host", url.host)
+    } catch {}
+  }
+
+  const session = await auth.api.getSession({ headers: customHeaders })
   if (!session) {
     return { response: apiError("UNAUTHENTICATED", "Silakan login untuk melanjutkan.", 401) }
   }
