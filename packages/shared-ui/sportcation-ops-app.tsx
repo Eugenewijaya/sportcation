@@ -659,22 +659,66 @@ function AdminOverview({ onAction, adminRows }: { onAction: (message: string) =>
       .catch(() => {})
   }, [])
 
+  const getNav = (section: string) => adminNav.find((n) => n.section === section)!
+
+  const cPanelGroups = [
+    {
+      title: "User & Partner Management",
+      icon: Users,
+      items: [getNav("users"), getNav("merchants"), getNav("venues")].filter(Boolean),
+    },
+    {
+      title: "Operations & Commerce",
+      icon: Ticket,
+      items: [getNav("bookings"), getNav("payments"), getNav("finance")].filter(Boolean),
+    },
+    {
+      title: "Content & System",
+      icon: Settings,
+      items: [getNav("banners"), getNav("reports"), getNav("settings")].filter(Boolean),
+    },
+  ]
+
   return (
-    <div className="space-y-6">
-      <OpsHero
-        label="Dashboard"
-        title="Kelola seluruh platform Sportcation."
-        body="Pantau pengguna, verifikasi venue, kelola pembayaran, dan atur konten dari satu dashboard."
-        action="Lihat Antrian"
-        onAction={() => onAction("Membuka antrian review")}
-      />
+    <div className="space-y-8">
+      {/* Welcome Banner */}
+      <div className="rounded-[24px] bg-white p-6 shadow-sm border border-[#e2e8e8] lg:p-8">
+        <p className="text-xs font-black uppercase tracking-[0.26em] text-[#007c61]">Admin Console</p>
+        <h2 className="mt-2 text-2xl font-black tracking-[-0.05em] text-[#2c3133]">Platform Administration</h2>
+        <p className="mt-2 max-w-2xl text-sm font-semibold leading-relaxed text-[#687073]">
+          Manage users, partner venues, transactions, and overall system content through this centralized control panel.
+        </p>
+      </div>
+
       <StatsGrid stats={stats} />
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_0.75fr]">
-        <OperationsBoard title="Antrian Review" rows={[...adminRows.venues, ...adminRows.payments].slice(0, 5)} onAction={onAction} />
-        <ReadinessPanel
-          title="Status Platform"
-          items={["Sistem autentikasi aktif", "Moderasi venue berjalan", "Gateway pembayaran terhubung", "Monitoring uptime aktif"]}
-        />
+
+      {/* cPanel-style categorized sections */}
+      <div className="space-y-6">
+        {cPanelGroups.map((group, i) => (
+          <div key={i} className="overflow-hidden rounded-[24px] border border-[#e2e8e8] bg-white shadow-sm">
+            <div className="flex items-center gap-3 border-b border-[#e2e8e8] bg-[#f8fafa] px-6 py-4">
+              <group.icon className="h-5 w-5 text-[#007c61]" />
+              <h3 className="text-sm font-black uppercase tracking-[0.1em] text-[#2c3133]">{group.title}</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-2 p-2 md:grid-cols-4 lg:grid-cols-5">
+              {group.items.map((item) => {
+                const Icon = item.icon
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="group flex flex-col items-center justify-center gap-3 rounded-2xl p-6 text-center transition-all hover:bg-[#eafff8]"
+                  >
+                    <Icon className="h-9 w-9 text-[#687073] transition-colors group-hover:text-[#007c61]" />
+                    <span className="text-[13px] font-bold text-[#5f666a] transition-colors group-hover:text-[#007c61]">
+                      {item.label}
+                    </span>
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )
