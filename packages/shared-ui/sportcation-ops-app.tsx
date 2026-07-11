@@ -661,7 +661,8 @@ function AdminOverview({ onAction, adminRows }: { onAction: (message: string) =>
   const [stats, setStats] = useState<StatCard[]>(adminStats)
 
   useEffect(() => {
-    fetch("/api/admin/reports")
+    // ponytail: hit the API service instead of current origin, send cookies for auth
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || ""}/api/admin/reports`, { credentials: "include" })
       .then((res) => res.json())
       .then((data) => {
         if (data.stats) {
@@ -1088,7 +1089,8 @@ function useOpsDashboard(role: SportcationOpsRole) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    fetch(role === "merchant" ? "/api/merchant/dashboard" : "/api/admin/dashboard")
+    // ponytail: hit the API service instead of current origin, send cookies for auth
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || ""}${role === "merchant" ? "/api/merchant/dashboard" : "/api/admin/dashboard"}`, { credentials: "include" })
       .then(res => res.json())
       .then(res => { setData(res); setLoading(false); })
       .catch(err => { console.error(err); setLoading(false); });
@@ -1137,7 +1139,8 @@ function AdminBannersWorkspace({ onAction }: { onAction: (message: string) => vo
 
   const loadBanners = async () => {
     try {
-      const res = await fetch("/api/public/promo-banners")
+      // ponytail: hit the API service instead of current origin, send cookies for auth
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ""}/api/public/promo-banners`, { credentials: "include" })
       const data = await res.json()
       setBanners(data)
     } catch (err) {
