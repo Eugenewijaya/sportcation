@@ -13,6 +13,15 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        // Proxy to backend API. In production, this allows cookies to be set on the frontend domain
+        destination: `${process.env.BACKEND_API_URL || "https://sportcation-api.vercel.app"}/api/:path*`,
+      },
+    ]
+  },
   async headers() {
     return [
       {
