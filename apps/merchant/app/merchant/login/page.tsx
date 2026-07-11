@@ -48,10 +48,8 @@ export default function MerchantLoginPage({
 
       const userRole = result.data?.user.role
       const requestedPath = safeInternalPath(next)
-      const destination = requestedPath ?? defaultDestination(userRole ?? undefined)
-      
-      router.push(destination)
-      router.refresh()
+      const destination = requestedPath ?? "/merchant"
+      window.location.href = destination
     } catch (authError) {
       setError(authError instanceof Error ? authError.message : "Gagal masuk.")
     } finally {

@@ -44,8 +44,7 @@ export default function AdminLoginPage({
       }
       
       const requestedPath = safeInternalPath(next)
-      router.push(requestedPath ?? "/admin")
-      router.refresh()
+      window.location.href = requestedPath ?? "/admin"
     } catch (authError) {
       setError(authError instanceof Error ? authError.message : "Gagal masuk.")
       await authClient.signOut()

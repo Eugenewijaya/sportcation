@@ -50,8 +50,7 @@ export default function LoginPage({
       const requestedPath = safeInternalPath(next)
       const destination = requestedPath ?? defaultDestination(userRole ?? undefined)
       
-      router.push(destination)
-      router.refresh()
+      window.location.href = destination
     } catch (authError) {
       setError(authError instanceof Error ? authError.message : "Gagal masuk.")
     } finally {
