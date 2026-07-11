@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { updateMerchantStatusAction } from "../../actions/moderation-actions"
+import { updateMerchantStatusAction } from "@/app/actions/moderation-actions"
 import { CheckCircle, XCircle, Loader2 } from "lucide-react"
 
 export function MerchantModerationButtons({ id, currentStatus }: { id: string, currentStatus: string }) {

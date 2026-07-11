@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { updateVenueStatusAction } from "../../actions/moderation-actions"
+import { updateVenueStatusAction } from "@/app/actions/moderation-actions"
 import { CheckCircle, XCircle, Loader2 } from "lucide-react"
 
 export function VenueModerationButtons({ id, currentStatus }: { id: string, currentStatus: string }) {

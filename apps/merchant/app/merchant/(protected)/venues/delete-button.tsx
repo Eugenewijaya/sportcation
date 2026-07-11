@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { deleteVenueAction } from "../../actions/venue-actions"
+import { deleteVenueAction } from "@/app/actions/venue-actions"
 import { Trash2, Loader2 } from "lucide-react"
 
 export function DeleteVenueButton({ id, venueName }: { id: string, venueName: string }) {

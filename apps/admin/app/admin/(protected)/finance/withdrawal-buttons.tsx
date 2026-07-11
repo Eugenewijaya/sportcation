@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { processWithdrawalAction } from "../../actions/finance-actions"
+import { processWithdrawalAction } from "@/app/actions/finance-actions"
 import { CheckCircle, XCircle, Loader2 } from "lucide-react"
 
 export function WithdrawalButtons({ id, currentStatus }: { id: string, currentStatus: string }) {

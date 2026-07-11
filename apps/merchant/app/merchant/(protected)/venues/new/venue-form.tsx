@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { createVenueAction } from "../../../actions/venue-actions"
+import { createVenueAction } from "@/app/actions/venue-actions"
 import { Loader2 } from "lucide-react"
 
 export function VenueForm({ categories }: { categories: any[] }) {

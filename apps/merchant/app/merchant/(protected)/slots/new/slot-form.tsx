@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { createSlotAction } from "../../../actions/slot-actions"
+import { createSlotAction } from "@/app/actions/slot-actions"
 import { Loader2 } from "lucide-react"
 
 type CourtOption = {

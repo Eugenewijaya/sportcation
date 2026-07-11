@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { deleteSlotAction } from "../../actions/slot-actions"
+import { deleteSlotAction } from "@/app/actions/slot-actions"
 import { Trash2, Loader2 } from "lucide-react"
 
 export function DeleteSlotButton({ id, description }: { id: string, description: string }) {
