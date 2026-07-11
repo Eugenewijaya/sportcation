@@ -181,7 +181,7 @@ export function AdminBookingReviewWorkspace({ onAction }: { onAction: (message: 
       onTabChange={(value) => setTab(value as BookingTab)}
     >
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_390px]">
-        <section className="overflow-hidden rounded-[30px] bg-white shadow-sm">
+        <section className="overflow-hidden rounded-3xl bg-white shadow-sm">
           {loading ? (
             <StateBlock icon={LoaderCircle} spin title="Loading admin bookings..." body="Mengambil booking lintas merchant dari SQLite/libSQL." />
           ) : !filtered.length ? (
@@ -194,27 +194,27 @@ export function AdminBookingReviewWorkspace({ onAction }: { onAction: (message: 
                     <img src={booking.venue.image} alt="" className="h-20 w-20 shrink-0 rounded-2xl object-cover" />
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="truncate text-lg font-black">{booking.bookingCode}</h3>
+                        <h3 className="truncate text-lg font-semibold">{booking.bookingCode}</h3>
                         <StatusBadge label={bookingStatusLabel(booking.status)} tone={booking.review.needsAttention ? "yellow" : statusTone(booking.status)} />
                       </div>
-                      <p className="mt-1 truncate text-sm font-semibold text-[#687073]">{booking.customer.name} - {booking.venue.name}</p>
-                      <p className="mt-1 truncate text-xs font-bold text-[#687073]">{booking.merchant.businessName}</p>
-                      <p className="mt-2 text-xs font-black uppercase tracking-[0.12em] text-[#9aa1a6]">
+                      <p className="mt-1 truncate text-sm font-semibold text-muted-foreground">{booking.customer.name} - {booking.venue.name}</p>
+                      <p className="mt-1 truncate text-xs font-bold text-muted-foreground">{booking.merchant.businessName}</p>
+                      <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#9aa1a6]">
                         {formatDate(booking.item.slotDate)} - {booking.item.startTime} - {booking.item.endTime}
                       </p>
                     </div>
                   </div>
                   <div>
-                    <p className="text-lg font-black">{rupiah(booking.totalAmount)}</p>
-                    <p className="mt-1 text-xs font-bold text-[#687073]">{paymentMethodLabel(booking.payment.method)}</p>
-                    <p className="mt-1 text-xs font-black uppercase text-[#007c61]">{paymentStatusLabel(booking.payment.status)}</p>
+                    <p className="text-lg font-semibold">{rupiah(booking.totalAmount)}</p>
+                    <p className="mt-1 text-xs font-bold text-muted-foreground">{paymentMethodLabel(booking.payment.method)}</p>
+                    <p className="mt-1 text-xs font-semibold uppercase text-primary">{paymentStatusLabel(booking.payment.status)}</p>
                   </div>
                   <div className="flex flex-wrap gap-2 xl:justify-end">
-                    <button type="button" onClick={() => void openDetail(booking.id)} className="h-10 rounded-xl bg-[#edf1f1] px-4 text-xs font-black uppercase text-[#4d5559]">
+                    <button type="button" onClick={() => void openDetail(booking.id)} className="h-10 rounded-xl bg-muted px-4 text-xs font-semibold uppercase text-[#4d5559]">
                       Detail
                     </button>
                     {booking.review.needsAttention && (
-                      <span className="inline-flex h-10 items-center rounded-xl bg-[#fff2c9] px-4 text-xs font-black uppercase text-[#8a6f00]">
+                      <span className="inline-flex h-10 items-center rounded-xl bg-[#fff2c9] px-4 text-xs font-semibold uppercase text-[#8a6f00]">
                         Review
                       </span>
                     )}
@@ -334,7 +334,7 @@ export function AdminPaymentReviewWorkspace({ onAction }: { onAction: (message: 
       onTabChange={(value) => setTab(value as PaymentTab)}
     >
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_390px]">
-        <section className="overflow-hidden rounded-[30px] bg-white shadow-sm">
+        <section className="overflow-hidden rounded-3xl bg-white shadow-sm">
           {loading ? (
             <StateBlock icon={LoaderCircle} spin title="Loading payment reviews..." body="Mengambil payment simulation dari SQLite/libSQL." />
           ) : !filtered.length ? (
@@ -344,30 +344,30 @@ export function AdminPaymentReviewWorkspace({ onAction }: { onAction: (message: 
               {filtered.map((payment) => (
                 <article key={payment.id} className="grid gap-4 px-5 py-5 xl:grid-cols-[minmax(280px,1fr)_170px_auto] xl:items-center xl:px-6">
                   <div className="flex min-w-0 items-center gap-4">
-                    <span className="grid h-20 w-20 shrink-0 place-items-center rounded-2xl bg-[#dcfff6] text-[#007c61]">
+                    <span className="grid h-20 w-20 shrink-0 place-items-center rounded-2xl bg-[#dcfff6] text-primary">
                       <ReceiptText className="h-8 w-8" />
                     </span>
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="truncate text-lg font-black">{payment.providerReference ?? payment.id}</h3>
+                        <h3 className="truncate text-lg font-semibold">{payment.providerReference ?? payment.id}</h3>
                         <StatusBadge label={paymentStatusLabel(payment.status)} tone={payment.review.needsAttention ? "yellow" : paymentStatusTone(payment.status)} />
                       </div>
-                      <p className="mt-1 truncate text-sm font-semibold text-[#687073]">{payment.bookingCode} - {payment.customer.name}</p>
-                      <p className="mt-1 truncate text-xs font-bold text-[#687073]">{payment.merchant.businessName}</p>
-                      <p className="mt-2 text-xs font-black uppercase tracking-[0.12em] text-[#9aa1a6]">{paymentMethodLabel(payment.method)}</p>
+                      <p className="mt-1 truncate text-sm font-semibold text-muted-foreground">{payment.bookingCode} - {payment.customer.name}</p>
+                      <p className="mt-1 truncate text-xs font-bold text-muted-foreground">{payment.merchant.businessName}</p>
+                      <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#9aa1a6]">{paymentMethodLabel(payment.method)}</p>
                     </div>
                   </div>
                   <div>
-                    <p className="text-lg font-black">{rupiah(payment.amount)}</p>
-                    <p className="mt-1 text-xs font-bold text-[#687073]">Booking {bookingStatusLabel(payment.bookingStatus)}</p>
-                    <p className="mt-1 text-xs font-black uppercase text-[#007c61]">{payment.venue.name}</p>
+                    <p className="text-lg font-semibold">{rupiah(payment.amount)}</p>
+                    <p className="mt-1 text-xs font-bold text-muted-foreground">Booking {bookingStatusLabel(payment.bookingStatus)}</p>
+                    <p className="mt-1 text-xs font-semibold uppercase text-primary">{payment.venue.name}</p>
                   </div>
                   <div className="flex flex-wrap gap-2 xl:justify-end">
-                    <button type="button" onClick={() => void openDetail(payment.id)} className="h-10 rounded-xl bg-[#edf1f1] px-4 text-xs font-black uppercase text-[#4d5559]">
+                    <button type="button" onClick={() => void openDetail(payment.id)} className="h-10 rounded-xl bg-muted px-4 text-xs font-semibold uppercase text-[#4d5559]">
                       Detail
                     </button>
                     {payment.review.needsAttention && (
-                      <span className="inline-flex h-10 items-center rounded-xl bg-[#fff2c9] px-4 text-xs font-black uppercase text-[#8a6f00]">
+                      <span className="inline-flex h-10 items-center rounded-xl bg-[#fff2c9] px-4 text-xs font-semibold uppercase text-[#8a6f00]">
                         Review
                       </span>
                     )}
@@ -417,26 +417,26 @@ function AdminReviewFrame({
 }) {
   return (
     <div className="space-y-6">
-      <section className="rounded-[30px] bg-white p-6 shadow-sm lg:p-8">
+      <section className="rounded-3xl bg-white p-6 shadow-sm lg:p-8">
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
           <div>
             <div className="flex flex-wrap items-center gap-3">
-              <p className="text-xs font-black uppercase tracking-[0.24em] text-[#007c61]">{eyebrow}</p>
-              <span className="inline-flex items-center gap-2 rounded-full bg-[#eafff8] px-3 py-1 text-xs font-black text-[#007c61]">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">{eyebrow}</p>
+              <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-primary">
                 <Database className="h-3.5 w-3.5" />
                 SQLite / libSQL
               </span>
             </div>
-            <h2 className="mt-3 text-4xl font-black tracking-[-0.07em] lg:text-5xl">{title}</h2>
-            <p className="mt-3 max-w-3xl text-base font-semibold leading-relaxed text-[#687073]">{description}</p>
+            <h2 className="mt-3 text-4xl font-semibold tracking-[-0.07em] lg:text-5xl">{title}</h2>
+            <p className="mt-3 max-w-3xl text-base font-semibold leading-relaxed text-muted-foreground">{description}</p>
           </div>
-          <button type="button" onClick={onRefresh} className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#071413] px-5 text-sm font-black uppercase tracking-[0.12em] text-white">
+          <button type="button" onClick={onRefresh} className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#071413] px-5 text-sm font-semibold uppercase tracking-[0.12em] text-white">
             <RefreshCw className="h-5 w-5" />
             {actionLabel}
           </button>
         </div>
         <div className="mt-7 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
-          <label className="flex h-13 items-center gap-3 rounded-2xl bg-[#edf1f1] px-4">
+          <label className="flex h-13 items-center gap-3 rounded-2xl bg-muted px-4">
             <Search className="h-5 w-5 text-[#798186]" />
             <input value={query} onChange={(event) => onQueryChange(event.target.value)} placeholder={queryPlaceholder} className="min-w-0 flex-1 bg-transparent text-sm font-bold outline-none placeholder:text-[#9ca3a7]" />
           </label>
@@ -447,8 +447,8 @@ function AdminReviewFrame({
                 type="button"
                 onClick={() => onTabChange(item.id)}
                 className={cx(
-                  "h-13 min-w-fit rounded-2xl px-4 text-xs font-black uppercase tracking-[0.12em]",
-                  activeTab === item.id ? "bg-[#007c61] text-white" : "bg-[#edf1f1] text-[#687073]",
+                  "h-13 min-w-fit rounded-2xl px-4 text-xs font-semibold uppercase tracking-[0.12em]",
+                  activeTab === item.id ? "bg-primary text-white" : "bg-muted text-muted-foreground",
                 )}
               >
                 {item.label}
@@ -463,9 +463,9 @@ function AdminReviewFrame({
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
           <article key={stat.label} className="rounded-[24px] bg-white p-5 shadow-sm">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#687073]">{stat.label}</p>
-            <h3 className="mt-2 text-2xl font-black tracking-[-0.05em]">{stat.value}</h3>
-            <p className="mt-1 text-sm font-semibold text-[#687073]">{stat.helper}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{stat.label}</p>
+            <h3 className="mt-2 text-2xl font-semibold tracking-[-0.05em]">{stat.value}</h3>
+            <p className="mt-1 text-sm font-semibold text-muted-foreground">{stat.helper}</p>
           </article>
         ))}
       </section>
@@ -477,7 +477,7 @@ function AdminReviewFrame({
 
 function AdminBookingDetailPanel({ selected, detailLoading }: { selected: AdminBookingReview | null; detailLoading: boolean }) {
   return (
-    <aside className="h-fit rounded-[30px] bg-white p-6 shadow-sm xl:sticky xl:top-28">
+    <aside className="h-fit rounded-3xl bg-white p-6 shadow-sm xl:sticky xl:top-28">
       <PanelHeader title={selected?.bookingCode ?? "Select booking"} loading={detailLoading} />
       {selected ? (
         <div className="mt-6 space-y-5">
@@ -498,13 +498,13 @@ function AdminBookingDetailPanel({ selected, detailLoading }: { selected: AdminB
 
 function AdminPaymentDetailPanel({ selected, detailLoading }: { selected: AdminPaymentReview | null; detailLoading: boolean }) {
   return (
-    <aside className="h-fit rounded-[30px] bg-white p-6 shadow-sm xl:sticky xl:top-28">
+    <aside className="h-fit rounded-3xl bg-white p-6 shadow-sm xl:sticky xl:top-28">
       <PanelHeader title={selected?.providerReference ?? selected?.id ?? "Select payment"} loading={detailLoading} />
       {selected ? (
         <div className="mt-6 space-y-5">
           <div className="rounded-[24px] bg-[#071413] p-5 text-white">
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-[#49e7ba]">Simulated payment</p>
-            <h3 className="mt-3 text-3xl font-black tracking-[-0.05em]">{rupiah(selected.amount)}</h3>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#49e7ba]">Simulated payment</p>
+            <h3 className="mt-3 text-3xl font-semibold tracking-[-0.05em]">{rupiah(selected.amount)}</h3>
             <p className="mt-2 text-sm font-bold text-white/65">{paymentMethodLabel(selected.method)} - {paymentStatusLabel(selected.status)}</p>
           </div>
           <DetailRow icon={ReceiptText} label="Reference" value={selected.providerReference ?? selected.id} helper={`Payment ID ${selected.id}`} />
@@ -525,8 +525,8 @@ function PanelHeader({ title, loading }: { title: string; loading: boolean }) {
   return (
     <div className="flex items-start justify-between gap-4">
       <div className="min-w-0">
-        <p className="text-xs font-black uppercase tracking-[0.22em] text-[#007c61]">Read-only detail</p>
-        <h3 className="mt-2 truncate text-2xl font-black tracking-[-0.05em]">{title}</h3>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">Read-only detail</p>
+        <h3 className="mt-2 truncate text-2xl font-semibold tracking-[-0.05em]">{title}</h3>
       </div>
       {loading && <LoaderCircle className="h-5 w-5 animate-spin text-[#008f71]" />}
     </div>
@@ -535,11 +535,11 @@ function PanelHeader({ title, loading }: { title: string; loading: boolean }) {
 
 function ReviewBox({ review }: { review: { needsAttention: boolean; reason: string } }) {
   return (
-    <div className={cx("rounded-2xl p-4", review.needsAttention ? "bg-[#fff8df] text-[#7b6400]" : "bg-[#eafff8] text-[#007c61]")}>
+    <div className={cx("rounded-2xl p-4", review.needsAttention ? "bg-[#fff8df] text-[#7b6400]" : "bg-emerald-50 text-primary")}>
       <div className="flex items-start gap-3">
         {review.needsAttention ? <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" /> : <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" />}
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.18em]">{review.needsAttention ? "Needs review" : "Healthy"}</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em]">{review.needsAttention ? "Needs review" : "Healthy"}</p>
           <p className="mt-1 text-sm font-bold leading-relaxed">{review.reason}</p>
         </div>
       </div>
@@ -551,7 +551,7 @@ function EmptyDetail({ icon: Icon, body }: { icon: LucideIcon; body: string }) {
   return (
     <div className="mt-6 rounded-2xl border border-dashed border-[#d7dddd] p-6 text-center">
       <Icon className="mx-auto h-9 w-9 text-[#9aa1a6]" />
-      <p className="mt-3 text-sm font-bold text-[#687073]">{body}</p>
+      <p className="mt-3 text-sm font-bold text-muted-foreground">{body}</p>
     </div>
   )
 }
@@ -559,7 +559,7 @@ function EmptyDetail({ icon: Icon, body }: { icon: LucideIcon; body: string }) {
 function NoticeBanner({ notice }: { notice: Exclude<Notice, null> }) {
   const Icon = notice.tone === "success" ? CheckCircle2 : AlertCircle
   return (
-    <div className={cx("flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm font-bold", notice.tone === "success" ? "border-[#b8f3df] bg-[#eafff8] text-[#007c61]" : "border-[#ffd1d5] bg-[#fff0f1] text-[#c11f32]")}>
+    <div className={cx("flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm font-bold", notice.tone === "success" ? "border-[#b8f3df] bg-emerald-50 text-primary" : "border-[#ffd1d5] bg-[#fff0f1] text-[#c11f32]")}>
       <Icon className="mt-0.5 h-5 w-5 shrink-0" />
       {notice.message}
     </div>
@@ -571,7 +571,7 @@ function StateBlock({ icon: Icon, title, body, spin }: { icon: LucideIcon; title
     <div className="grid min-h-72 place-items-center p-8 text-center">
       <div>
         <Icon className={cx("mx-auto h-10 w-10 text-[#008f71]", spin && "animate-spin")} />
-        <p className="mt-3 font-black">{title}</p>
+        <p className="mt-3 font-semibold">{title}</p>
         <p className="mt-1 text-sm font-semibold text-[#7d8589]">{body}</p>
       </div>
     </div>
@@ -581,13 +581,13 @@ function StateBlock({ icon: Icon, title, body, spin }: { icon: LucideIcon; title
 function DetailRow({ icon: Icon, label, value, helper }: { icon: LucideIcon; label: string; value: string; helper: string }) {
   return (
     <div className="flex items-start gap-4">
-      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#dcfff6] text-[#007c61]">
+      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#dcfff6] text-primary">
         <Icon className="h-5 w-5" />
       </span>
       <div className="min-w-0">
-        <p className="text-xs font-black uppercase tracking-[0.18em] text-[#687073]">{label}</p>
-        <p className="mt-1 truncate text-base font-black">{value}</p>
-        <p className="mt-1 text-sm font-semibold text-[#687073]">{helper}</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
+        <p className="mt-1 truncate text-base font-semibold">{value}</p>
+        <p className="mt-1 text-sm font-semibold text-muted-foreground">{helper}</p>
       </div>
     </div>
   )
@@ -595,14 +595,14 @@ function DetailRow({ icon: Icon, label, value, helper }: { icon: LucideIcon; lab
 
 function StatusBadge({ label, tone }: { label: string; tone: "green" | "yellow" | "red" | "gray" | "blue" }) {
   return (
-    <span className={cx("rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em]", badgeClass(tone))}>
+    <span className={cx("rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em]", badgeClass(tone))}>
       {label}
     </span>
   )
 }
 
 function badgeClass(tone: "green" | "yellow" | "red" | "gray" | "blue") {
-  if (tone === "green") return "bg-[#dcfff6] text-[#007c61]"
+  if (tone === "green") return "bg-[#dcfff6] text-primary"
   if (tone === "yellow") return "bg-[#fff2c9] text-[#8a6f00]"
   if (tone === "red") return "bg-[#fff0f1] text-[#c11f32]"
   if (tone === "blue") return "bg-[#e5efff] text-[#2c64a7]"

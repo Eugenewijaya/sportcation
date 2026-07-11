@@ -80,12 +80,12 @@ export function WithdrawButton({ maxAmount, hasPin }: { maxAmount: number, hasPi
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl relative text-gray-900">
-            <button onClick={() => setIsOpen(false)} className="absolute right-4 top-4 text-gray-400 hover:text-gray-600">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl relative text-foreground">
+            <button onClick={() => setIsOpen(false)} className="absolute right-4 top-4 text-muted-foreground hover:text-muted-foreground">
               <X className="h-5 w-5" />
             </button>
             <h2 className="text-xl font-bold mb-1">Tarik Saldo</h2>
-            <p className="text-sm text-gray-500 mb-6">Maksimal penarikan: Rp {maxAmount.toLocaleString("id-ID")}</p>
+            <p className="text-sm text-muted-foreground mb-6">Maksimal penarikan: Rp {maxAmount.toLocaleString("id-ID")}</p>
             
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>

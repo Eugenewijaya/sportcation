@@ -174,28 +174,28 @@ export function MerchantBookingWorkspace({ onAction }: { onAction: (message: str
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[30px] bg-white p-6 shadow-sm lg:p-8">
+      <section className="rounded-3xl bg-white p-6 shadow-sm lg:p-8">
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
           <div>
             <div className="flex flex-wrap items-center gap-3">
-              <p className="text-xs font-black uppercase tracking-[0.24em] text-[#007c61]">Merchant database</p>
-              <span className="inline-flex items-center gap-2 rounded-full bg-[#eafff8] px-3 py-1 text-xs font-black text-[#007c61]">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">Merchant database</p>
+              <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-primary">
                 <Database className="h-3.5 w-3.5" />
                 SQLite / libSQL
               </span>
             </div>
-            <h2 className="mt-3 text-4xl font-black tracking-[-0.07em] lg:text-5xl">Booking Operations</h2>
-            <p className="mt-3 max-w-2xl text-base font-semibold leading-relaxed text-[#687073]">
+            <h2 className="mt-3 text-4xl font-semibold tracking-[-0.07em] lg:text-5xl">Booking Operations</h2>
+            <p className="mt-3 max-w-2xl text-base font-semibold leading-relaxed text-muted-foreground">
               Customer booking records are now read from persisted booking, payment, venue, and slot tables with merchant ownership filtering.
             </p>
           </div>
-          <button type="button" onClick={() => void load()} className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#071413] px-5 text-sm font-black uppercase tracking-[0.12em] text-white">
+          <button type="button" onClick={() => void load()} className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#071413] px-5 text-sm font-semibold uppercase tracking-[0.12em] text-white">
             <RefreshCw className="h-5 w-5" />
             Refresh
           </button>
         </div>
         <div className="mt-7 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
-          <label className="flex h-13 items-center gap-3 rounded-2xl bg-[#edf1f1] px-4">
+          <label className="flex h-13 items-center gap-3 rounded-2xl bg-muted px-4">
             <Search className="h-5 w-5 text-[#798186]" />
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search booking code, customer, venue..." className="min-w-0 flex-1 bg-transparent text-sm font-bold outline-none placeholder:text-[#9ca3a7]" />
           </label>
@@ -206,8 +206,8 @@ export function MerchantBookingWorkspace({ onAction }: { onAction: (message: str
                 type="button"
                 onClick={() => setTab(item.id)}
                 className={cx(
-                  "h-13 min-w-fit rounded-2xl px-4 text-xs font-black uppercase tracking-[0.12em]",
-                  tab === item.id ? "bg-[#007c61] text-white" : "bg-[#edf1f1] text-[#687073]",
+                  "h-13 min-w-fit rounded-2xl px-4 text-xs font-semibold uppercase tracking-[0.12em]",
+                  tab === item.id ? "bg-primary text-white" : "bg-muted text-muted-foreground",
                 )}
               >
                 {item.label}
@@ -222,15 +222,15 @@ export function MerchantBookingWorkspace({ onAction }: { onAction: (message: str
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
           <article key={stat.label} className="rounded-[24px] bg-white p-5 shadow-sm">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#687073]">{stat.label}</p>
-            <h3 className="mt-2 text-2xl font-black tracking-[-0.05em]">{stat.value}</h3>
-            <p className="mt-1 text-sm font-semibold text-[#687073]">{stat.helper}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{stat.label}</p>
+            <h3 className="mt-2 text-2xl font-semibold tracking-[-0.05em]">{stat.value}</h3>
+            <p className="mt-1 text-sm font-semibold text-muted-foreground">{stat.helper}</p>
           </article>
         ))}
       </section>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <section className="overflow-hidden rounded-[30px] bg-white shadow-sm">
+        <section className="overflow-hidden rounded-3xl bg-white shadow-sm">
           {loading ? (
             <StateBlock icon={LoaderCircle} spin title="Loading merchant bookings..." body="Mengambil data booking dari database." />
           ) : !filtered.length ? (
@@ -243,31 +243,31 @@ export function MerchantBookingWorkspace({ onAction }: { onAction: (message: str
                     <img src={booking.venue.image} alt="" className="h-20 w-20 shrink-0 rounded-2xl object-cover" />
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="truncate text-lg font-black">{booking.bookingCode}</h3>
+                        <h3 className="truncate text-lg font-semibold">{booking.bookingCode}</h3>
                         <StatusBadge label={bookingStatusLabel(booking.status)} status={booking.status} />
                       </div>
-                      <p className="mt-1 truncate text-sm font-semibold text-[#687073]">{booking.customer.name} - {booking.venue.name}</p>
-                      <p className="mt-2 text-xs font-black uppercase tracking-[0.12em] text-[#9aa1a6]">
+                      <p className="mt-1 truncate text-sm font-semibold text-muted-foreground">{booking.customer.name} - {booking.venue.name}</p>
+                      <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#9aa1a6]">
                         {formatDate(booking.item.slotDate)} - {booking.item.startTime} - {booking.item.endTime}
                       </p>
                     </div>
                   </div>
                   <div>
-                    <p className="text-lg font-black">{rupiah(booking.totalAmount)}</p>
-                    <p className="mt-1 text-xs font-bold text-[#687073]">{booking.item.courtName}</p>
-                    <p className="mt-1 text-xs font-black uppercase text-[#007c61]">{booking.payment.status}</p>
+                    <p className="text-lg font-semibold">{rupiah(booking.totalAmount)}</p>
+                    <p className="mt-1 text-xs font-bold text-muted-foreground">{booking.item.courtName}</p>
+                    <p className="mt-1 text-xs font-semibold uppercase text-primary">{booking.payment.status}</p>
                   </div>
                   <div className="flex flex-wrap gap-2 xl:justify-end">
-                    <button type="button" onClick={() => void openDetail(booking.id)} className="h-10 rounded-xl bg-[#edf1f1] px-4 text-xs font-black uppercase text-[#4d5559]">
+                    <button type="button" onClick={() => void openDetail(booking.id)} className="h-10 rounded-xl bg-muted px-4 text-xs font-semibold uppercase text-[#4d5559]">
                       Detail
                     </button>
                     {booking.actions.canCheckIn && (
-                      <button type="button" disabled={actionBookingId === booking.id} onClick={() => void changeStatus(booking, "checked_in")} className="h-10 rounded-xl bg-[#007c61] px-4 text-xs font-black uppercase text-white disabled:opacity-50">
+                      <button type="button" disabled={actionBookingId === booking.id} onClick={() => void changeStatus(booking, "checked_in")} className="h-10 rounded-xl bg-primary px-4 text-xs font-semibold uppercase text-white disabled:opacity-50">
                         Check In
                       </button>
                     )}
                     {booking.actions.canComplete && (
-                      <button type="button" disabled={actionBookingId === booking.id} onClick={() => void changeStatus(booking, "completed")} className="h-10 rounded-xl bg-[#071413] px-4 text-xs font-black uppercase text-white disabled:opacity-50">
+                      <button type="button" disabled={actionBookingId === booking.id} onClick={() => void changeStatus(booking, "completed")} className="h-10 rounded-xl bg-[#071413] px-4 text-xs font-semibold uppercase text-white disabled:opacity-50">
                         Complete
                       </button>
                     )}
@@ -278,11 +278,11 @@ export function MerchantBookingWorkspace({ onAction }: { onAction: (message: str
           )}
         </section>
 
-        <aside className="h-fit rounded-[30px] bg-white p-6 shadow-sm xl:sticky xl:top-28">
+        <aside className="h-fit rounded-3xl bg-white p-6 shadow-sm xl:sticky xl:top-28">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.22em] text-[#007c61]">Booking detail</p>
-              <h3 className="mt-2 text-2xl font-black tracking-[-0.05em]">{selected?.bookingCode ?? "Select booking"}</h3>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">Booking detail</p>
+              <h3 className="mt-2 text-2xl font-semibold tracking-[-0.05em]">{selected?.bookingCode ?? "Select booking"}</h3>
             </div>
             {detailLoading && <LoaderCircle className="h-5 w-5 animate-spin text-[#008f71]" />}
           </div>
@@ -294,17 +294,17 @@ export function MerchantBookingWorkspace({ onAction }: { onAction: (message: str
               <DetailRow icon={Ticket} label="Venue" value={selected.venue.name} helper={`${selected.item.courtName} - ${selected.venue.location}`} />
               <DetailRow icon={CalendarClock} label="Schedule" value={formatDate(selected.item.slotDate)} helper={`${selected.item.startTime} - ${selected.item.endTime}`} />
               <DetailRow icon={BadgeCheck} label="Status" value={bookingStatusLabel(selected.status)} helper={`Payment ${selected.payment.status} - ${rupiah(selected.payment.amount)}`} />
-              <div className="rounded-2xl bg-[#f3f6f6] p-4">
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#687073]">Operational action</p>
+              <div className="rounded-2xl bg-slate-50/50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Operational action</p>
                 <div className="mt-4 grid gap-2">
-                  <button type="button" disabled={!selected.actions.canCheckIn || actionBookingId === selected.id} onClick={() => void changeStatus(selected, "checked_in")} className="h-12 rounded-full bg-[#007c61] text-sm font-black uppercase text-white disabled:cursor-not-allowed disabled:bg-[#d8dddd] disabled:text-[#889094]">
+                  <button type="button" disabled={!selected.actions.canCheckIn || actionBookingId === selected.id} onClick={() => void changeStatus(selected, "checked_in")} className="h-12 rounded-full bg-primary text-sm font-semibold uppercase text-white disabled:cursor-not-allowed disabled:bg-[#d8dddd] disabled:text-[#889094]">
                     Mark Checked In
                   </button>
-                  <button type="button" disabled={!selected.actions.canComplete || actionBookingId === selected.id} onClick={() => void changeStatus(selected, "completed")} className="h-12 rounded-full bg-[#071413] text-sm font-black uppercase text-white disabled:cursor-not-allowed disabled:bg-[#d8dddd] disabled:text-[#889094]">
+                  <button type="button" disabled={!selected.actions.canComplete || actionBookingId === selected.id} onClick={() => void changeStatus(selected, "completed")} className="h-12 rounded-full bg-[#071413] text-sm font-semibold uppercase text-white disabled:cursor-not-allowed disabled:bg-[#d8dddd] disabled:text-[#889094]">
                     Mark Completed
                   </button>
                 </div>
-                <p className="mt-3 text-xs font-semibold leading-relaxed text-[#687073]">
+                <p className="mt-3 text-xs font-semibold leading-relaxed text-muted-foreground">
                   Merchant actions are limited to check-in and completion. Cancellation, refund, and payment mutations remain outside merchant MVP scope.
                 </p>
               </div>
@@ -312,7 +312,7 @@ export function MerchantBookingWorkspace({ onAction }: { onAction: (message: str
           ) : (
             <div className="mt-6 rounded-2xl border border-dashed border-[#d7dddd] p-6 text-center">
               <Clock className="mx-auto h-9 w-9 text-[#9aa1a6]" />
-              <p className="mt-3 text-sm font-bold text-[#687073]">Open a booking detail to run safe operational actions.</p>
+              <p className="mt-3 text-sm font-bold text-muted-foreground">Open a booking detail to run safe operational actions.</p>
             </div>
           )}
         </aside>
@@ -324,7 +324,7 @@ export function MerchantBookingWorkspace({ onAction }: { onAction: (message: str
 function NoticeBanner({ notice }: { notice: Exclude<Notice, null> }) {
   const Icon = notice.tone === "success" ? CheckCircle2 : AlertCircle
   return (
-    <div className={`flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm font-bold ${notice.tone === "success" ? "border-[#b8f3df] bg-[#eafff8] text-[#007c61]" : "border-[#ffd1d5] bg-[#fff0f1] text-[#c11f32]"}`}>
+    <div className={`flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm font-bold ${notice.tone === "success" ? "border-[#b8f3df] bg-emerald-50 text-primary" : "border-[#ffd1d5] bg-[#fff0f1] text-[#c11f32]"}`}>
       <Icon className="mt-0.5 h-5 w-5 shrink-0" />
       {notice.message}
     </div>
@@ -346,7 +346,7 @@ function StateBlock({
     <div className="grid min-h-72 place-items-center p-8 text-center">
       <div>
         <Icon className={cx("mx-auto h-10 w-10 text-[#008f71]", spin && "animate-spin")} />
-        <p className="mt-3 font-black">{title}</p>
+        <p className="mt-3 font-semibold">{title}</p>
         <p className="mt-1 text-sm font-semibold text-[#7d8589]">{body}</p>
       </div>
     </div>
@@ -366,13 +366,13 @@ function DetailRow({
 }) {
   return (
     <div className="flex items-start gap-4">
-      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#dcfff6] text-[#007c61]">
+      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#dcfff6] text-primary">
         <Icon className="h-5 w-5" />
       </span>
       <div className="min-w-0">
-        <p className="text-xs font-black uppercase tracking-[0.18em] text-[#687073]">{label}</p>
-        <p className="mt-1 truncate text-base font-black">{value}</p>
-        <p className="mt-1 text-sm font-semibold text-[#687073]">{helper}</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
+        <p className="mt-1 truncate text-base font-semibold">{value}</p>
+        <p className="mt-1 text-sm font-semibold text-muted-foreground">{helper}</p>
       </div>
     </div>
   )
@@ -380,14 +380,14 @@ function DetailRow({
 
 function StatusBadge({ label, status }: { label: string; status: MerchantBookingStatus }) {
   return (
-    <span className={cx("rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em]", statusClass(status))}>
+    <span className={cx("rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em]", statusClass(status))}>
       {label}
     </span>
   )
 }
 
 function statusClass(status: MerchantBookingStatus) {
-  if (status === "confirmed" || status === "completed") return "bg-[#dcfff6] text-[#007c61]"
+  if (status === "confirmed" || status === "completed") return "bg-[#dcfff6] text-primary"
   if (status === "checked_in") return "bg-[#e5efff] text-[#2c64a7]"
   if (status === "pending_payment") return "bg-[#fff2c9] text-[#8a6f00]"
   if (status === "cancelled" || status === "refunded") return "bg-[#fff0f1] text-[#c11f32]"

@@ -1093,12 +1093,11 @@ function Brand({ compact = false, inverse = false }: { compact?: boolean; invers
   return (
     <div
       className={cx(
-        "flex items-center gap-2 font-bold",
+        "flex items-center gap-2",
         inverse ? "text-white" : "text-gray-900",
       )}
     >
-      <span className={cx("flex items-center justify-center rounded-lg bg-emerald-600 font-extrabold text-white", compact ? "h-7 w-7 text-xs" : "h-8 w-8 text-sm")}>S</span>
-      <span className={cx(compact ? "text-base" : "text-lg")}>Sportcation</span>
+      <img src="/logo.png" alt="Sportcation" className={cx("w-auto", compact ? "h-6" : "h-8")} />
     </div>
   )
 }
@@ -1181,7 +1180,13 @@ function MobileTopBar({
         ) : (
           <MapPin className="h-4 w-4 text-emerald-600" />
         )}
-        <span className="truncate text-sm font-semibold text-gray-900">{title ?? (brand ? "Sportcation" : "Jakarta")}</span>
+        {title ? (
+          <span className="truncate text-sm font-semibold text-gray-900">{title}</span>
+        ) : brand ? (
+          <img src="/logo.png" alt="Sportcation" className="h-6 w-auto" />
+        ) : (
+          <span className="truncate text-sm font-semibold text-gray-900">Jakarta</span>
+        )}
       </div>
       <div className="flex items-center gap-2">
         {onBell && (
@@ -1803,7 +1808,7 @@ function VenueDetailScreen({
 
   return (
     <div>
-      <MobileTopBar title="SPORTCATION" back onBack={onBack} />
+      <MobileTopBar back onBack={onBack} />
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_390px] lg:gap-8 lg:pt-8">
         <section>
           <div className="relative h-[400px] overflow-hidden lg:rounded-2xl">
@@ -2240,7 +2245,7 @@ function BookingsScreen({
 
   return (
     <>
-      <MobileTopBar title="SPORTCATION" brand />
+      <MobileTopBar brand />
       <div className="px-6 py-7 lg:px-0">
         <p className="text-xs font-black uppercase tracking-[0.22em] text-[#007c61]">Your Activities</p>
         <h1 className="mt-3 text-5xl font-black tracking-[-0.08em]">My Bookings</h1>
@@ -2830,7 +2835,7 @@ function SettingsScreen({
 }) {
   return (
     <>
-      <MobileTopBar title="SPORTCATION" brand />
+      <MobileTopBar brand />
       <div className="px-6 py-7 lg:px-0">
         <h1 className="text-4xl font-black tracking-[-0.07em]">Settings</h1>
         <p className="mt-2 text-base font-semibold text-[#687073]">Manage your elite sport vacation experience</p>

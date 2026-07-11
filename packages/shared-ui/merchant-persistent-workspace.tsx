@@ -307,21 +307,21 @@ function VenueWorkspace({ onAction }: { onAction: (message: string) => void }) {
                 {venue.imageUrl ? (
                   <img src={venue.imageUrl} alt="" className="h-20 w-20 shrink-0 rounded-2xl object-cover" />
                 ) : (
-                  <span className="grid h-20 w-20 shrink-0 place-items-center rounded-2xl bg-[#dcfff6] text-[#007c61]">
+                  <span className="grid h-20 w-20 shrink-0 place-items-center rounded-2xl bg-[#dcfff6] text-primary">
                     <Store className="h-8 w-8" />
                   </span>
                 )}
                 <div className="min-w-0">
-                  <h3 className="truncate text-lg font-black">{venue.name}</h3>
-                  <p className="mt-1 flex items-center gap-1 truncate text-sm font-semibold text-[#687073]">
+                  <h3 className="truncate text-lg font-semibold">{venue.name}</h3>
+                  <p className="mt-1 flex items-center gap-1 truncate text-sm font-semibold text-muted-foreground">
                     <MapPin className="h-4 w-4 shrink-0" />
                     {venue.area || venue.city}
                   </p>
-                  <p className="mt-2 text-xs font-black uppercase tracking-[0.14em] text-[#9aa1a6]">{venue.categoryName} · {venue.courts.length} court</p>
+                  <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#9aa1a6]">{venue.categoryName} · {venue.courts.length} court</p>
                 </div>
               </div>
               <div>
-                <p className="text-lg font-black">{rupiah(venue.priceFrom)}<span className="text-xs text-[#8a9296]">/jam</span></p>
+                <p className="text-lg font-semibold">{rupiah(venue.priceFrom)}<span className="text-xs text-[#8a9296]">/jam</span></p>
                 <Status label={venue.status} />
               </div>
               <div className="flex gap-2">
@@ -332,7 +332,7 @@ function VenueWorkspace({ onAction }: { onAction: (message: string) => void }) {
           ))}
         </ResourceList>
 
-        <form onSubmit={submit} className="h-fit rounded-[30px] bg-white p-6 shadow-sm xl:sticky xl:top-28">
+        <form onSubmit={submit} className="h-fit rounded-3xl bg-white p-6 shadow-sm xl:sticky xl:top-28">
           <FormTitle editing={Boolean(editingId)} entity="Venue" onReset={resetForm} />
           <div className="mt-6 space-y-4">
             <Field label="Venue name" required>
@@ -509,17 +509,17 @@ function SlotWorkspace({ onAction }: { onAction: (message: string) => void }) {
           {filtered.map((slot) => (
             <article key={slot.id} className="grid gap-4 px-5 py-5 xl:grid-cols-[minmax(220px,1fr)_125px_auto] xl:items-center xl:px-6">
               <div className="flex min-w-0 items-center gap-4">
-                <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-[#dcfff6] text-[#007c61]">
+                <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-[#dcfff6] text-primary">
                   <CalendarClock className="h-7 w-7" />
                 </span>
                 <div className="min-w-0">
-                  <h3 className="truncate text-lg font-black">{slot.courtName}</h3>
-                  <p className="mt-1 truncate text-sm font-semibold text-[#687073]">{slot.venueName}</p>
-                  <p className="mt-2 text-xs font-black uppercase tracking-[0.12em] text-[#9aa1a6]">{slot.slotDate} · {slot.startTime} - {slot.endTime}</p>
+                  <h3 className="truncate text-lg font-semibold">{slot.courtName}</h3>
+                  <p className="mt-1 truncate text-sm font-semibold text-muted-foreground">{slot.venueName}</p>
+                  <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#9aa1a6]">{slot.slotDate} · {slot.startTime} - {slot.endTime}</p>
                 </div>
               </div>
               <div>
-                <p className="text-lg font-black">{rupiah(slot.price)}</p>
+                <p className="text-lg font-semibold">{rupiah(slot.price)}</p>
                 <Status label={slot.status} />
               </div>
               <div className="flex gap-2">
@@ -530,7 +530,7 @@ function SlotWorkspace({ onAction }: { onAction: (message: string) => void }) {
           ))}
         </ResourceList>
 
-        <form onSubmit={submit} className="h-fit rounded-[30px] bg-white p-6 shadow-sm xl:sticky xl:top-28">
+        <form onSubmit={submit} className="h-fit rounded-3xl bg-white p-6 shadow-sm xl:sticky xl:top-28">
           <FormTitle editing={Boolean(editingId)} entity="Slot" onReset={resetForm} />
           <div className="mt-6 space-y-4">
             <Field label="Court" required>
@@ -594,30 +594,30 @@ function PersistentShell({
 }) {
   return (
     <div className="space-y-6">
-      <section className="rounded-[30px] bg-white p-6 shadow-sm lg:p-8">
+      <section className="rounded-3xl bg-white p-6 shadow-sm lg:p-8">
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
           <div>
             <div className="flex flex-wrap items-center gap-3">
-              <p className="text-xs font-black uppercase tracking-[0.24em] text-[#007c61]">{eyebrow}</p>
-              <span className="inline-flex items-center gap-2 rounded-full bg-[#eafff8] px-3 py-1 text-xs font-black text-[#007c61]">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">{eyebrow}</p>
+              <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-primary">
                 <Database className="h-3.5 w-3.5" />
                 SQLite / libSQL
               </span>
             </div>
-            <h2 className="mt-3 text-4xl font-black tracking-[-0.07em] lg:text-5xl">{title}</h2>
-            <p className="mt-3 max-w-2xl text-base font-semibold leading-relaxed text-[#687073]">{subtitle}</p>
+            <h2 className="mt-3 text-4xl font-semibold tracking-[-0.07em] lg:text-5xl">{title}</h2>
+            <p className="mt-3 max-w-2xl text-base font-semibold leading-relaxed text-muted-foreground">{subtitle}</p>
           </div>
-          <button type="button" onClick={onCreate} className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#008f71] to-[#49e7ba] px-5 text-sm font-black uppercase tracking-[0.12em] text-white">
+          <button type="button" onClick={onCreate} className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#008f71] to-[#49e7ba] px-5 text-sm font-semibold uppercase tracking-[0.12em] text-white">
             <Plus className="h-5 w-5" />
             {createLabel}
           </button>
         </div>
         <div className="mt-7 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
-          <label className="flex h-13 items-center gap-3 rounded-2xl bg-[#edf1f1] px-4">
+          <label className="flex h-13 items-center gap-3 rounded-2xl bg-muted px-4">
             <Search className="h-5 w-5 text-[#798186]" />
             <input value={query} onChange={(event) => onQuery(event.target.value)} placeholder={`Search ${title.toLowerCase()}...`} className="min-w-0 flex-1 bg-transparent text-sm font-bold outline-none placeholder:text-[#9ca3a7]" />
           </label>
-          <button type="button" onClick={onRefresh} title="Refresh database records" className="inline-flex h-13 items-center justify-center gap-2 rounded-2xl bg-[#071413] px-5 text-sm font-black text-white">
+          <button type="button" onClick={onRefresh} title="Refresh database records" className="inline-flex h-13 items-center justify-center gap-2 rounded-2xl bg-[#071413] px-5 text-sm font-semibold text-white">
             <RefreshCw className="h-5 w-5" />
             Refresh
           </button>
@@ -631,19 +631,19 @@ function PersistentShell({
 
 function ResourceList({ loading, empty, emptyLabel, children }: { loading: boolean; empty: boolean; emptyLabel: string; children: React.ReactNode }) {
   return (
-    <section className="overflow-hidden rounded-[30px] bg-white shadow-sm">
+    <section className="overflow-hidden rounded-3xl bg-white shadow-sm">
       {loading ? (
         <div className="grid min-h-72 place-items-center p-8 text-center">
           <div>
             <LoaderCircle className="mx-auto h-9 w-9 animate-spin text-[#008f71]" />
-            <p className="mt-3 font-black">Loading database records...</p>
+            <p className="mt-3 font-semibold">Loading database records...</p>
           </div>
         </div>
       ) : empty ? (
         <div className="grid min-h-72 place-items-center p-8 text-center">
           <div>
             <Database className="mx-auto h-10 w-10 text-[#9aa1a6]" />
-            <p className="mt-3 font-black">{emptyLabel}</p>
+            <p className="mt-3 font-semibold">{emptyLabel}</p>
             <p className="mt-1 text-sm font-semibold text-[#7d8589]">Gunakan form di samping untuk menambahkan data.</p>
           </div>
         </div>
@@ -657,7 +657,7 @@ function ResourceList({ loading, empty, emptyLabel, children }: { loading: boole
 function NoticeBanner({ notice }: { notice: Exclude<Notice, null> }) {
   const Icon = notice.tone === "success" ? CheckCircle2 : AlertCircle
   return (
-    <div className={`flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm font-bold ${notice.tone === "success" ? "border-[#b8f3df] bg-[#eafff8] text-[#007c61]" : "border-[#ffd1d5] bg-[#fff0f1] text-[#c11f32]"}`}>
+    <div className={`flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm font-bold ${notice.tone === "success" ? "border-[#b8f3df] bg-emerald-50 text-primary" : "border-[#ffd1d5] bg-[#fff0f1] text-[#c11f32]"}`}>
       <Icon className="mt-0.5 h-5 w-5 shrink-0" />
       {notice.message}
     </div>
@@ -668,8 +668,8 @@ function FormTitle({ editing, entity, onReset }: { editing: boolean; entity: str
   return (
     <div className="flex items-start justify-between gap-4">
       <div>
-        <p className="text-xs font-black uppercase tracking-[0.22em] text-[#007c61]">{editing ? "Edit record" : "Create record"}</p>
-        <h3 className="mt-2 text-2xl font-black tracking-[-0.05em]">{editing ? `Update ${entity}` : `New ${entity}`}</h3>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">{editing ? "Edit record" : "Create record"}</p>
+        <h3 className="mt-2 text-2xl font-semibold tracking-[-0.05em]">{editing ? `Update ${entity}` : `New ${entity}`}</h3>
       </div>
       {editing && <IconAction label="Cancel edit" icon={X} onClick={onReset} />}
     </div>
@@ -679,7 +679,7 @@ function FormTitle({ editing, entity, onReset }: { editing: boolean; entity: str
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="text-xs font-black uppercase tracking-[0.18em] text-[#687073]">{label}{required ? " *" : ""}</span>
+      <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{label}{required ? " *" : ""}</span>
       {children}
     </label>
   )
@@ -698,7 +698,7 @@ function Select({ value, onChange, children }: { value: string; onChange: (value
 
 function SaveButton({ saving, label }: { saving: boolean; label: string }) {
   return (
-    <button type="submit" disabled={saving} className="inline-flex h-13 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#008f71] to-[#49e7ba] text-sm font-black uppercase tracking-[0.14em] text-white disabled:cursor-not-allowed disabled:opacity-60">
+    <button type="submit" disabled={saving} className="inline-flex h-13 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#008f71] to-[#49e7ba] text-sm font-semibold uppercase tracking-[0.14em] text-white disabled:cursor-not-allowed disabled:opacity-60">
       {saving ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <Database className="h-5 w-5" />}
       {saving ? "Saving..." : label}
     </button>
@@ -707,7 +707,7 @@ function SaveButton({ saving, label }: { saving: boolean; label: string }) {
 
 function IconAction({ label, icon: Icon, danger, onClick }: { label: string; icon: typeof Edit3; danger?: boolean; onClick: () => void }) {
   return (
-    <button type="button" title={label} aria-label={label} onClick={onClick} className={`grid h-10 w-10 place-items-center rounded-xl transition hover:-translate-y-0.5 ${danger ? "bg-[#fff0f1] text-[#c11f32]" : "bg-[#edf1f1] text-[#596165]"}`}>
+    <button type="button" title={label} aria-label={label} onClick={onClick} className={`grid h-10 w-10 place-items-center rounded-xl transition hover:-translate-y-0.5 ${danger ? "bg-[#fff0f1] text-[#c11f32]" : "bg-muted text-[#596165]"}`}>
       <Icon className="h-4.5 w-4.5" />
     </button>
   )
@@ -715,16 +715,16 @@ function IconAction({ label, icon: Icon, danger, onClick }: { label: string; ico
 
 function Status({ label }: { label: string }) {
   const color = label === "published" || label === "available"
-    ? "bg-[#dcfff6] text-[#007c61]"
+    ? "bg-[#dcfff6] text-primary"
     : label === "booked" || label === "review"
       ? "bg-[#e5efff] text-[#2c64a7]"
       : label === "rejected"
         ? "bg-[#fff0f1] text-[#c11f32]"
         : "bg-[#f1f2f2] text-[#646c70]"
-  return <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-black uppercase tracking-[0.1em] ${color}`}>{label}</span>
+  return <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.1em] ${color}`}>{label}</span>
 }
 
-const inputClass = "mt-2 h-12 w-full rounded-2xl border-0 bg-[#edf1f1] px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#49e7ba]"
+const inputClass = "mt-2 h-12 w-full rounded-2xl border-0 bg-muted px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#49e7ba]"
 
 function ImageUploadField({ value, onChange }: { value: string; onChange: (url: string) => void }) {
   const [uploading, setUploading] = useState(false)
@@ -765,7 +765,7 @@ function ImageUploadField({ value, onChange }: { value: string; onChange: (url: 
         {value ? (
           <img src={value} alt="" className="h-16 w-16 shrink-0 rounded-xl object-cover" />
         ) : (
-          <div className="h-16 w-16 shrink-0 rounded-xl bg-[#edf1f1] flex items-center justify-center">
+          <div className="h-16 w-16 shrink-0 rounded-xl bg-muted flex items-center justify-center">
             <Store className="h-6 w-6 text-[#9ca3a7]" />
           </div>
         )}
@@ -775,9 +775,9 @@ function ImageUploadField({ value, onChange }: { value: string; onChange: (url: 
             accept="image/*"
             onChange={handleFileChange}
             disabled={uploading}
-            className="block w-full text-sm text-[#687073] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:uppercase file:tracking-[0.1em] file:bg-[#dcfff6] file:text-[#007c61] hover:file:bg-[#b8f3df] file:cursor-pointer disabled:opacity-50"
+            className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:uppercase file:tracking-[0.1em] file:bg-[#dcfff6] file:text-primary hover:file:bg-[#b8f3df] file:cursor-pointer disabled:opacity-50"
           />
-          {uploading && <p className="mt-1 text-xs font-semibold text-[#007c61]">Uploading image...</p>}
+          {uploading && <p className="mt-1 text-xs font-semibold text-primary">Uploading image...</p>}
           {error && <p className="mt-1 text-xs font-semibold text-[#c11f32]">{error}</p>}
         </div>
       </div>

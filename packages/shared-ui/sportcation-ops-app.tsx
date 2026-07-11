@@ -56,7 +56,7 @@ import {
 export type SportcationOpsRole = "merchant" | "admin"
 
 export type MerchantSection = "overview" | "venues" | "slots" | "bookings" | "pos" | "finance" | "promotions" | "customers" | "reviews" | "settings" | "verification"
-export type AdminSection = "overview" | "users" | "venues" | "bookings" | "payments" | "finance" | "reports" | "content" | "settings"
+export type AdminSection = "overview" | "users" | "venues" | "bookings" | "payments" | "finance" | "reports" | "content" | "settings" | "merchants" | "banners"
 export type SportcationOpsSection = MerchantSection | AdminSection
 
 type StatusTone = "green" | "yellow" | "red" | "gray" | "blue"
@@ -313,7 +313,7 @@ const merchantResources: Record<Exclude<MerchantSection, "overview" | "settings"
   },
 }
 
-const adminResources: Record<Exclude<AdminSection, "overview" | "settings" | "finance">, ResourceConfig> = {
+const adminResources: Record<Exclude<AdminSection, "overview" | "settings" | "finance" | "merchants" | "banners" | "reports">, ResourceConfig> = {
   users: {
     title: "User Registry",
     subtitle: "Manage customers, merchant owners, staff roles, verification, and restrictions.",
@@ -368,20 +368,6 @@ const adminResources: Record<Exclude<AdminSection, "overview" | "settings" | "fi
       { label: "Provider", placeholder: "QRIS / VA / Wallet", type: "select" },
       { label: "Amount", placeholder: "365000", type: "number" },
       { label: "Admin decision", placeholder: "Approve / Hold / Refund", type: "select" },
-    ],
-  },
-  reports: {
-    title: "Platform Reports",
-    subtitle: "Track GMV, venue supply, conversion, payment risk, and operational health.",
-    createLabel: "New Report",
-    entityName: "report",
-    helper: "Ready for materialized views or Neon read replicas when analytics grows.",
-    rows: adminRows.reports,
-    formFields: [
-      { label: "Report name", placeholder: "GMV Performance" },
-      { label: "Metric source", placeholder: "bookings/payments", type: "select" },
-      { label: "Date range", placeholder: "Last 30 days" },
-      { label: "Notes", placeholder: "Executive summary", type: "textarea" },
     ],
   },
   content: {
@@ -442,7 +428,7 @@ export function SportcationOpsApp({
       : "Control platform users, venue approval, payments, reports, and content governance."
 
   return (
-    <main className="min-h-screen bg-[#f3f6f6] text-[#2c3133]">
+    <main className="min-h-screen bg-slate-50/50 text-foreground">
       <div className="lg:flex">
         <OpsSidebar role={role} nav={nav} active={normalizedSection as SportcationOpsSection} />
         <section className="min-h-screen flex-1 lg:pl-[292px]">
@@ -450,7 +436,7 @@ export function SportcationOpsApp({
           <div className="mx-auto w-full max-w-[430px] px-5 py-6 lg:max-w-none lg:px-8 lg:py-8">
             <MobileOpsNav nav={nav} active={normalizedSection as SportcationOpsSection} />
             {actionMessage && (
-              <div className="mb-6 flex items-center gap-3 rounded-2xl border border-[#c7f7e7] bg-[#eafff8] px-4 py-3 text-sm font-bold text-[#007c61] lg:hidden">
+              <div className="mb-6 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-primary lg:hidden">
                 <Database className="h-4 w-4" />
                 {actionMessage}
               </div>
@@ -525,15 +511,14 @@ function OpsSidebar({
   active: SportcationOpsSection
 }) {
   return (
-    <aside className="fixed inset-y-0 left-0 hidden w-[292px] border-r border-[#e2e8e8] bg-[#fdfdfd] px-6 py-7 lg:block">
-      <Link href="/" className="flex items-center gap-3 font-semibold text-[#111827]">
-        <span className="h-8 w-8 rounded-lg bg-[#059669] text-white flex items-center justify-center font-bold">S</span>
-        <span className="text-xl tracking-tight">Sportcation</span>
+    <aside className="fixed inset-y-0 left-0 hidden w-[292px] border-r border-border bg-background px-6 py-7 lg:block">
+      <Link href="/" className="flex items-center gap-3 font-semibold text-foreground">
+        <img src="/logo.png" alt="Sportcation" className="h-10 w-auto" />
       </Link>
-      <div className="mt-8 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-600">{role === "merchant" ? "Partner Mode" : "Platform Mode"}</p>
-        <h2 className="mt-1 text-lg font-semibold tracking-tight text-gray-900">{role === "merchant" ? "Merchant Studio" : "Admin Command"}</h2>
-        <p className="mt-1 text-xs text-gray-500">
+      <div className="mt-8 rounded-2xl border border-border bg-card p-4 shadow-sm">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">{role === "merchant" ? "Partner Mode" : "Platform Mode"}</p>
+        <h2 className="mt-1 text-lg font-semibold tracking-tight text-card-foreground">{role === "merchant" ? "Merchant Studio" : "Admin Command"}</h2>
+        <p className="mt-1 text-xs text-muted-foreground">
           {role === "merchant" ? "Manage supply, bookings, and payout readiness." : "Govern demand, supply, payment risk, and content."}
         </p>
       </div>
@@ -544,7 +529,7 @@ function OpsSidebar({
       </nav>
       <div className="mt-8 grid gap-3">
         <OpsAccountControls />
-        <Link href="/" className="flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
+        <Link href="/" className="flex items-center justify-center rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted/50">
           Back to User App
         </Link>
       </div>
@@ -559,7 +544,7 @@ function OpsNavLink({ item, active }: { item: NavItem; active: boolean }) {
       href={item.href}
       className={cx(
         "flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors",
-        active ? "bg-emerald-50 text-emerald-700" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
+        active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground",
       )}
       aria-current={active ? "page" : undefined}
     >
@@ -579,19 +564,19 @@ function OpsTopBar({
   subtitle: string
 }) {
   return (
-    <header className="border-b border-[#e2e8e8] bg-white/80 px-5 py-4 backdrop-blur lg:sticky lg:top-0 lg:z-20 lg:px-8">
+    <header className="border-b border-border bg-background/80 px-5 py-4 backdrop-blur lg:sticky lg:top-0 lg:z-20 lg:px-8">
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-600">{role === "merchant" ? "Jakarta Partner" : "Sportcation HQ"}</p>
-          <h1 className="truncate text-xl font-semibold tracking-tight text-gray-900 lg:text-2xl">{title}</h1>
-          <p className="hidden text-sm text-gray-500 lg:block">{subtitle}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">{role === "merchant" ? "Jakarta Partner" : "Sportcation HQ"}</p>
+          <h1 className="truncate text-xl font-semibold tracking-tight text-foreground lg:text-2xl">{title}</h1>
+          <p className="hidden text-sm text-muted-foreground lg:block">{subtitle}</p>
         </div>
         <div className="flex items-center gap-3">
-          <Link href="/" className="hidden h-10 items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 lg:flex">
+          <Link href="/" className="hidden h-10 items-center gap-2 rounded-lg border border-border bg-white px-4 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted/50 lg:flex">
             <Home className="h-4 w-4" />
             User App
           </Link>
-          <button type="button" className="grid h-10 w-10 place-items-center rounded-lg border border-gray-200 bg-white text-gray-500 shadow-sm transition hover:bg-gray-50">
+          <button type="button" className="grid h-10 w-10 place-items-center rounded-lg border border-border bg-white text-muted-foreground shadow-sm transition hover:bg-muted/50">
             <Bell className="h-4 w-4" />
           </button>
           <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-100 text-emerald-700">
@@ -613,7 +598,9 @@ function MobileOpsNav({
   return (
     <div className="mb-6 lg:hidden">
       <div className="mb-4 flex items-center justify-between">
-        <Link href="/" className="font-black italic tracking-[-0.05em]">SPORTCATION</Link>
+        <Link href="/" className="font-semibold italic tracking-[-0.05em]">
+          <img src="/logo.png" alt="Sportcation" className="h-8 w-auto" />
+        </Link>
         <OpsAccountControls compact />
       </div>
       <nav className="sportcation-scrollbar -mx-5 flex gap-3 overflow-x-auto px-5 pb-1">
@@ -625,8 +612,8 @@ function MobileOpsNav({
               key={item.href}
               href={item.href}
               className={cx(
-                "flex min-w-fit items-center gap-2 rounded-full px-4 py-3 text-xs font-black uppercase tracking-[0.12em]",
-                selected ? "bg-[#007c61] text-white shadow-lg shadow-emerald-900/10" : "bg-white text-[#8a9297]",
+                "flex min-w-fit items-center gap-2 rounded-full px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em]",
+                selected ? "bg-primary text-white shadow-lg shadow-emerald-900/10" : "bg-white text-muted-foreground",
               )}
             >
               <Icon className="h-4 w-4" />
@@ -741,25 +728,25 @@ function OpsHero({
   )
 }
 
-function StatsGrid({ stats }: { stats: StatCard[] }) {
+export function StatsGrid({ stats }: { stats: StatCard[] }) {
   return (
     <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {stats.map((stat, i) => {
         // Fallback icon mapping if API doesn't return functions
         const Icon = stat.icon || (i === 0 ? TrendingUp : i === 1 ? Users : i === 2 ? ShieldCheck : Activity)
         return (
-          <article key={stat.label} className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <article key={stat.label} className="rounded-2xl border border-border bg-white p-6 shadow-sm">
             <div className="flex items-start justify-between gap-4">
               <span className={cx("grid h-12 w-12 place-items-center rounded-xl", toneBg(stat.tone ?? "green"))}>
                 <Icon className="h-6 w-6" />
               </span>
-              <button type="button" className="text-gray-400 transition hover:text-gray-600">
+              <button type="button" className="text-muted-foreground transition hover:text-muted-foreground">
                 <MoreHorizontal className="h-5 w-5" />
               </button>
             </div>
-            <p className="mt-5 text-sm font-medium text-gray-500">{stat.label}</p>
-            <h3 className="mt-1 text-2xl font-bold tracking-tight text-gray-900">{stat.value}</h3>
-            <p className="mt-1 text-sm text-gray-500">{stat.helper}</p>
+            <p className="mt-5 text-sm font-medium text-muted-foreground">{stat.label}</p>
+            <h3 className="mt-1 text-2xl font-bold tracking-tight text-foreground">{stat.value}</h3>
+            <p className="mt-1 text-sm text-muted-foreground">{stat.helper}</p>
           </article>
         )
       })}
@@ -794,30 +781,30 @@ function CrudWorkspace({
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[30px] bg-white p-6 shadow-sm lg:p-8">
+      <section className="rounded-3xl bg-white p-6 shadow-sm lg:p-8">
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.24em] text-[#007c61]">{role === "merchant" ? "Merchant resource" : "Admin resource"}</p>
-            <h2 className="mt-3 text-4xl font-black tracking-[-0.07em] lg:text-5xl">{config.title}</h2>
-            <p className="mt-3 max-w-2xl text-base font-semibold leading-relaxed text-[#687073]">{config.subtitle}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">{role === "merchant" ? "Merchant resource" : "Admin resource"}</p>
+            <h2 className="mt-3 text-4xl font-semibold tracking-[-0.07em] lg:text-5xl">{config.title}</h2>
+            <p className="mt-3 max-w-2xl text-base font-semibold leading-relaxed text-muted-foreground">{config.subtitle}</p>
           </div>
           <div className="flex flex-wrap gap-3">
             <button
               type="button"
               onClick={() => trigger("Create")}
-              className="inline-flex h-12 items-center gap-2 rounded-full bg-gradient-to-r from-[#008f71] to-[#49e7ba] px-5 text-sm font-black uppercase tracking-[0.12em] text-white"
+              className="inline-flex h-12 items-center gap-2 rounded-full bg-gradient-to-r from-[#008f71] to-[#49e7ba] px-5 text-sm font-semibold uppercase tracking-[0.12em] text-white"
             >
               <Plus className="h-5 w-5" />
               {config.createLabel}
             </button>
-            <button type="button" onClick={() => onAction("Bulk action toolbar ready")} className="inline-flex h-12 items-center gap-2 rounded-full bg-[#edf1f1] px-5 text-sm font-black text-[#5f666a]">
+            <button type="button" onClick={() => onAction("Bulk action toolbar ready")} className="inline-flex h-12 items-center gap-2 rounded-full bg-muted px-5 text-sm font-semibold text-[#5f666a]">
               <SlidersHorizontal className="h-5 w-5" />
               Bulk Actions
             </button>
           </div>
         </div>
         <div className="mt-7 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto_auto]">
-          <label className="flex h-13 items-center gap-3 rounded-2xl bg-[#edf1f1] px-4">
+          <label className="flex h-13 items-center gap-3 rounded-2xl bg-muted px-4">
             <Search className="h-5 w-5 text-[#798186]" />
             <input
               value={query}
@@ -826,11 +813,11 @@ function CrudWorkspace({
               className="min-w-0 flex-1 bg-transparent text-sm font-bold outline-none placeholder:text-[#9ca3a7]"
             />
           </label>
-          <button type="button" onClick={() => onAction("Filter state ready for query params")} className="inline-flex h-13 items-center justify-center gap-2 rounded-2xl bg-[#edf1f1] px-5 text-sm font-black text-[#5f666a]">
+          <button type="button" onClick={() => onAction("Filter state ready for query params")} className="inline-flex h-13 items-center justify-center gap-2 rounded-2xl bg-muted px-5 text-sm font-semibold text-[#5f666a]">
             <Filter className="h-5 w-5" />
             Filter
           </button>
-          <button type="button" onClick={() => onAction("Export action ready for report endpoint")} className="inline-flex h-13 items-center justify-center gap-2 rounded-2xl bg-[#071413] px-5 text-sm font-black text-white">
+          <button type="button" onClick={() => onAction("Export action ready for report endpoint")} className="inline-flex h-13 items-center justify-center gap-2 rounded-2xl bg-[#071413] px-5 text-sm font-semibold text-white">
             <FileText className="h-5 w-5" />
             Export
           </button>
@@ -838,9 +825,9 @@ function CrudWorkspace({
       </section>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <section className="overflow-hidden rounded-[30px] bg-white shadow-sm">
-          <div className="border-b border-[#edf1f1] px-6 py-5">
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-[#687073]">{filteredRows.length} records</p>
+        <section className="overflow-hidden rounded-3xl bg-white shadow-sm">
+          <div className="border-b border-border px-6 py-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">{filteredRows.length} records</p>
           </div>
           <div className="divide-y divide-[#edf1f1]">
             {filteredRows.map((item) => (
@@ -849,19 +836,19 @@ function CrudWorkspace({
                   {item.image ? (
                     <img src={item.image} alt="" className="h-16 w-16 rounded-2xl object-cover shadow-sm" />
                   ) : (
-                    <span className="grid h-16 w-16 place-items-center rounded-2xl bg-[#dcfff6] text-[#007c61] shadow-sm">
+                    <span className="grid h-16 w-16 place-items-center rounded-2xl bg-[#dcfff6] text-primary shadow-sm">
                       <Database className="h-7 w-7" />
                     </span>
                   )}
                   <span className="min-w-0">
-                    <span className="block text-lg font-black leading-tight text-[#1f2326]">{item.primary}</span>
-                    <span className="mt-1 block truncate text-sm font-semibold text-[#687073]">{item.secondary}</span>
-                    <span className="mt-1.5 block text-[10px] font-black uppercase tracking-[0.16em] text-[#9aa1a6]">{item.id}</span>
+                    <span className="block text-lg font-semibold leading-tight text-[#1f2326]">{item.primary}</span>
+                    <span className="mt-1 block truncate text-sm font-semibold text-muted-foreground">{item.secondary}</span>
+                    <span className="mt-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9aa1a6]">{item.id}</span>
                   </span>
                 </button>
                 <p className="text-sm font-bold text-[#5f666a] truncate">{item.meta}</p>
                 <div>
-                  <p className="text-lg font-black text-[#1f2326]">{item.metric}</p>
+                  <p className="text-lg font-semibold text-[#1f2326]">{item.metric}</p>
                   <div className="mt-1">
                     <StatusBadge label={item.status} tone={item.statusTone} />
                   </div>
@@ -895,11 +882,11 @@ function CrudFormPanel({
   onAction: (message: string) => void
 }) {
   return (
-    <aside className="rounded-[30px] bg-white p-6 shadow-sm xl:sticky xl:top-28 xl:h-fit">
+    <aside className="rounded-3xl bg-white p-6 shadow-sm xl:sticky xl:top-28 xl:h-fit">
       <button type="button" onClick={onToggle} className="flex w-full items-center justify-between gap-3 text-left">
         <span>
-          <span className="block text-xs font-black uppercase tracking-[0.22em] text-[#007c61]">CRUD form draft</span>
-          <span className="mt-2 block text-2xl font-black tracking-[-0.05em]">{selected.primary}</span>
+          <span className="block text-xs font-semibold uppercase tracking-[0.22em] text-primary">CRUD form draft</span>
+          <span className="mt-2 block text-2xl font-semibold tracking-[-0.05em]">{selected.primary}</span>
         </span>
         <ChevronRight className={cx("h-5 w-5 text-[#8f979c] transition", open && "rotate-90")} />
       </button>
@@ -907,25 +894,25 @@ function CrudFormPanel({
         <div className="mt-6 space-y-4">
           {config.formFields.map((field) => (
             <label key={field.label} className="block">
-              <span className="text-xs font-black uppercase tracking-[0.18em] text-[#687073]">{field.label}</span>
+              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{field.label}</span>
               {field.type === "textarea" ? (
-                <textarea className="mt-2 min-h-24 w-full rounded-2xl border-0 bg-[#edf1f1] px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-[#49e7ba]" placeholder={field.placeholder} />
+                <textarea className="mt-2 min-h-24 w-full rounded-2xl border-0 bg-muted px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-[#49e7ba]" placeholder={field.placeholder} />
               ) : (
                 <input
                   type={field.type === "number" ? "number" : "text"}
-                  className="mt-2 h-12 w-full rounded-2xl border-0 bg-[#edf1f1] px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#49e7ba]"
+                  className="mt-2 h-12 w-full rounded-2xl border-0 bg-muted px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#49e7ba]"
                   placeholder={field.placeholder}
                 />
               )}
             </label>
           ))}
-          <div className="rounded-2xl bg-[#eafff8] p-4 text-sm font-bold leading-relaxed text-[#007c61]">
+          <div className="rounded-2xl bg-emerald-50 p-4 text-sm font-bold leading-relaxed text-primary">
             {config.helper}
           </div>
           <button
             type="button"
             onClick={() => onAction(`Save draft ${config.entityName}: replace with server action or route handler mutation`)}
-            className="h-13 w-full rounded-full bg-gradient-to-r from-[#008f71] to-[#49e7ba] text-sm font-black uppercase tracking-[0.14em] text-white"
+            className="h-13 w-full rounded-full bg-gradient-to-r from-[#008f71] to-[#49e7ba] text-sm font-semibold uppercase tracking-[0.14em] text-white"
           >
             Save Draft
           </button>
@@ -945,25 +932,25 @@ function OperationsBoard({
   onAction: (message: string) => void
 }) {
   return (
-    <section className="min-w-0 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+    <section className="min-w-0 rounded-2xl border border-border bg-white p-6 shadow-sm">
       <div className="mb-5 flex items-center justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600">Live queue</p>
-          <h2 className="mt-1 text-xl font-bold tracking-tight text-gray-900">{title}</h2>
+          <h2 className="mt-1 text-xl font-bold tracking-tight text-foreground">{title}</h2>
         </div>
-        <button type="button" onClick={() => onAction("Queue filter ready")} className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
+        <button type="button" onClick={() => onAction("Queue filter ready")} className="rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-medium text-foreground shadow-sm transition hover:bg-muted/50">
           Latest
         </button>
       </div>
       <div className="space-y-3">
         {rows.map((item) => (
-          <button key={item.id} type="button" onClick={() => onAction(`Open ${item.id}`)} className="flex w-full items-center justify-between gap-4 rounded-xl border border-transparent bg-gray-50 p-4 text-left transition hover:border-gray-200 hover:bg-white hover:shadow-sm">
+          <button key={item.id} type="button" onClick={() => onAction(`Open ${item.id}`)} className="flex w-full items-center justify-between gap-4 rounded-xl border border-transparent bg-muted/50 p-4 text-left transition hover:border-border hover:bg-white hover:shadow-sm">
             <span className="min-w-0">
-              <span className="block truncate font-semibold text-gray-900">{item.primary}</span>
-              <span className="block truncate text-sm text-gray-500">{item.secondary}</span>
+              <span className="block truncate font-semibold text-foreground">{item.primary}</span>
+              <span className="block truncate text-sm text-muted-foreground">{item.secondary}</span>
             </span>
             <span className="text-right">
-              <span className="block font-semibold text-gray-900">{item.metric}</span>
+              <span className="block font-semibold text-foreground">{item.metric}</span>
               <StatusBadge label={item.status} tone={item.statusTone} />
             </span>
           </button>
@@ -1007,10 +994,10 @@ function SettingsWorkspace({ role, onAction }: { role: SportcationOpsRole; onAct
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[30px] bg-white p-6 shadow-sm lg:p-8">
-        <p className="text-xs font-black uppercase tracking-[0.22em] text-[#007c61]">{role} settings</p>
-        <h2 className="mt-3 text-4xl font-black tracking-[-0.07em] lg:text-5xl">Settings & Access Control</h2>
-        <p className="mt-3 max-w-2xl text-base font-semibold leading-relaxed text-[#687073]">
+      <section className="rounded-3xl bg-white p-6 shadow-sm lg:p-8">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">{role} settings</p>
+        <h2 className="mt-3 text-4xl font-semibold tracking-[-0.07em] lg:text-5xl">Settings & Access Control</h2>
+        <p className="mt-3 max-w-2xl text-base font-semibold leading-relaxed text-muted-foreground">
           Settings UI is prepared for role-based permissions, server validation, audit logging, and Drizzle-backed persistence.
         </p>
       </section>
@@ -1018,15 +1005,15 @@ function SettingsWorkspace({ role, onAction }: { role: SportcationOpsRole; onAct
         {sections.map(([title, body], index) => (
           <article key={title} className="rounded-[28px] bg-white p-6 shadow-sm">
             <div className="flex items-start justify-between gap-4">
-              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#dcfff6] text-[#007c61]">
+              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#dcfff6] text-primary">
                 {index === 0 ? <UserCog className="h-6 w-6" /> : index === 1 ? <ShieldCheck className="h-6 w-6" /> : index === 2 ? <Settings className="h-6 w-6" /> : <Database className="h-6 w-6" />}
               </span>
-              <button type="button" onClick={() => onAction(`Open ${title} settings`)} className="rounded-full bg-[#edf1f1] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#687073]">
+              <button type="button" onClick={() => onAction(`Open ${title} settings`)} className="rounded-full bg-muted px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                 Configure
               </button>
             </div>
-            <h3 className="mt-5 text-xl font-black">{title}</h3>
-            <p className="mt-2 text-sm font-semibold leading-relaxed text-[#687073]">{body}</p>
+            <h3 className="mt-5 text-xl font-semibold">{title}</h3>
+            <p className="mt-2 text-sm font-semibold leading-relaxed text-muted-foreground">{body}</p>
           </article>
         ))}
       </div>
@@ -1036,7 +1023,7 @@ function SettingsWorkspace({ role, onAction }: { role: SportcationOpsRole; onAct
 
 function StatusBadge({ label, tone }: { label: string; tone: StatusTone }) {
   return (
-    <span className={cx("mt-2 inline-flex rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em]", toneBadge(tone))}>
+    <span className={cx("mt-2 inline-flex rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em]", toneBadge(tone))}>
       {label}
     </span>
   )
@@ -1061,7 +1048,7 @@ function IconButton({
       title={label}
       className={cx(
         "grid h-10 w-10 place-items-center rounded-full transition",
-        danger ? "bg-[#ffe9ec] text-[#c92034] hover:bg-[#ffd9df]" : "bg-[#edf1f1] text-[#5f666a] hover:bg-[#dcfff6] hover:text-[#007c61]",
+        danger ? "bg-[#ffe9ec] text-[#c92034] hover:bg-[#ffd9df]" : "bg-muted text-[#5f666a] hover:bg-[#dcfff6] hover:text-primary",
       )}
     >
       <Icon className="h-4 w-4" />
@@ -1070,19 +1057,19 @@ function IconButton({
 }
 
 function toneBg(tone: StatusTone) {
-  if (tone === "green") return "bg-[#dcfff6] text-[#007c61]"
+  if (tone === "green") return "bg-[#dcfff6] text-primary"
   if (tone === "yellow") return "bg-[#fff2c9] text-[#8a6f00]"
   if (tone === "red") return "bg-[#ffe0e5] text-[#c92034]"
   if (tone === "blue") return "bg-[#e3f0ff] text-[#2263b7]"
-  return "bg-[#edf1f1] text-[#687073]"
+  return "bg-muted text-muted-foreground"
 }
 
 function toneBadge(tone: StatusTone) {
-  if (tone === "green") return "bg-[#dcfff6] text-[#007c61]"
+  if (tone === "green") return "bg-[#dcfff6] text-primary"
   if (tone === "yellow") return "bg-[#fff2c9] text-[#8a6f00]"
   if (tone === "red") return "bg-[#ffe0e5] text-[#c92034]"
   if (tone === "blue") return "bg-[#e3f0ff] text-[#2263b7]"
-  return "bg-[#edf1f1] text-[#687073]"
+  return "bg-muted text-muted-foreground"
 }
 
 function getMerchantResources(rows: typeof merchantRows): Record<Exclude<MerchantSection, "overview" | "settings" | "pos" | "verification">, ResourceConfig> { return { venues: { ...merchantResources.venues, rows: rows.venues }, slots: { ...merchantResources.slots, rows: rows.slots }, bookings: { ...merchantResources.bookings, rows: rows.bookings }, finance: { ...merchantResources.finance, rows: rows.finance }, promotions: { ...merchantResources.promotions, rows: rows.promotions }, customers: { ...merchantResources.customers, rows: rows.customers }, reviews: { ...merchantResources.reviews, rows: rows.reviews } } }
