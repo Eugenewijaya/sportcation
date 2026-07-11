@@ -44,6 +44,7 @@ export async function getServerSession() {
 
 export async function requirePageRole(allowedRoles: readonly AppRole[], destination: string) {
   const session = await getServerSession()
+  console.log("requirePageRole SESSION:", session ? "FOUND" : "NULL");
 
   if (!session) {
     if (destination.startsWith("/merchant")) {
