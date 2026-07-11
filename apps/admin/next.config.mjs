@@ -16,7 +16,7 @@ const nextConfig = {
   async rewrites() {
     return [
       {
-        source: "/api/:path*",
+        source: "/api/:path((?!auth).*)",
         // Proxy to backend API. In production, this allows cookies to be set on the frontend domain
         destination: `${process.env.BACKEND_API_URL || "https://sportcation-api.vercel.app"}/api/:path*`,
       },
