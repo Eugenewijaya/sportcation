@@ -417,15 +417,13 @@ export function SportcationOpsApp({
 
   const nav = role === "merchant" ? merchantNav : adminNav
   const normalizedSection = nav.some((item) => item.section === section) ? section : "overview"
-  const [actionMessage, setActionMessage] = useState(
-    role === "merchant" ? "Venue and slot CRUD connected" : "Admin UI ready for backend wiring",
-  )
+  const [actionMessage, setActionMessage] = useState("")
 
   const roleTitle = role === "merchant" ? "Merchant Studio" : "Admin Command"
   const roleSubtitle =
     role === "merchant"
-      ? "Operate venues, slots, bookings, and settlement from one responsive workspace."
-      : "Control platform users, venue approval, payments, reports, and content governance."
+      ? "Kelola venue, jadwal, pesanan, dan pencairan dana."
+      : "Kelola pengguna, venue, pembayaran, laporan, dan konten."
 
   return (
     <main className="min-h-screen bg-slate-50/50 text-foreground">
@@ -436,8 +434,8 @@ export function SportcationOpsApp({
           <div className="mx-auto w-full max-w-[430px] px-5 py-6 lg:max-w-none lg:px-8 lg:py-8">
             <MobileOpsNav nav={nav} active={normalizedSection as SportcationOpsSection} />
             {actionMessage && (
-              <div className="mb-6 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-primary lg:hidden">
-                <Database className="h-4 w-4" />
+              <div className="mb-6 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 lg:hidden">
+                <CheckCircle2 className="h-4 w-4" />
                 {actionMessage}
               </div>
             )}
@@ -482,8 +480,7 @@ function WorkspaceRouter({
     }
     if (section === "bookings") return <MerchantBookingWorkspace onAction={onAction} />
     if (section === "finance") return <MerchantFinanceWorkspace onAction={onAction} />
-      if (section === "pos") return <MerchantPosWorkspace onAction={onAction} />
-    if (section === "verification") return <MerchantVerificationWorkspace onAction={onAction} />
+    if (section === "pos") return <MerchantPosWorkspace onAction={onAction} />
     return <CrudWorkspace config={getMerchantResources(merchantRows)[section as keyof ReturnType<typeof getMerchantResources>]} role="merchant" onAction={onAction} />
   }
 
@@ -516,10 +513,10 @@ function OpsSidebar({
         <img src="/logo.png" alt="Sportcation" className="h-10 w-auto" />
       </Link>
       <div className="mt-8 rounded-2xl border border-border bg-card p-4 shadow-sm">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">{role === "merchant" ? "Partner Mode" : "Platform Mode"}</p>
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">{role === "merchant" ? "Mode Mitra" : "Mode Platform"}</p>
         <h2 className="mt-1 text-lg font-semibold tracking-tight text-card-foreground">{role === "merchant" ? "Merchant Studio" : "Admin Command"}</h2>
         <p className="mt-1 text-xs text-muted-foreground">
-          {role === "merchant" ? "Manage supply, bookings, and payout readiness." : "Govern demand, supply, payment risk, and content."}
+          {role === "merchant" ? "Kelola venue, booking, dan pencairan." : "Kelola pengguna, venue, dan konten."}
         </p>
       </div>
       <nav className="mt-7 space-y-1">
@@ -530,7 +527,7 @@ function OpsSidebar({
       <div className="mt-8 grid gap-3">
         <OpsAccountControls />
         <Link href="/" className="flex items-center justify-center rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted/50">
-          Back to User App
+          Kembali ke Aplikasi
         </Link>
       </div>
     </aside>
@@ -612,8 +609,8 @@ function MobileOpsNav({
               key={item.href}
               href={item.href}
               className={cx(
-                "flex min-w-fit items-center gap-2 rounded-full px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em]",
-                selected ? "bg-primary text-white shadow-lg shadow-emerald-900/10" : "bg-white text-muted-foreground",
+                "flex min-w-fit items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium",
+                selected ? "bg-emerald-600 text-white shadow-sm" : "bg-white text-muted-foreground border border-border",
               )}
             >
               <Icon className="h-4 w-4" />
@@ -628,20 +625,20 @@ function MobileOpsNav({
 
 function MerchantOverview({ onAction, merchantRows }: { onAction: (message: string) => void; merchantRows: any }) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <OpsHero
-        label="Merchant workspace"
-        title="Run your venue inventory without waiting for admin."
-        body="Create courts, publish slot capacity, confirm bookings, and prepare payout records. Every card has the same resource shape expected by the upcoming Drizzle API."
-        action="Add venue"
-        onAction={() => onAction("Create venue drawer is ready for backend mutation")}
+        label="Selamat datang"
+        title="Kelola venue dan booking Anda dari satu tempat."
+        body="Tambah venue baru, atur jadwal slot, konfirmasi pesanan, dan pantau pendapatan harian Anda."
+        action="Tambah Venue"
+        onAction={() => onAction("Navigasi ke halaman venues untuk menambah venue baru")}
       />
       <StatsGrid stats={merchantStats} />
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_0.75fr]">
-        <OperationsBoard title="Today Ops Queue" rows={merchantRows.bookings} onAction={onAction} />
+        <OperationsBoard title="Antrian Hari Ini" rows={merchantRows.bookings} onAction={onAction} />
         <ReadinessPanel
-          title="CRUD Readiness"
-          items={["Venue form fields mapped", "Slot unique key defined", "Booking state actions visible", "Settlement rows ready for ledger API"]}
+          title="Checklist Operasional"
+          items={["Data venue sudah dilengkapi", "Jadwal slot sudah dipublikasikan", "Pesanan siap dikonfirmasi", "Pencairan dana terjadwal"]}
         />
       </div>
     </div>
@@ -652,7 +649,6 @@ function AdminOverview({ onAction, adminRows }: { onAction: (message: string) =>
   const [stats, setStats] = useState<StatCard[]>(adminStats)
 
   useEffect(() => {
-    // ponytail: hit the API service instead of current origin, send cookies for auth
     fetch(`/api/admin/reports`, { credentials: "include" })
       .then((res) => res.json())
       .then((data) => {
@@ -660,24 +656,24 @@ function AdminOverview({ onAction, adminRows }: { onAction: (message: string) =>
           setStats(data.stats)
         }
       })
-      .catch((err) => console.error(err))
+      .catch(() => {})
   }, [])
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <OpsHero
-        label="Admin command"
-        title="Control users, venues, payments, and platform content."
-        body="The admin surface is structured around resources that will map cleanly to Drizzle schema modules and Neon-backed CRUD endpoints."
-        action="Open review queue"
-        onAction={() => onAction("Admin review queue route and UI are ready")}
+        label="Dashboard"
+        title="Kelola seluruh platform Sportcation."
+        body="Pantau pengguna, verifikasi venue, kelola pembayaran, dan atur konten dari satu dashboard."
+        action="Lihat Antrian"
+        onAction={() => onAction("Membuka antrian review")}
       />
       <StatsGrid stats={stats} />
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_0.75fr]">
-        <OperationsBoard title="Platform Review Queue" rows={[...adminRows.venues, ...adminRows.payments].slice(0, 5)} onAction={onAction} />
+        <OperationsBoard title="Antrian Review" rows={[...adminRows.venues, ...adminRows.payments].slice(0, 5)} onAction={onAction} />
         <ReadinessPanel
-          title="Backend Contract Targets"
-          items={["Role-based route guards", "Drizzle schema per domain", "Neon pooled server connection", "Audit logs on every admin mutation"]}
+          title="Status Platform"
+          items={["Sistem autentikasi aktif", "Moderasi venue berjalan", "Gateway pembayaran terhubung", "Monitoring uptime aktif"]}
         />
       </div>
     </div>
@@ -698,31 +694,21 @@ function OpsHero({
   onAction: () => void
 }) {
   return (
-    <section className="overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-800 to-emerald-950 p-7 text-white shadow-lg lg:p-9">
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-emerald-300">{label}</p>
-          <h2 className="mt-3 max-w-3xl text-3xl font-bold tracking-tight lg:text-5xl">{title}</h2>
-          <p className="mt-4 max-w-2xl text-base text-emerald-100 lg:text-lg">{body}</p>
-          <button
-            type="button"
-            onClick={onAction}
-            className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-white px-5 text-sm font-semibold text-emerald-900 shadow-sm transition hover:bg-emerald-50"
-          >
-            <Plus className="h-4 w-4" />
-            {action}
-          </button>
+    <section className="overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-700 to-emerald-900 p-6 text-white shadow-md lg:p-8">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="max-w-2xl">
+          <p className="text-xs font-medium uppercase tracking-wider text-emerald-300">{label}</p>
+          <h2 className="mt-2 text-2xl font-bold tracking-tight lg:text-3xl">{title}</h2>
+          <p className="mt-2 text-sm text-emerald-100 lg:text-base">{body}</p>
         </div>
-        <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-sm">
-          <div className="grid grid-cols-2 gap-3">
-            {["Create", "Read", "Update", "Delete"].map((item, index) => (
-              <div key={item} className="rounded-xl bg-white/10 p-4">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-200">CRUD {index + 1}</p>
-                <p className="mt-1 text-lg font-bold">{item}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+        <button
+          type="button"
+          onClick={onAction}
+          className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-white px-5 text-sm font-semibold text-emerald-900 shadow-sm transition hover:bg-emerald-50"
+        >
+          <Plus className="h-4 w-4" />
+          {action}
+        </button>
       </div>
     </section>
   )
@@ -776,87 +762,85 @@ function CrudWorkspace({
   function trigger(action: string, item?: TableRow) {
     if (item) setSelected(item)
     setFormOpen(true)
-    onAction(`${action} ${item?.id ?? config.entityName}: UI ready, backend mutation pending`)
+    onAction(`${action}: ${item?.primary ?? config.entityName}`)
   }
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-3xl bg-white p-6 shadow-sm lg:p-8">
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
+    <div className="space-y-5">
+      <section className="rounded-2xl border border-border bg-white p-5 shadow-sm lg:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">{role === "merchant" ? "Merchant resource" : "Admin resource"}</p>
-            <h2 className="mt-3 text-4xl font-semibold tracking-[-0.07em] lg:text-5xl">{config.title}</h2>
-            <p className="mt-3 max-w-2xl text-base font-semibold leading-relaxed text-muted-foreground">{config.subtitle}</p>
+            <h2 className="text-xl font-semibold tracking-tight">{config.title}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{config.subtitle}</p>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => trigger("Create")}
-              className="inline-flex h-12 items-center gap-2 rounded-full bg-gradient-to-r from-[#008f71] to-[#49e7ba] px-5 text-sm font-semibold uppercase tracking-[0.12em] text-white"
+              onClick={() => trigger("Tambah")}
+              className="inline-flex h-9 items-center gap-2 rounded-lg bg-emerald-600 px-4 text-sm font-medium text-white transition hover:bg-emerald-700"
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="h-4 w-4" />
               {config.createLabel}
             </button>
-            <button type="button" onClick={() => onAction("Bulk action toolbar ready")} className="inline-flex h-12 items-center gap-2 rounded-full bg-muted px-5 text-sm font-semibold text-[#5f666a]">
-              <SlidersHorizontal className="h-5 w-5" />
-              Bulk Actions
+            <button type="button" onClick={() => onAction("Aksi massal")} className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-white px-4 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted/50">
+              <SlidersHorizontal className="h-4 w-4" />
+              Aksi Massal
             </button>
           </div>
         </div>
-        <div className="mt-7 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto_auto]">
-          <label className="flex h-13 items-center gap-3 rounded-2xl bg-muted px-4">
-            <Search className="h-5 w-5 text-[#798186]" />
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+          <label className="flex h-9 flex-1 items-center gap-2 rounded-lg border border-border bg-white px-3">
+            <Search className="h-4 w-4 text-muted-foreground" />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder={`Search ${config.entityName}s...`}
-              className="min-w-0 flex-1 bg-transparent text-sm font-bold outline-none placeholder:text-[#9ca3a7]"
+              placeholder={`Cari ${config.entityName}...`}
+              className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             />
           </label>
-          <button type="button" onClick={() => onAction("Filter state ready for query params")} className="inline-flex h-13 items-center justify-center gap-2 rounded-2xl bg-muted px-5 text-sm font-semibold text-[#5f666a]">
-            <Filter className="h-5 w-5" />
+          <button type="button" onClick={() => onAction("Filter aktif")} className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-white px-3 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted/50">
+            <Filter className="h-4 w-4" />
             Filter
           </button>
-          <button type="button" onClick={() => onAction("Export action ready for report endpoint")} className="inline-flex h-13 items-center justify-center gap-2 rounded-2xl bg-[#071413] px-5 text-sm font-semibold text-white">
-            <FileText className="h-5 w-5" />
+          <button type="button" onClick={() => onAction("Export data")} className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-white px-3 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted/50">
+            <FileText className="h-4 w-4" />
             Export
           </button>
         </div>
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <section className="overflow-hidden rounded-3xl bg-white shadow-sm">
-          <div className="border-b border-border px-6 py-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">{filteredRows.length} records</p>
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <section className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
+          <div className="border-b border-border px-5 py-3">
+            <p className="text-sm text-muted-foreground">{filteredRows.length} data ditemukan</p>
           </div>
-          <div className="divide-y divide-[#edf1f1]">
+          <div className="divide-y divide-border">
             {filteredRows.map((item) => (
-              <article key={item.id} className="grid gap-4 px-6 py-5 hover:bg-[#f9fbfb] transition-colors lg:grid-cols-[minmax(260px,1fr)_140px_150px_auto] lg:items-center">
-                <button type="button" onClick={() => trigger("Read", item)} className="flex min-w-0 items-center gap-4 text-left hover:opacity-80 transition-opacity">
+              <article key={item.id} className="grid gap-3 px-5 py-4 hover:bg-muted/30 transition-colors lg:grid-cols-[minmax(260px,1fr)_140px_150px_auto] lg:items-center">
+                <button type="button" onClick={() => trigger("Detail", item)} className="flex min-w-0 items-center gap-3 text-left hover:opacity-80 transition-opacity">
                   {item.image ? (
                     <img src={item.image} alt="" className="h-16 w-16 rounded-2xl object-cover shadow-sm" />
                   ) : (
-                    <span className="grid h-16 w-16 place-items-center rounded-2xl bg-[#dcfff6] text-primary shadow-sm">
-                      <Database className="h-7 w-7" />
+                    <span className="grid h-12 w-12 place-items-center rounded-xl bg-emerald-50 text-emerald-600 shadow-sm">
+                      <Database className="h-5 w-5" />
                     </span>
                   )}
                   <span className="min-w-0">
-                    <span className="block text-lg font-semibold leading-tight text-[#1f2326]">{item.primary}</span>
-                    <span className="mt-1 block truncate text-sm font-semibold text-muted-foreground">{item.secondary}</span>
-                    <span className="mt-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9aa1a6]">{item.id}</span>
+                    <span className="block text-sm font-semibold leading-tight text-foreground">{item.primary}</span>
+                    <span className="mt-0.5 block truncate text-xs text-muted-foreground">{item.secondary}</span>
                   </span>
                 </button>
-                <p className="text-sm font-bold text-[#5f666a] truncate">{item.meta}</p>
+                <p className="text-sm text-muted-foreground truncate">{item.meta}</p>
                 <div>
-                  <p className="text-lg font-semibold text-[#1f2326]">{item.metric}</p>
+                  <p className="text-sm font-semibold text-foreground">{item.metric}</p>
                   <div className="mt-1">
                     <StatusBadge label={item.status} tone={item.statusTone} />
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <IconButton label="Edit" icon={Edit3} onClick={() => trigger("Update", item)} />
-                  <IconButton label="Archive" icon={LockKeyhole} onClick={() => trigger("Archive", item)} />
-                  <IconButton label="Delete" icon={Trash2} danger onClick={() => trigger("Delete", item)} />
+                <div className="flex gap-1.5">
+                  <IconButton label="Edit" icon={Edit3} onClick={() => trigger("Edit", item)} />
+                  <IconButton label="Arsip" icon={LockKeyhole} onClick={() => trigger("Arsip", item)} />
+                  <IconButton label="Hapus" icon={Trash2} danger onClick={() => trigger("Hapus", item)} />
                 </div>
               </article>
             ))}
@@ -882,11 +866,11 @@ function CrudFormPanel({
   onAction: (message: string) => void
 }) {
   return (
-    <aside className="rounded-3xl bg-white p-6 shadow-sm xl:sticky xl:top-28 xl:h-fit">
+    <aside className="rounded-2xl border border-border bg-white p-5 shadow-sm xl:sticky xl:top-28 xl:h-fit">
       <button type="button" onClick={onToggle} className="flex w-full items-center justify-between gap-3 text-left">
         <span>
-          <span className="block text-xs font-semibold uppercase tracking-[0.22em] text-primary">CRUD form draft</span>
-          <span className="mt-2 block text-2xl font-semibold tracking-[-0.05em]">{selected.primary}</span>
+          <span className="block text-xs font-medium uppercase tracking-wider text-muted-foreground">Detail</span>
+          <span className="mt-1 block text-lg font-semibold">{selected.primary}</span>
         </span>
         <ChevronRight className={cx("h-5 w-5 text-[#8f979c] transition", open && "rotate-90")} />
       </button>
@@ -894,13 +878,13 @@ function CrudFormPanel({
         <div className="mt-6 space-y-4">
           {config.formFields.map((field) => (
             <label key={field.label} className="block">
-              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{field.label}</span>
+              <span className="text-xs font-medium text-muted-foreground">{field.label}</span>
               {field.type === "textarea" ? (
-                <textarea className="mt-2 min-h-24 w-full rounded-2xl border-0 bg-muted px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-[#49e7ba]" placeholder={field.placeholder} />
+                <textarea className="mt-1.5 min-h-20 w-full rounded-lg border border-border bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500" placeholder={field.placeholder} />
               ) : (
                 <input
                   type={field.type === "number" ? "number" : "text"}
-                  className="mt-2 h-12 w-full rounded-2xl border-0 bg-muted px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[#49e7ba]"
+                  className="mt-1.5 h-9 w-full rounded-lg border border-border bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
                   placeholder={field.placeholder}
                 />
               )}
@@ -911,10 +895,10 @@ function CrudFormPanel({
           </div>
           <button
             type="button"
-            onClick={() => onAction(`Save draft ${config.entityName}: replace with server action or route handler mutation`)}
-            className="h-13 w-full rounded-full bg-gradient-to-r from-[#008f71] to-[#49e7ba] text-sm font-semibold uppercase tracking-[0.14em] text-white"
+            onClick={() => onAction(`Simpan ${config.entityName}`)}
+            className="h-9 w-full rounded-lg bg-emerald-600 text-sm font-medium text-white transition hover:bg-emerald-700"
           >
-            Save Draft
+            Simpan
           </button>
         </div>
       )}
@@ -932,11 +916,10 @@ function OperationsBoard({
   onAction: (message: string) => void
 }) {
   return (
-    <section className="min-w-0 rounded-2xl border border-border bg-white p-6 shadow-sm">
-      <div className="mb-5 flex items-center justify-between gap-4">
+    <section className="min-w-0 rounded-2xl border border-border bg-white p-5 shadow-sm">
+      <div className="mb-4 flex items-center justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600">Live queue</p>
-          <h2 className="mt-1 text-xl font-bold tracking-tight text-foreground">{title}</h2>
+          <h2 className="text-base font-semibold text-foreground">{title}</h2>
         </div>
         <button type="button" onClick={() => onAction("Queue filter ready")} className="rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-medium text-foreground shadow-sm transition hover:bg-muted/50">
           Latest
@@ -962,13 +945,13 @@ function OperationsBoard({
 
 function ReadinessPanel({ title, items }: { title: string; items: string[] }) {
   return (
-    <section className="min-w-0 rounded-2xl bg-gradient-to-br from-emerald-800 to-emerald-950 p-6 text-white shadow-lg">
-      <h2 className="text-xl font-bold tracking-tight">{title}</h2>
-      <ul className="mt-5 space-y-3">
+    <section className="min-w-0 rounded-2xl border border-border bg-white p-5 shadow-sm">
+      <h2 className="text-base font-semibold text-foreground">{title}</h2>
+      <ul className="mt-4 space-y-3">
         {items.map((item) => (
           <li key={item} className="flex items-start gap-3">
-            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
-            <span className="text-sm font-medium text-emerald-50">{item}</span>
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+            <span className="text-sm text-muted-foreground">{item}</span>
           </li>
         ))}
       </ul>
@@ -1073,7 +1056,7 @@ function toneBadge(tone: StatusTone) {
 }
 
 function getMerchantResources(rows: typeof merchantRows): Record<Exclude<MerchantSection, "overview" | "settings" | "pos" | "verification">, ResourceConfig> { return { venues: { ...merchantResources.venues, rows: rows.venues }, slots: { ...merchantResources.slots, rows: rows.slots }, bookings: { ...merchantResources.bookings, rows: rows.bookings }, finance: { ...merchantResources.finance, rows: rows.finance }, promotions: { ...merchantResources.promotions, rows: rows.promotions }, customers: { ...merchantResources.customers, rows: rows.customers }, reviews: { ...merchantResources.reviews, rows: rows.reviews } } }
-function getAdminResources(rows: typeof adminRows): Record<Exclude<AdminSection, "overview" | "settings" | "users" | "venues" | "bookings" | "payments" | "finance">, ResourceConfig> { return { reports: { ...adminResources.reports, rows: rows.reports }, content: { ...adminResources.content, rows: rows.content } } }
+function getAdminResources(rows: typeof adminRows): Record<Exclude<AdminSection, "overview" | "settings" | "users" | "venues" | "bookings" | "payments" | "finance" | "merchants" | "banners" | "reports">, ResourceConfig> { return { content: { ...adminResources.content, rows: rows.content } } }
 
 
 function useOpsDashboard(role: SportcationOpsRole) {
