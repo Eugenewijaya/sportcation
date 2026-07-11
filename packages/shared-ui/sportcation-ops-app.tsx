@@ -5,6 +5,9 @@ import { useEffect, useMemo, useState } from "react"
 import { AdminUserDirectoryWorkspace, AdminVenueModerationWorkspace } from "@/components/admin-directory-workspace"
 import { AdminBookingReviewWorkspace, AdminPaymentReviewWorkspace } from "@/components/admin-review-workspace"
 import { AdminFinanceWorkspace } from "@/components/admin-finance-workspace"
+import { AdminMerchantVerificationWorkspace } from "@/components/admin-merchants-workspace"
+import { AdminReportsWorkspace } from "@/components/admin-reports-workspace"
+import { AdminBannersWorkspace } from "@/components/admin-banners-workspace"
 import { MerchantBookingWorkspace } from "@/components/merchant-booking-workspace"
 import { MerchantFinanceWorkspace } from "@/components/merchant-finance-workspace"
 import { MerchantPersistentWorkspace } from "@/components/merchant-persistent-workspace"
@@ -116,14 +119,12 @@ const adminNav: NavItem[] = [
   { section: "overview", label: "Command", href: "/admin", icon: LayoutDashboard },
   { section: "users", label: "Users", href: "/admin/users", icon: Users },
   { section: "venues", label: "Venues", href: "/admin/venues", icon: Store },
-  // NOTE: Use a generic string to bypass type errors for custom pages if AdminSection is too strict
-  { section: "merchants" as any, label: "Verifikasi Mitra", href: "/admin/merchants", icon: ShieldCheck },
-  { section: "banners" as any, label: "Banners", href: "/admin/banners", icon: Tag },
+  { section: "merchants", label: "Verifikasi Mitra", href: "/admin/merchants", icon: ShieldCheck },
+  { section: "banners", label: "Banners", href: "/admin/banners", icon: Tag },
   { section: "bookings", label: "Bookings", href: "/admin/bookings", icon: Ticket },
   { section: "payments", label: "Payments", href: "/admin/payments", icon: CreditCard },
   { section: "finance", label: "Finance", href: "/admin/finance", icon: Landmark },
   { section: "reports", label: "Reports", href: "/admin/reports", icon: BarChart3 },
-  { section: "content", label: "Content", href: "/admin/content", icon: Megaphone },
   { section: "settings", label: "Settings", href: "/admin/settings", icon: Settings },
 ]
 
@@ -504,10 +505,13 @@ function WorkspaceRouter({
   if (section === "settings") return <SettingsWorkspace role="admin" onAction={onAction} />
   if (section === "users") return <AdminUserDirectoryWorkspace onAction={onAction} />
   if (section === "venues") return <AdminVenueModerationWorkspace onAction={onAction} />
+  if (section === "merchants") return <AdminMerchantVerificationWorkspace onAction={onAction} />
+  if (section === "reports") return <AdminReportsWorkspace onAction={onAction} />
   if (section === "bookings") return <AdminBookingReviewWorkspace onAction={onAction} />
   if (section === "payments") return <AdminPaymentReviewWorkspace onAction={onAction} />
   if (section === "finance") return <AdminFinanceWorkspace onAction={onAction} />
   if (section === "content") return <AdminBannersWorkspace onAction={onAction} />
+  if (section === "banners") return <AdminBannersWorkspace onAction={onAction} />
   return <CrudWorkspace config={getAdminResources(adminRows)[section as keyof ReturnType<typeof getAdminResources>]} role="admin" onAction={onAction} />
 }
 
@@ -1128,170 +1132,4 @@ function mapAdminDataToRows(data: any) {
 
 
 
-function AdminBannersWorkspace({ onAction }: { onAction: (message: string) => void }) {
-  const [banners, setBanners] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [isAdding, setIsAdding] = useState(false)
-  const [newTitle, setNewTitle] = useState("")
-  const [newImageUrl, setNewImageUrl] = useState("")
-  const [newLinkUrl, setNewLinkUrl] = useState("")
-  const [newTerms, setNewTerms] = useState("")
 
-  const loadBanners = async () => {
-    try {
-      // ponytail: hit the API service instead of current origin, send cookies for auth
-      const res = await fetch(`/api/public/promo-banners`, { credentials: "include" })
-      const data = await res.json()
-      setBanners(data)
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    loadBanners()
-  }, [])
-
-  const handleSave = async () => {
-    // Usually we would POST to an admin API endpoint. Since we don't have it yet, simulate.
-    onAction("Banner '\' added! (API not implemented yet)")
-    setBanners([...banners, { id: Date.now().toString(), title: newTitle, imageUrl: newImageUrl, linkUrl: newLinkUrl, termsAndConditions: newTerms }])
-    setIsAdding(false)
-    setNewTitle("")
-    setNewImageUrl("")
-    setNewLinkUrl("")
-    setNewTerms("")
-  }
-
-  const handleDelete = (id: string) => {
-    setBanners(banners.filter(b => b.id !== id))
-    onAction("Banner removed! (API not implemented yet)")
-  }
-
-  if (loading) return <div>Loading banners...</div>
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-black">Manage Promo Banners</h2>
-          <p className="text-sm text-gray-500">Add, edit, or remove promotional banners from the home screen.</p>
-        </div>
-        <button
-          onClick={() => setIsAdding(true)}
-          className="flex items-center gap-2 rounded-full bg-[#007c61] px-4 py-2 text-sm font-bold text-white transition hover:bg-emerald-800"
-        >
-          <Plus className="h-4 w-4" />
-          Add Banner
-        </button>
-      </div>
-
-      {isAdding && (
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-lg font-bold">New Banner</h3>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Title</label>
-              <input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-500 sm:text-sm" placeholder="Promo Title" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Image URL</label>
-              <input value={newImageUrl} onChange={(e) => setNewImageUrl(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-500 sm:text-sm" placeholder="https://example.com/image.jpg" />
-              <p className="mt-1 text-xs text-gray-500">Provide an absolute URL for the banner image. Recommend landscape aspect ratio.</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Link URL (Optional)</label>
-              <input value={newLinkUrl} onChange={(e) => setNewLinkUrl(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-500 sm:text-sm" placeholder="https://example.com/promo-details" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Terms & Conditions (Optional)</label>
-              <textarea value={newTerms} onChange={(e) => setNewTerms(e.target.value)} rows={3} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-500 sm:text-sm" placeholder="Syarat dan ketentuan berlaku..." />
-            </div>
-            <div className="flex gap-3">
-              <button onClick={handleSave} className="rounded-full bg-[#007c61] px-6 py-2 text-sm font-bold text-white hover:bg-emerald-800">Save</button>
-              <button onClick={() => setIsAdding(false)} className="rounded-full bg-gray-200 px-6 py-2 text-sm font-bold text-gray-700 hover:bg-gray-300">Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        {banners.map((banner) => (
-          <div key={banner.id} className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-            <div className="aspect-[21/9] bg-gray-100">
-              <img src={banner.imageUrl} alt={banner.title} className="h-full w-full object-cover" />
-            </div>
-            <div className="p-4">
-              <h3 className="font-bold">{banner.title}</h3>
-              {banner.linkUrl && <a href={banner.linkUrl} target="_blank" className="text-xs text-emerald-600 hover:underline">{banner.linkUrl}</a>}
-              {banner.termsAndConditions && <p className="mt-2 text-xs text-gray-500 line-clamp-2">{banner.termsAndConditions}</p>}
-              <div className="mt-4 flex justify-end">
-                <button onClick={() => handleDelete(banner.id)} className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-100">Delete</button>
-              </div>
-            </div>
-          </div>
-        ))}
-        {banners.length === 0 && !isAdding && (
-          <div className="col-span-2 rounded-2xl border border-dashed border-gray-300 p-8 text-center text-gray-500">
-            No banners active. Click "Add Banner" to create one.
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-function MerchantVerificationWorkspace({ onAction }: { onAction: (message: string) => void }) {
-  const [ktpUrl, setKtpUrl] = useState("")
-  const [npwpUrl, setNpwpUrl] = useState("")
-  const [businessLicenseUrl, setBusinessLicenseUrl] = useState("")
-  const [status, setStatus] = useState("pending")
-
-  const handleUpload = () => {
-    onAction("Verification documents submitted for review.")
-    setStatus("reviewing")
-  }
-
-  return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-black">Account Verification</h2>
-      <p className="text-sm text-gray-500">Upload your documents to get verified and start selling on Sportcation.</p>
-
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h3 className="font-bold text-lg mb-4">Verification Status</h3>
-        <div className={cx(
-          "inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-bold",
-          status === "verified" ? "bg-emerald-100 text-emerald-700" :
-          status === "reviewing" ? "bg-amber-100 text-amber-700" :
-          "bg-gray-100 text-gray-700"
-        )}>
-          {status === "verified" && <ShieldCheck className="h-4 w-4" />}
-          {status === "reviewing" && <Clock className="h-4 w-4" />}
-          {status === "pending" && <HelpCircle className="h-4 w-4" />}
-          {status.charAt(0).toUpperCase() + status.slice(1)}
-        </div>
-      </div>
-
-      <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">KTP / ID Card URL</label>
-          <input value={ktpUrl} onChange={(e) => setKtpUrl(e.target.value)} disabled={status !== "pending"} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-emerald-500 sm:text-sm" placeholder="https://example.com/ktp.jpg" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">NPWP / Tax ID URL</label>
-          <input value={npwpUrl} onChange={(e) => setNpwpUrl(e.target.value)} disabled={status !== "pending"} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-emerald-500 sm:text-sm" placeholder="https://example.com/npwp.jpg" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Business License / NIB URL</label>
-          <input value={businessLicenseUrl} onChange={(e) => setBusinessLicenseUrl(e.target.value)} disabled={status !== "pending"} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-emerald-500 sm:text-sm" placeholder="https://example.com/license.jpg" />
-        </div>
-        {status === "pending" && (
-          <button onClick={handleUpload} className="w-full rounded-lg bg-[#007c61] py-3 text-sm font-bold text-white hover:bg-emerald-800">
-            Submit for Verification
-          </button>
-        )}
-      </div>
-    </div>
-  )
-}

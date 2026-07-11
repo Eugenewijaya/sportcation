@@ -5,6 +5,20 @@ const { chromium } = require('playwright');
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext();
   const page = await context.newPage();
+  page.on('request', request => {
+    if (request.url().includes('/api/auth/')) {
+      console.log('AUTH REQUEST:', request.method(), request.url());
+    }
+  });
+  page.on('response', response => {
+    if (response.url().includes('/api/auth/')) {
+      console.log('AUTH RESPONSE:', response.url(), response.status());
+      const headers = response.headers();
+      if (headers['set-cookie']) {
+        console.log('SET-COOKIE:', headers['set-cookie']);
+      }
+    }
+  });
 
   try {
     console.log('Navigating to login page...');
