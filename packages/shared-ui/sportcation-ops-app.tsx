@@ -129,17 +129,17 @@ const adminNav: NavItem[] = [
 ]
 
 const merchantStats: StatCard[] = [
-  { label: "Monthly GMV", value: "Rp 0", helper: "Calculating...", icon: TrendingUp, tone: "green" },
-  { label: "Active Courts", value: "0", helper: "Fetching data...", icon: Store, tone: "blue" },
-  { label: "Today Bookings", value: "0", helper: "Fetching data...", icon: Ticket, tone: "yellow" },
-  { label: "Payout Queue", value: "Rp 0", helper: "Fetching data...", icon: Banknote, tone: "green" },
+  { label: "Pendapatan Bulan Ini", value: "Rp 42.5M", helper: "Naik 12% dari bulan lalu", icon: TrendingUp, tone: "green" },
+  { label: "Lapangan Aktif", value: "8", helper: "Semua lapangan beroperasi", icon: Store, tone: "blue" },
+  { label: "Booking Hari Ini", value: "142", helper: "28 menunggu konfirmasi", icon: Ticket, tone: "yellow" },
+  { label: "Siap Dicairkan", value: "Rp 12.4M", helper: "Dijadwalkan besok", icon: Banknote, tone: "green" },
 ]
 
 const adminStats: StatCard[] = [
-  { label: "Platform GMV", value: "Rp 0", helper: "Calculating...", icon: TrendingUp, tone: "green" },
-  { label: "Active Users", value: "0", helper: "Fetching users...", icon: Users, tone: "blue" },
-  { label: "Open Reviews", value: "0", helper: "Fetching queues...", icon: ShieldCheck, tone: "yellow" },
-  { label: "System Health", value: "Checking...", helper: "Verifying API...", icon: Activity, tone: "green" },
+  { label: "Total GMV Platform", value: "Rp 1.2B", helper: "Bulan Mei 2026", icon: TrendingUp, tone: "green" },
+  { label: "Pengguna Aktif", value: "12,482", helper: "+420 minggu ini", icon: Users, tone: "blue" },
+  { label: "Verifikasi Tertunda", value: "12", helper: "Venue baru mendaftar", icon: ShieldCheck, tone: "yellow" },
+  { label: "Status Sistem", value: "Normal", helper: "Uptime 99.9%", icon: Activity, tone: "green" },
 ]
 
 const merchantRows = {
@@ -513,7 +513,7 @@ function OpsSidebar({
         <div className="grid h-8 w-8 place-items-center rounded-lg bg-[#f25f22] text-white">
           <Database className="h-4 w-4" />
         </div>
-        <span className="text-lg tracking-tight">Athenaeum</span>
+        <span className="text-lg tracking-tight">Sportcation</span>
       </Link>
       
       <div className="flex-1 overflow-y-auto sportcation-scrollbar -mx-2 px-2">
@@ -526,21 +526,21 @@ function OpsSidebar({
 
       <div className="mt-6 border-t border-border pt-6">
         <div className="rounded-xl bg-orange-50/50 p-4 border border-orange-100">
-          <h4 className="flex items-center gap-2 text-sm font-bold text-foreground"><Star className="h-3.5 w-3.5 text-[#f25f22]" /> Upgrade to Pro</h4>
-          <p className="mt-1 text-xs text-muted-foreground">Unlock AI insights & forecasts</p>
+          <h4 className="flex items-center gap-2 text-sm font-bold text-foreground"><Star className="h-3.5 w-3.5 text-[#f25f22]" /> Upgrade ke Pro</h4>
+          <p className="mt-1 text-xs text-muted-foreground">Dapatkan wawasan & prediksi AI</p>
           <button className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-xs font-bold text-white transition hover:bg-zinc-800">
-            Try 1 month free
+            Coba gratis 1 bulan
           </button>
         </div>
         
         <div className="mt-6 flex items-center justify-between rounded-xl bg-white p-2 shadow-sm border border-border">
           <div className="flex items-center gap-3">
             <div className="grid h-9 w-9 place-items-center rounded-full bg-[#f25f22] text-sm font-bold text-white">
-              NK
+              S
             </div>
             <div>
-              <p className="text-sm font-bold text-foreground">Nadia Karim</p>
-              <p className="text-[10px] text-muted-foreground">Head Librarian</p>
+              <p className="text-sm font-bold text-foreground">Superadmin</p>
+              <p className="text-[10px] text-muted-foreground">Sportcation Ops</p>
             </div>
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -582,7 +582,7 @@ function OpsTopBar({
         <div className="relative hidden w-full max-w-2xl lg:block">
           <input 
             type="text" 
-            placeholder="Search books, members, ISBN..." 
+            placeholder="Cari venue, nama pemesan, atau ID booking..." 
             className="h-12 w-full rounded-full border border-border bg-white px-6 text-sm shadow-sm outline-none transition focus:border-zinc-300 focus:ring-2 focus:ring-zinc-100"
           />
         </div>
@@ -603,10 +603,10 @@ function OpsTopBar({
         </div>
         <div className="hidden items-center gap-3 lg:flex">
            <button className="h-10 rounded-full bg-white border border-border px-4 text-sm font-semibold shadow-sm hover:bg-muted/50">
-             Export report
+             Export Laporan
            </button>
            <button className="h-10 rounded-full bg-[#f25f22] px-4 text-sm font-semibold text-white shadow-sm shadow-orange-500/20 hover:bg-[#ea580c] flex items-center gap-2">
-             <Plus className="h-4 w-4" /> New Checkout
+             <Plus className="h-4 w-4" /> Booking Baru
            </button>
         </div>
       </div>
@@ -666,7 +666,7 @@ function AthenaeumOverview({ role, onAction }: { role: SportcationOpsRole, onAct
   return (
     <div className="space-y-6 pb-10">
       <div className="flex items-center justify-between text-sm">
-        <p className="text-muted-foreground">Your platform is buzzing — <span className="font-bold text-foreground">728 active visitors</span> right now.</p>
+        <p className="text-muted-foreground">Platform Anda sedang ramai — <span className="font-bold text-foreground">728 pengguna aktif</span> saat ini melihat-lihat lapangan.</p>
       </div>
 
       <StatsGrid stats={stats} />
@@ -677,13 +677,13 @@ function AthenaeumOverview({ role, onAction }: { role: SportcationOpsRole, onAct
           <div className="rounded-3xl border border-border bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-bold text-foreground flex items-center gap-2">Peak Traffic Hours <span className="text-[10px] font-bold uppercase tracking-wider text-[#f25f22] flex items-center gap-1"><TrendingUp className="h-3 w-3" /> Peak 5:00 PM</span></h3>
-                <p className="mt-1 text-xs text-muted-foreground">Footfall throughout the day - 3,145 visitors today</p>
+                <h3 className="font-bold text-foreground flex items-center gap-2">Jam Sibuk Lapangan <span className="text-[10px] font-bold uppercase tracking-wider text-[#f25f22] flex items-center gap-1"><TrendingUp className="h-3 w-3" /> Puncak 19:00</span></h3>
+                <p className="mt-1 text-xs text-muted-foreground">Tingkat hunian lapangan sepanjang hari - 3,145 booking hari ini</p>
               </div>
               <div className="flex items-center gap-1 rounded-full border border-border p-1 text-xs font-medium shadow-sm">
-                <button className="rounded-full bg-white px-4 py-1.5 shadow-sm border border-border font-bold text-foreground">Day</button>
-                <button className="rounded-full px-4 py-1.5 text-muted-foreground hover:bg-muted/50">Week</button>
-                <button className="rounded-full px-4 py-1.5 text-muted-foreground hover:bg-muted/50">Month</button>
+                <button className="rounded-full bg-white px-4 py-1.5 shadow-sm border border-border font-bold text-foreground">Hari</button>
+                <button className="rounded-full px-4 py-1.5 text-muted-foreground hover:bg-muted/50">Minggu</button>
+                <button className="rounded-full px-4 py-1.5 text-muted-foreground hover:bg-muted/50">Bulan</button>
               </div>
             </div>
             <div className="mt-8 flex items-end justify-between gap-2 h-48 border-b border-border pb-4">
@@ -700,10 +700,10 @@ function AthenaeumOverview({ role, onAction }: { role: SportcationOpsRole, onAct
           <div className="rounded-3xl border border-border bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h3 className="font-bold text-foreground">Most Popular {role === "admin" ? "Venues" : "Slots"}</h3>
-                <p className="mt-1 text-xs text-muted-foreground">Top items ranked by bookings this month</p>
+                <h3 className="font-bold text-foreground">{role === "admin" ? "Venue" : "Lapangan"} Terpopuler</h3>
+                <p className="mt-1 text-xs text-muted-foreground">Peringkat berdasarkan jumlah booking bulan ini</p>
               </div>
-              <button className="text-xs font-bold text-[#f25f22] flex items-center gap-1 hover:underline">View all <ChevronRight className="h-3 w-3" /></button>
+              <button className="text-xs font-bold text-[#f25f22] flex items-center gap-1 hover:underline">Lihat semua <ChevronRight className="h-3 w-3" /></button>
             </div>
             <div className="space-y-6">
               {[
@@ -742,8 +742,8 @@ function AthenaeumOverview({ role, onAction }: { role: SportcationOpsRole, onAct
           <div className="rounded-3xl border border-border bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-bold text-foreground">Revenue by Source</h3>
-                <p className="mt-1 text-xs text-muted-foreground">May 2026 • all channels</p>
+                <h3 className="font-bold text-foreground">Sumber Pendapatan</h3>
+                <p className="mt-1 text-xs text-muted-foreground">Bulan ini • Semua channel</p>
               </div>
               <span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-600">+8.7%</span>
             </div>
@@ -751,7 +751,7 @@ function AthenaeumOverview({ role, onAction }: { role: SportcationOpsRole, onAct
             <div className="my-10 flex justify-center">
               <div className="relative h-40 w-40 rounded-full border-[16px] border-[#f25f22] border-r-[#3b82f6] border-b-[#8b5cf6] border-l-[#f97316]">
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-[10px] font-semibold text-muted-foreground">Total Revenue</span>
+                  <span className="text-[10px] font-semibold text-muted-foreground">Total Pendapatan</span>
                   <span className="text-xl font-black">Rp 800M</span>
                 </div>
               </div>
@@ -759,10 +759,10 @@ function AthenaeumOverview({ role, onAction }: { role: SportcationOpsRole, onAct
 
             <div className="space-y-5">
               {[
-                { label: "Bookings", pct: "60.3%", val: "Rp 482M", color: "bg-[#f97316]" },
-                { label: "Memberships", pct: "21.0%", val: "Rp 168M", color: "bg-[#fb923c]" },
-                { label: "Merchandise", pct: "11.6%", val: "Rp 94M", color: "bg-[#3b82f6]" },
-                { label: "Events", pct: "7.0%", val: "Rp 56M", color: "bg-[#8b5cf6]" },
+                { label: "Sewa Lapangan", pct: "60.3%", val: "Rp 482M", color: "bg-[#f97316]" },
+                { label: "Membership", pct: "21.0%", val: "Rp 168M", color: "bg-[#fb923c]" },
+                { label: "Kantin & FnB", pct: "11.6%", val: "Rp 94M", color: "bg-[#3b82f6]" },
+                { label: "Event/Turnamen", pct: "7.0%", val: "Rp 56M", color: "bg-[#8b5cf6]" },
               ].map((src, i) => (
                 <div key={i} className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-3">
@@ -782,28 +782,28 @@ function AthenaeumOverview({ role, onAction }: { role: SportcationOpsRole, onAct
           <div className="rounded-3xl border border-border bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="font-bold text-foreground">Action Items</h3>
-                <p className="mt-1 text-xs text-muted-foreground">Requires attention • 280 items</p>
+                <h3 className="font-bold text-foreground">Tugas Aktif</h3>
+                <p className="mt-1 text-xs text-muted-foreground">Perlu penyelesaian • 280 item</p>
               </div>
               <div className="grid h-10 w-10 place-items-center rounded-xl border border-orange-200 bg-orange-50 text-[#f25f22]">
                 <Activity className="h-5 w-5" />
               </div>
             </div>
             <div className="rounded-2xl bg-gradient-to-br from-[#fd8444] to-[#f25f22] p-6 text-white shadow-md">
-              <p className="text-xs font-semibold text-white/90">Pending Verifications</p>
-              <p className="mt-1 text-3xl font-black">12 Venues</p>
+              <p className="text-xs font-semibold text-white/90">Menunggu Pembayaran</p>
+              <p className="mt-1 text-3xl font-black">12 Booking</p>
               <div className="mt-6 flex items-center justify-between text-[10px]">
                 <div>
-                  <p className="font-bold">1-7 days</p>
-                  <p className="font-medium text-white/80">8 venues</p>
+                  <p className="font-bold">Hari ini</p>
+                  <p className="font-medium text-white/80">8 booking</p>
                 </div>
                 <div>
-                  <p className="font-bold">8-30 days</p>
-                  <p className="font-medium text-white/80">3 venues</p>
+                  <p className="font-bold">Besok</p>
+                  <p className="font-medium text-white/80">3 booking</p>
                 </div>
                 <div>
-                  <p className="font-bold">90+ days</p>
-                  <p className="font-medium text-white/80">1 venue</p>
+                  <p className="font-bold">Minggu ini</p>
+                  <p className="font-medium text-white/80">1 booking</p>
                 </div>
               </div>
               <div className="mt-3 h-1.5 w-full rounded-full bg-white/20 flex overflow-hidden">
@@ -814,15 +814,15 @@ function AthenaeumOverview({ role, onAction }: { role: SportcationOpsRole, onAct
             </div>
             <div className="mt-8">
               <div className="flex items-center justify-between text-xs font-bold text-foreground mb-4">
-                <span>Recent reminders</span>
-                <button className="text-[#f25f22] flex items-center gap-1 hover:underline"><Megaphone className="h-3 w-3" /> Send all</button>
+                <span>Konfirmasi Manual</span>
+                <button className="text-[#f25f22] flex items-center gap-1 hover:underline"><Megaphone className="h-3 w-3" /> Ingatkan</button>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-3">
-                  <div className="grid h-10 w-10 place-items-center rounded-full bg-orange-100 text-xs font-bold text-[#f25f22]">TR</div>
+                  <div className="grid h-10 w-10 place-items-center rounded-full bg-orange-100 text-xs font-bold text-[#f25f22]">AR</div>
                   <div>
-                    <p className="font-bold text-foreground">Tahmid Rahman</p>
-                    <p className="text-[10px] font-medium text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" /> 14d overdue</p>
+                    <p className="font-bold text-foreground">Andi Rahman</p>
+                    <p className="text-[10px] font-medium text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" /> Padel Arena, 19:00</p>
                   </div>
                 </div>
                 <span className="font-bold text-foreground">Rp 1.25M</span>
