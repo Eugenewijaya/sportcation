@@ -426,10 +426,10 @@ export function SportcationOpsApp({
       : "Kelola pengguna, venue, pembayaran, laporan, dan konten."
 
   return (
-    <main className="min-h-screen bg-slate-50/50 text-foreground">
+    <main className="min-h-screen bg-[#fcfcfd] text-foreground">
       <div className="lg:flex">
         <OpsSidebar role={role} nav={nav} active={normalizedSection as SportcationOpsSection} />
-        <section className="min-h-screen flex-1 lg:pl-[292px]">
+        <section className="min-h-screen flex-1 lg:pl-[260px]">
           <OpsTopBar role={role} title={roleTitle} subtitle={roleSubtitle} />
           <div className="mx-auto w-full max-w-[430px] px-5 py-6 lg:max-w-none lg:px-8 lg:py-8">
             <MobileOpsNav nav={nav} active={normalizedSection as SportcationOpsSection} />
@@ -508,27 +508,53 @@ function OpsSidebar({
   active: SportcationOpsSection
 }) {
   return (
-    <aside className="fixed inset-y-0 left-0 hidden w-[292px] border-r border-border bg-background px-6 py-7 lg:block">
-      <Link href="/" className="flex items-center gap-3 font-semibold text-foreground">
-        <img src="/logo.png" alt="Sportcation" className="h-10 w-auto" />
+    <aside className="fixed inset-y-0 left-0 hidden w-[260px] flex-col border-r border-border bg-white px-4 py-6 lg:flex">
+      <Link href="/" className="mb-6 flex items-center gap-2 px-2 font-bold text-foreground">
+        <div className="grid h-7 w-7 place-items-center rounded bg-zinc-900 text-white">
+          <ShieldCheck className="h-4 w-4" />
+        </div>
+        <span className="text-lg tracking-tight">RecordaOps</span>
+        <button className="ml-auto text-muted-foreground"><SlidersHorizontal className="h-4 w-4" /></button>
       </Link>
-      <div className="mt-8 rounded-2xl border border-border bg-card p-4 shadow-sm">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">{role === "merchant" ? "Mode Mitra" : "Mode Platform"}</p>
-        <h2 className="mt-1 text-lg font-semibold tracking-tight text-card-foreground">{role === "merchant" ? "Merchant Studio" : "Admin Command"}</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {role === "merchant" ? "Kelola venue, booking, dan pencairan." : "Kelola pengguna, venue, dan konten."}
-        </p>
+      
+      <div className="flex-1 overflow-y-auto sportcation-scrollbar -mx-2 px-2">
+        <nav className="space-y-0.5">
+          {nav.map((item) => (
+            <OpsNavLink key={item.href} item={item} active={active === item.section} />
+          ))}
+        </nav>
       </div>
-      <nav className="mt-7 space-y-1">
-        {nav.map((item) => (
-          <OpsNavLink key={item.href} item={item} active={active === item.section} />
-        ))}
-      </nav>
-      <div className="mt-8 grid gap-3">
-        <OpsAccountControls />
-        <Link href="/" className="flex items-center justify-center rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted/50">
-          Kembali ke Aplikasi
-        </Link>
+
+      <div className="mt-6 border-t border-border pt-6">
+        <div className="rounded-xl bg-[#f8f9fa] p-4">
+          <h4 className="text-sm font-bold text-foreground">Record anything</h4>
+          <p className="mt-1 text-xs text-muted-foreground">Capture your screen, camera, or both.</p>
+          <button className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2 text-xs font-bold text-white transition hover:bg-zinc-800">
+            <CheckCircle2 className="h-3.5 w-3.5" /> Start recording
+          </button>
+        </div>
+        <div className="mt-6 px-1">
+          <div className="flex items-center justify-between text-xs font-medium">
+            <span className="text-foreground">Storage</span>
+            <span className="cursor-pointer text-blue-600 hover:underline">Upgrade</span>
+          </div>
+          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+            <div className="h-full w-[40%] rounded-full bg-blue-600"></div>
+          </div>
+          <p className="mt-2 text-[10px] text-muted-foreground">78.4 GB of 200 GB used</p>
+        </div>
+        <div className="mt-6 flex items-center justify-between rounded-xl border border-border p-2 shadow-sm">
+          <div className="flex items-center gap-2">
+            <div className="grid h-8 w-8 place-items-center rounded bg-emerald-100 text-emerald-700">
+              <Users className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-foreground">Cansaas Agency</p>
+              <p className="text-[10px] text-muted-foreground">Pro Plan</p>
+            </div>
+          </div>
+          <ChevronRight className="h-4 w-4 rotate-90 text-muted-foreground" />
+        </div>
       </div>
     </aside>
   )
@@ -540,12 +566,12 @@ function OpsNavLink({ item, active }: { item: NavItem; active: boolean }) {
     <Link
       href={item.href}
       className={cx(
-        "flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors",
-        active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+        "flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors",
+        active ? "bg-muted font-semibold text-foreground" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
       )}
       aria-current={active ? "page" : undefined}
     >
-      <Icon className="h-5 w-5" />
+      <Icon className={cx("h-4 w-4", active ? "text-foreground" : "text-muted-foreground")} />
       {item.label}
     </Link>
   )
@@ -561,24 +587,36 @@ function OpsTopBar({
   subtitle: string
 }) {
   return (
-    <header className="border-b border-border bg-background/80 px-5 py-4 backdrop-blur lg:sticky lg:top-0 lg:z-20 lg:px-8">
-      <div className="flex items-center justify-between gap-4">
-        <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">{role === "merchant" ? "Jakarta Partner" : "Sportcation HQ"}</p>
-          <h1 className="truncate text-xl font-semibold tracking-tight text-foreground lg:text-2xl">{title}</h1>
-          <p className="hidden text-sm text-muted-foreground lg:block">{subtitle}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link href="/" className="hidden h-10 items-center gap-2 rounded-lg border border-border bg-white px-4 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted/50 lg:flex">
-            <Home className="h-4 w-4" />
-            User App
-          </Link>
-          <button type="button" className="grid h-10 w-10 place-items-center rounded-lg border border-border bg-white text-muted-foreground shadow-sm transition hover:bg-muted/50">
-            <Bell className="h-4 w-4" />
-          </button>
-          <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-100 text-emerald-700">
-            {role === "merchant" ? <Store className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
+    <header className="flex h-16 items-center justify-between gap-4 border-b border-border bg-white px-5 lg:sticky lg:top-0 lg:z-20 lg:px-8">
+      <div className="flex flex-1 items-center gap-4">
+        <div className="relative hidden w-full max-w-md lg:block">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input 
+            type="text" 
+            placeholder="Search videos, tags, folders..." 
+            className="h-10 w-full rounded-lg border border-border bg-[#f8f9fa] pl-10 pr-4 text-sm outline-none transition focus:border-zinc-300 focus:bg-white focus:ring-2 focus:ring-zinc-100"
+          />
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 rounded border border-border px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+            /
           </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-3">
+        <button type="button" className="grid h-9 w-9 place-items-center rounded-lg border border-border bg-white text-muted-foreground transition hover:bg-muted/50">
+          <Bell className="h-4 w-4" />
+        </button>
+        <button className="hidden h-9 items-center gap-2 rounded-lg border border-border bg-white px-3 text-sm font-medium text-foreground transition hover:bg-muted/50 lg:flex">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          Filters
+          <ChevronRight className="ml-1 h-3 w-3 rotate-90 text-muted-foreground" />
+        </button>
+        <div className="hidden h-9 items-center gap-2 rounded-lg border border-border bg-white px-3 text-sm font-medium text-foreground transition hover:bg-muted/50 lg:flex">
+          Sort: Newest
+          <ChevronRight className="ml-1 h-3 w-3 rotate-90 text-muted-foreground" />
+        </div>
+        <div className="hidden h-9 items-center rounded-lg border border-border bg-white p-1 lg:flex">
+          <button className="grid h-full w-8 place-items-center rounded bg-muted text-foreground"><LayoutDashboard className="h-3.5 w-3.5" /></button>
+          <button className="grid h-full w-8 place-items-center rounded text-muted-foreground hover:bg-muted/50"><MoreHorizontal className="h-3.5 w-3.5" /></button>
         </div>
       </div>
     </header>
@@ -659,66 +697,183 @@ function AdminOverview({ onAction, adminRows }: { onAction: (message: string) =>
       .catch(() => {})
   }, [])
 
-  const getNav = (section: string) => adminNav.find((n) => n.section === section)!
-
-  const cPanelGroups = [
-    {
-      title: "User & Partner Management",
-      icon: Users,
-      items: [getNav("users"), getNav("merchants"), getNav("venues")].filter(Boolean),
-    },
-    {
-      title: "Operations & Commerce",
-      icon: Ticket,
-      items: [getNav("bookings"), getNav("payments"), getNav("finance")].filter(Boolean),
-    },
-    {
-      title: "Content & System",
-      icon: Settings,
-      items: [getNav("banners"), getNav("reports"), getNav("settings")].filter(Boolean),
-    },
-  ]
-
   return (
-    <div className="space-y-8">
-      {/* Welcome Banner */}
-      <div className="rounded-[24px] bg-white p-6 shadow-sm border border-[#e2e8e8] lg:p-8">
-        <p className="text-xs font-black uppercase tracking-[0.26em] text-[#007c61]">Admin Console</p>
-        <h2 className="mt-2 text-2xl font-black tracking-[-0.05em] text-[#2c3133]">Platform Administration</h2>
-        <p className="mt-2 max-w-2xl text-sm font-semibold leading-relaxed text-[#687073]">
-          Manage users, partner venues, transactions, and overall system content through this centralized control panel.
-        </p>
+    <div className="space-y-8 pb-10">
+      {/* Header Area */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">My Library</h1>
+          <p className="mt-2 text-sm text-muted-foreground">All your users, venues, bookings, and files in one place.</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => onAction("Create new record action triggered")}
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
+        >
+          <Plus className="h-4 w-4" />
+          New video
+          <ChevronRight className="ml-1 h-3 w-3 rotate-90 opacity-70" />
+        </button>
       </div>
 
-      <StatsGrid stats={stats} />
+      {/* Tabs */}
+      <div className="border-b border-border">
+        <nav className="-mb-px flex gap-6">
+          {["All", "Videos", "Screenshots", "Files", "Folders"].map((tab, i) => (
+            <button
+              key={tab}
+              className={cx(
+                "border-b-2 px-1 pb-3 text-sm font-medium transition-colors",
+                i === 0 ? "border-zinc-900 text-zinc-900" : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
+              )}
+            >
+              {tab}
+            </button>
+          ))}
+        </nav>
+      </div>
 
-      {/* cPanel-style categorized sections */}
-      <div className="space-y-6">
-        {cPanelGroups.map((group, i) => (
-          <div key={i} className="overflow-hidden rounded-[24px] border border-[#e2e8e8] bg-white shadow-sm">
-            <div className="flex items-center gap-3 border-b border-[#e2e8e8] bg-[#f8fafa] px-6 py-4">
-              <group.icon className="h-5 w-5 text-[#007c61]" />
-              <h3 className="text-sm font-black uppercase tracking-[0.1em] text-[#2c3133]">{group.title}</h3>
+      {/* Filters */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-2">
+          {["Owner: Me", "Date created", "Any duration", "Any status", "Add tag"].map((filter) => (
+            <button key={filter} className="inline-flex h-8 items-center gap-1.5 rounded-full border border-border bg-white px-3 text-xs font-medium text-foreground transition hover:bg-muted/50">
+              {filter}
+              <ChevronRight className="h-3 w-3 rotate-90 text-muted-foreground" />
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-4 text-sm">
+          <button className="flex items-center gap-1.5 text-muted-foreground transition hover:text-foreground">
+            <Activity className="h-4 w-4" /> Reset
+          </button>
+          <button className="font-semibold text-foreground transition hover:text-muted-foreground">Clear all</button>
+        </div>
+      </div>
+
+      {/* Featured / Continue Watching */}
+      <div className="space-y-4">
+        <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
+          Continue watching
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </h2>
+        <div className="flex flex-col overflow-hidden rounded-[20px] border border-border bg-white p-2 shadow-sm sm:flex-row">
+          <div className="h-48 w-full shrink-0 overflow-hidden rounded-xl bg-muted sm:w-72">
+            <img src="/padel-court-modern.jpg" alt="Featured" className="h-full w-full object-cover" />
+          </div>
+          <div className="flex flex-1 flex-col p-4 sm:p-6">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-foreground">Q1 Sales Dashboard Walkthrough</h3>
+                <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-700">CM</div>
+                    <span className="font-medium text-foreground">Caroline Meita</span>
+                  </div>
+                  <span>•</span>
+                  <span>1 hours ago</span>
+                </div>
+                <div className="mt-4 flex gap-2">
+                  <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">Product</span>
+                  <span className="rounded-full bg-zinc-50 px-2.5 py-1 text-xs font-medium text-zinc-700">Onboarding</span>
+                </div>
+              </div>
+              <button className="text-muted-foreground transition hover:text-foreground">
+                <MoreHorizontal className="h-5 w-5" />
+              </button>
             </div>
-            <div className="grid grid-cols-2 gap-2 p-2 md:grid-cols-4 lg:grid-cols-5">
-              {group.items.map((item) => {
-                const Icon = item.icon
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="group flex flex-col items-center justify-center gap-3 rounded-2xl p-6 text-center transition-all hover:bg-[#eafff8]"
-                  >
-                    <Icon className="h-9 w-9 text-[#687073] transition-colors group-hover:text-[#007c61]" />
-                    <span className="text-[13px] font-bold text-[#5f666a] transition-colors group-hover:text-[#007c61]">
-                      {item.label}
-                    </span>
-                  </Link>
-                )
-              })}
+            <div className="mt-auto pt-6">
+              <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+                <span>60% watched • 7:30 left</span>
+                <div className="flex gap-2">
+                  <button className="grid h-8 w-8 place-items-center rounded-lg border border-border transition hover:bg-muted/50">
+                    <LockKeyhole className="h-4 w-4" />
+                  </button>
+                  <button onClick={() => onAction("Resume clicked")} className="inline-flex h-8 items-center gap-2 rounded-lg bg-zinc-900 px-4 text-xs font-medium text-white transition hover:bg-zinc-800">
+                    <ChevronRight className="h-3.5 w-3.5" /> Resume
+                  </button>
+                </div>
+              </div>
+              <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div className="h-full w-[60%] rounded-full bg-blue-600"></div>
+              </div>
             </div>
           </div>
-        ))}
+        </div>
+      </div>
+
+      {/* Recent Grid */}
+      <div className="space-y-4 pt-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-foreground">Recent Videos</h2>
+          <button className="text-sm font-semibold text-foreground hover:underline">View all</button>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            {
+              title: "Q2 Sales Dashboard Tracker",
+              author: "Caroline Meita",
+              time: "2 hours ago",
+              tags: ["Dashboard", "Q2 Update"],
+              stats: "124 • 8",
+              timeLabel: "06:12"
+            },
+            {
+              title: "Product Demo - New Features",
+              author: "Soke Bahtera",
+              time: "Yesterday",
+              tags: ["Product", "Demo", "Research"],
+              stats: "124 • 8",
+              timeLabel: "12:45"
+            },
+            {
+              title: "Flow - Email Builder",
+              author: "Jenny",
+              time: "3 days ago",
+              tags: ["Product", "Onboarding"],
+              stats: "124 • 8",
+              timeLabel: "38:36"
+            },
+            {
+              title: "All Hands Dashboard May 2026",
+              author: "Patrick Wecker",
+              time: "2 days ago",
+              tags: ["Design", "Prototype"],
+              stats: "124 • 8",
+              timeLabel: "34:18"
+            }
+          ].map((item, i) => (
+            <div key={i} className="flex flex-col overflow-hidden rounded-[16px] border border-border bg-white shadow-sm transition hover:shadow-md">
+              <div className="relative h-36 w-full bg-muted">
+                <div className="absolute bottom-2 left-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-medium text-white">{item.timeLabel}</div>
+              </div>
+              <div className="flex flex-1 flex-col p-4">
+                <h3 className="font-bold text-foreground line-clamp-1">{item.title}</h3>
+                <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <div className="flex h-4 w-4 items-center justify-center rounded-full bg-zinc-100 text-[8px] font-bold text-zinc-600">{item.author.charAt(0)}</div>
+                  <span className="font-medium text-foreground">{item.author}</span>
+                  <span>•</span>
+                  <span>{item.time}</span>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {item.tags.map(tag => (
+                    <span key={tag} className="rounded-full border border-border px-2.5 py-1 text-[10px] font-medium text-muted-foreground">{tag}</span>
+                  ))}
+                </div>
+                <div className="mt-4 flex items-center justify-between text-xs font-medium text-muted-foreground">
+                  <div className="flex items-center gap-3">
+                    <span className="flex items-center gap-1"><Activity className="h-3 w-3" /> {item.stats.split('•')[0].trim()}</span>
+                    <span className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> {item.stats.split('•')[1].trim()}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <LockKeyhole className="h-3 w-3" />
+                    <Home className="h-3 w-3" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
