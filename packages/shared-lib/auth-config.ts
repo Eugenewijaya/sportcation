@@ -17,6 +17,10 @@ export function getTrustedAuthOrigins(
   const configured = getConfiguredAuthBaseURL(environment) ?? fallbackBaseURL
   const candidates = [
     configured,
+    "https://sportcation-admin-rho.vercel.app",
+    "https://sportcation-api.vercel.app",
+    "https://sportcation-merchant.vercel.app",
+    "https://sportcation-sotn.vercel.app",
     ...(environment.AUTH_TRUSTED_ORIGINS?.split(",").map((origin) => origin.trim()).filter(Boolean) ?? []),
   ]
 
