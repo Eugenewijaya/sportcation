@@ -47,8 +47,6 @@ export async function requirePageRole(allowedRoles: readonly AppRole[], destinat
   console.log("requirePageRole SESSION:", session ? "FOUND" : "NULL");
 
   if (!session) {
-    const rawHeaders = await headers()
-    throw new Error("DEBUG: session null, reqHeaders=" + JSON.stringify(Object.fromEntries(rawHeaders.entries())))
     if (destination.startsWith("/merchant")) {
       redirect(`/merchant/login?next=${encodeURIComponent(destination)}`)
     } else if (destination.startsWith("/admin")) {
