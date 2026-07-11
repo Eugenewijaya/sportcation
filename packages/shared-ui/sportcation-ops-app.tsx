@@ -129,17 +129,17 @@ const adminNav: NavItem[] = [
 ]
 
 const merchantStats: StatCard[] = [
-  { label: "Monthly GMV", value: "Rp 428.6M", helper: "+18.4% from May", icon: TrendingUp, tone: "green" },
-  { label: "Active Courts", value: "32", helper: "4 venues online", icon: Store, tone: "blue" },
-  { label: "Today Bookings", value: "86", helper: "14 pending check-in", icon: Ticket, tone: "yellow" },
-  { label: "Payout Queue", value: "Rp 72.4M", helper: "Next settlement Friday", icon: Banknote, tone: "green" },
+  { label: "Monthly GMV", value: "Rp 0", helper: "Calculating...", icon: TrendingUp, tone: "green" },
+  { label: "Active Courts", value: "0", helper: "Fetching data...", icon: Store, tone: "blue" },
+  { label: "Today Bookings", value: "0", helper: "Fetching data...", icon: Ticket, tone: "yellow" },
+  { label: "Payout Queue", value: "Rp 0", helper: "Fetching data...", icon: Banknote, tone: "green" },
 ]
 
 const adminStats: StatCard[] = [
-  { label: "Platform GMV", value: "Rp 8.2B", helper: "+23.1% month over month", icon: TrendingUp, tone: "green" },
-  { label: "Active Users", value: "48.2K", helper: "2.1K new this week", icon: Users, tone: "blue" },
-  { label: "Open Reviews", value: "27", helper: "Venue and payout checks", icon: ShieldCheck, tone: "yellow" },
-  { label: "System Health", value: "99.98%", helper: "API target for next phase", icon: Activity, tone: "green" },
+  { label: "Platform GMV", value: "Rp 0", helper: "Calculating...", icon: TrendingUp, tone: "green" },
+  { label: "Active Users", value: "0", helper: "Fetching users...", icon: Users, tone: "blue" },
+  { label: "Open Reviews", value: "0", helper: "Fetching queues...", icon: ShieldCheck, tone: "yellow" },
+  { label: "System Health", value: "Checking...", helper: "Verifying API...", icon: Activity, tone: "green" },
 ]
 
 const merchantRows = {

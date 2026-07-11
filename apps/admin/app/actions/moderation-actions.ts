@@ -1,7 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { apiFetch } from "@/lib/api/fetch"
+import { apiFetch } from "@sportcation/shared-lib/api/fetch"
 
 export async function updateMerchantStatusAction(id: string, status: "verified" | "suspended") {
   try {
